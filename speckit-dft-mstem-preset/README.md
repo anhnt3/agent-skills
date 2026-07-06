@@ -36,7 +36,7 @@ Hai override bổ trợ nhau:
 Nội bộ (dev, từ thư mục này):
 
 ```bash
-specify preset add --dev ./speckit-preset
+specify preset add --dev ./speckit-dft-mstem-preset
 ```
 
 **Kích hoạt hiến chương (project mới chưa có hiến chương):** `preset add` không tự ghi vào file sống `.specify/memory/constitution.md` — nó chỉ đổi template. Copy hiến chương shipped vào memory để khung phỏng vấn có nội dung:
