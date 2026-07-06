@@ -1,0 +1,60 @@
+name: Release dft-mstem preset
+
+# Chạy khi push tag dạng "dft-mstem-v1.0.0".
+# Đóng gói speckit-dft-mstem-preset/ thành zip chuẩn và tạo GitHub Release kèm asset.
+# Sau đó cài bằng:
+#   specify preset add --from \
+#     https://github.com/<org>/<repo>/releases/download/<tag>/dft-mstem-<version>.zip
+on:
+  push:
+    tags:
+      - "dft-mstem-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version để đóng gói (vd 1.0.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Xác định version
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ github.event.inputs.version }}"
+            tag="dft-mstem-v${version}"
+          else
+            tag="${GITHUB_REF_NAME}"
+            version="${tag#dft-mstem-v}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Kiểm tra version khớp preset.yml
+        run: |
+          manifest_ver="$(grep -E '^[[:space:]]*version:' speckit-dft-mstem-preset/preset.yml | head -1 | sed -E 's/.*version:[[:space:]]*"?([^"#]+)"?.*/\1/' | tr -d '[:space:]')"
+          if [ "$manifest_ver" != "${{ steps.ver.outputs.version }}" ]; then
+            echo "::error::version trong preset.yml ($manifest_ver) không khớp tag (${{ steps.ver.outputs.version }})"
+            exit 1
+          fi
+
+      - name: Build zip
+        run: |
+          chmod +x speckit-dft-mstem-preset/build-zip.sh
+          speckit-dft-mstem-preset/build-zip.sh "${{ steps.ver.outputs.version }}"
+
+      - name: Tạo GitHub Release + upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: dft-mstem ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: speckit-dft-mstem-preset/dist/dft-mstem-${{ steps.ver.outputs.version }}.zip
