@@ -1,0 +1,5 @@
+dist/
+scripts/.venv/
+**/__pycache__/
+*.pyc
+*-config.local.yml

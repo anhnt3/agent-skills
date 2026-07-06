@@ -53,6 +53,42 @@ python3 speckit-extension/scripts/csv_to_xlsx.py \
 
 Chỉ cần `python3` — script tự dựng `.venv` + cài `openpyxl` ở lần chạy đầu.
 
+## Phát hành (release lên GitHub)
+
+Cài qua `specify extension add --from <url>` yêu cầu URL trỏ tới **file zip** chứa
+extension (thư mục gốc `dft-speckit/` có `extension.yml` bên trong).
+
+### Tự động qua GitHub Actions (khuyến nghị)
+
+Workflow [`.github/workflows/release-speckit-extension.yml`](../.github/workflows/release-speckit-extension.yml)
+chạy khi push tag `dft-speckit-v<version>`, tự build zip và tạo GitHub Release kèm asset.
+
+```bash
+# 1. Cập nhật version trong extension.yml (vd 1.0.0) rồi commit.
+# 2. Tag + push (version phải khớp extension.yml, nếu không workflow báo lỗi):
+git tag dft-speckit-v1.0.0
+git push origin dft-speckit-v1.0.0
+```
+
+Sau khi workflow xong, cài bằng:
+
+```bash
+specify extension add dft-speckit --from \
+  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v1.0.0/dft-speckit-1.0.0.zip
+```
+
+> Cũng có thể chạy tay qua tab **Actions → Release dft-speckit extension → Run workflow** và nhập version.
+
+### Build zip thủ công (local)
+
+```bash
+speckit-extension/build-zip.sh          # đọc version từ extension.yml
+speckit-extension/build-zip.sh 1.0.0    # hoặc chỉ định version
+# -> speckit-extension/dist/dft-speckit-<version>.zip
+```
+
+Upload zip đó lên Release (hoặc host nội bộ) rồi dùng URL với `--from`.
+
 ## Định dạng cố định
 
 CSV bắt buộc đúng **14 cột, đúng thứ tự**:
