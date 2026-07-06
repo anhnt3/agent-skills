@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "dft-mstem"
   name: "DFT mSTEM"
-  version: "1.4.0"
+  version: "1.5.0"
   description: "Override speckit.specify: business analyst phỏng vấn tuần tự qua AskUserQuestion, khung constitution, wire mock→backend, tiếng Việt."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/your-org/spec-kit-preset-dft-mstem"
@@ -41,7 +41,7 @@ provides:
     - type: "command"
       name: "speckit.checklist"
       file: "commands/speckit.checklist.md"
-      description: "Wrap checklist: fast-path copy bộ IV cố định khi args nhắc ui-ux/convention/IV; ngược lại chạy sinh động core"
+      description: "Wrap checklist: fast-path stamp bộ IV cố định + chấm theo spec (tick/gap/N-A có nguồn) + thảo luận vá gap; args khác chạy sinh động core"
       strategy: "wrap"
 
     - type: "command"

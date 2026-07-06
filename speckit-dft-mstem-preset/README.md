@@ -25,10 +25,11 @@ Các override bổ trợ nhau (7 override, gom theo mục đích):
 **4. Template `constitution-template`** (`strategy: replace`) — *ship hiến chương*:
 - Chứa nguyên văn 11 nguyên tắc (Angular mockup → backend ABP). Addendum spec/plan tham chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
 
-**5. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định*:
-- `/speckit.checklist ui-ux` (hoặc args nhắc `convention`/`IV`) → **copy nguyên bộ IV cố định** (CHK001–010) vào `checklists/ui-ux.md`, giống hệt mỗi lần (không sinh động).
-- Args khác → chạy checklist sinh động của core như thường.
-- Là spec-completeness gate cho nguyên tắc IV: bổ trợ spec-addendum (addendum *điền* UX theo màn, checklist *gate* đã điền đủ chưa).
+**5. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định + chấm*:
+- `/speckit.checklist ui-ux @spec.md` → 3 bước: **stamp** bộ IV cố định (CHK001–010) → **chấm** theo spec (tick `[x]` pass + nguồn, `⚠️ Gap`, `➖ N/A`, bảng Tổng) → **thảo luận vá** từng gap qua AskUserQuestion, cập nhật spec.md rồi tick pass.
+- Chỉ điền mục còn `[ ]` trống; **giữ nguyên tick + note người đã ghi** (không clobber).
+- Không kèm spec → chỉ stamp list trống. Args khác → chạy checklist sinh động của core.
+- Là spec-completeness gate cho nguyên tắc IV: bổ trợ spec-addendum (addendum *điền* UX theo màn, checklist *chấm* đã điền đủ chưa + vá gap).
 
 > Tách WHAT (spec) vs HOW (plan) theo đúng triết lý spec-kit: spec cho business đọc, plan gánh kỹ thuật. Constitution Check gate sống ở plan (đúng như constitution quy định).
 
