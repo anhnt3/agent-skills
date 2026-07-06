@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "dft-mstem"
   name: "DFT mSTEM"
-  version: "1.6.0"
+  version: "1.7.0"
   description: "Override speckit.specify: business analyst phỏng vấn tuần tự qua AskUserQuestion, khung constitution, wire mock→backend, tiếng Việt."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/your-org/spec-kit-preset-dft-mstem"

@@ -8,7 +8,7 @@ Các override bổ trợ nhau (7 override, gom theo mục đích):
 
 **1. Command `speckit.specify`** (`strategy: wrap`) — điều khiển *cách hỏi*:
 - Đóng vai **business analyst** theo domain dự án, thảo luận + spec bằng **tiếng Việt**.
-- **Khảo sát trước khi hỏi**: đọc `docs/roadmap.md`, mockup frontend (field/validation/luồng/label/message), nợ kỹ thuật liên quan, và `.specify/memory/constitution.md`.
+- **Khảo sát trước khi hỏi**: tự tìm roadmap dự án (không rõ thì hỏi), mockup frontend (field/validation/luồng/label/message), nợ kỹ thuật liên quan, và `.specify/memory/constitution.md`.
 - **Phỏng vấn theo cây thiết kế**: mỗi nguyên tắc trong `constitution.md` là một nhánh; hỏi qua **AskUserQuestion**, mỗi lần một câu, 2–4 option, có `(Recommended)` + lý do + trade-off.
 - Bắt buộc rà **wire mock→backend** trên mọi màn (trừ trivial).
 - Đánh dấu nguồn mỗi kết luận: `[từ mock]` / `[suy luận]` / `[cần bạn quyết]`.
@@ -94,4 +94,4 @@ Cài từ asset qua `specify preset add --from <url>`. Lưu ý: `--from` chỉ n
 ## Yêu cầu
 
 - `speckit_version >= 0.6.0` (cần AskUserQuestion trên Claude Code).
-- Dự án đã `specify init`, có `docs/roadmap.md` và `.specify/memory/constitution.md`.
+- Dự án đã `specify init`, có `.specify/memory/constitution.md` và một file roadmap (vị trí tùy dự án; command tự tìm, không rõ thì hỏi).
