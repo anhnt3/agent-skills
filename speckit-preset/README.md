@@ -1,4 +1,4 @@
-# BA Interview (Vietnamese) — Spec Kit Preset
+# DFT mSTEM — Spec Kit Preset
 
 Override `/speckit.specify` thành một phiên business-analyst phỏng vấn tuần tự trước khi ghi spec, và ép spec output điền đủ 11 nguyên tắc hiến chương.
 
@@ -42,7 +42,7 @@ specify preset add --dev ./speckit-preset
 **Kích hoạt hiến chương (project mới chưa có hiến chương):** `preset add` không tự ghi vào file sống `.specify/memory/constitution.md` — nó chỉ đổi template. Copy hiến chương shipped vào memory để khung phỏng vấn có nội dung:
 
 ```bash
-cp .specify/presets/ba-interview-vi/templates/constitution.md .specify/memory/constitution.md
+cp .specify/presets/dft-mstem/templates/constitution.md .specify/memory/constitution.md
 ```
 
 Bỏ qua bước này nếu project đã có sẵn hiến chương phù hợp (vd admin_mbf).
@@ -50,7 +50,7 @@ Bỏ qua bước này nếu project đã có sẵn hiến chương phù hợp (v
 Kiểm tra:
 
 ```bash
-specify preset info ba-interview-vi       # xem 2 override (command + template)
+specify preset info dft-mstem       # xem 6 override (2 command + 4 template)
 specify preset resolve spec-template      # thấy composition chain: core → addendum
 specify preset list
 ```
@@ -58,13 +58,13 @@ specify preset list
 Gỡ:
 
 ```bash
-specify preset remove ba-interview-vi
+specify preset remove dft-mstem
 ```
 
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/<org>/<repo>/releases/download/ba-interview-vi-v1.0.0/ba-interview-vi-1.0.0.zip
+specify preset add --from https://github.com/<org>/<repo>/releases/download/dft-mstem-v1.0.0/dft-mstem-1.0.0.zip
 ```
 
 ## Publish (GitHub release zip)
@@ -72,14 +72,14 @@ specify preset add --from https://github.com/<org>/<repo>/releases/download/ba-i
 Đóng gói + release giống `speckit-extension`:
 
 ```bash
-./build-zip.sh                 # -> dist/ba-interview-vi-<version>.zip (đọc version từ preset.yml)
+./build-zip.sh                 # -> dist/dft-mstem-<version>.zip (đọc version từ preset.yml)
 ```
 
-Release tự động: push tag `ba-interview-vi-v<version>` (khớp `preset.version` trong preset.yml) → workflow `.github/workflows/release-speckit-preset.yml` build zip + tạo GitHub Release kèm asset.
+Release tự động: push tag `dft-mstem-v<version>` (khớp `preset.version` trong preset.yml) → workflow `.github/workflows/release-speckit-preset.yml` build zip + tạo GitHub Release kèm asset.
 
 ```bash
-git tag ba-interview-vi-v1.0.0
-git push origin ba-interview-vi-v1.0.0
+git tag dft-mstem-v1.0.0
+git push origin dft-mstem-v1.0.0
 ```
 
 Cài từ asset qua `specify preset add --from <url>`. Lưu ý: `--from` chỉ nhận HTTPS (hoặc localhost) — không nhận đường dẫn file local.

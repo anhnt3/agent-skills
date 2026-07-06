@@ -1,12 +1,12 @@
 schema_version: "1.0"
 
 preset:
-  id: "ba-interview-vi"
-  name: "BA Interview (Vietnamese)"
-  version: "1.2.0"
+  id: "dft-mstem"
+  name: "DFT mSTEM"
+  version: "1.3.0"
   description: "Override speckit.specify: business analyst phỏng vấn tuần tự qua AskUserQuestion, khung constitution, wire mock→backend, tiếng Việt."
   author: "Nguyen Tuan Anh"
-  repository: "https://github.com/your-org/spec-kit-preset-ba-interview-vi"
+  repository: "https://github.com/your-org/spec-kit-preset-dft-mstem"
   license: "MIT"
 
 requires:

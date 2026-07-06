@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Đóng gói preset ba-interview-vi thành zip chuẩn để cài qua:
+# Đóng gói preset dft-mstem thành zip chuẩn để cài qua:
 #   specify preset add --from <url-tới-zip>
 #
-# Zip có 1 thư mục gốc "ba-interview-vi/" chứa preset.yml ngay bên trong
+# Zip có 1 thư mục gốc "dft-mstem/" chứa preset.yml ngay bên trong
 # (đúng kiểu GitHub archive wrap 1 tầng).
 #
 # Dùng:
@@ -20,12 +20,12 @@ if [ -z "$version" ]; then
 fi
 [ -n "$version" ] || { echo "Không xác định được version"; exit 1; }
 
-pkg="ba-interview-vi"
+pkg="dft-mstem"
 out="${here}/dist/${pkg}-${version}.zip"
 mkdir -p "${here}/dist"
 rm -f "$out"
 
-# Staging để zip có thư mục gốc ba-interview-vi/
+# Staging để zip có thư mục gốc dft-mstem/
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 dest="${stage}/${pkg}"
