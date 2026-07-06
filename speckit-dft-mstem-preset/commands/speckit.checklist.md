@@ -19,13 +19,12 @@ Nếu `$ARGUMENTS` chỉ tới spec.md (hoặc feature có spec.md): đọc spec
 - **Gap** (spec thiếu/mơ hồ, tester không viết được testcase) → giữ `[ ]`, ghi ` — ⚠️ Gap: <thiếu gì>`.
 Mỗi verdict PHẢI trích nguồn spec; không có nguồn = Gap. Thêm cuối file mục `## Tổng` (đếm Pass/N/A/Gap).
 
-### Bước 3 — Thảo luận & vá gap (có kiểm soát)
-Command này vốn là gate read-only; chỉ sửa `spec.md` khi người dùng đồng ý từng mục. Với MỖI Gap:
+### Bước 3 — Thảo luận & vá gap
+Với MỖI Gap:
 1. Hỏi qua **AskUserQuestion** (một câu/lần, 2–4 option, `(Recommended)` đầu, kèm lý do) cách vá.
-2. Cảnh báo rõ "sẽ chỉnh spec.md" trước khi ghi.
-3. Ghi bổ sung vào một mục **`## Clarifications`** trong spec.md (append), giữ cấu trúc + dấu nguồn; **không sửa/ghi đè requirement đã có** — nếu cần đổi requirement gốc thì hand-off `/speckit.specify` hoặc `/speckit.clarify`, không tự sửa ở đây.
-4. Chấm lại mục đó; đạt thì tick `[x]` + nguồn mới. Cập nhật `## Tổng`.
-Hết gap (hoặc người dùng chấp nhận để lại): DỪNG, báo tổng kết.
+2. Sau khi người dùng chốt, **sửa trực tiếp `spec.md`**: cập nhật/append đúng requirement liên quan (FR-xxx, mục §IV, …), giữ cấu trúc + dấu nguồn `[từ mock]`/`[suy luận]`/`[cần bạn quyết]`. Sửa đúng chỗ gap, không viết lại phần khác.
+3. Chấm lại mục đó; đạt thì tick `[x]` + nguồn mới. Cập nhật `## Tổng`.
+Hết gap (hoặc người dùng chấp nhận để lại): DỪNG, báo tổng kết các thay đổi đã ghi vào spec.md.
 
 Verdict đã gắn (`— ✅/⚠️/➖`) là trạng thái review, KHÔNG coi là "nội dung item cố định" khi re-run so sánh — re-run chỉ đồng bộ text mục CHK theo bộ cố định, giữ nguyên verdict + tick.
 
