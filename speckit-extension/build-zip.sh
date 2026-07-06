@@ -35,6 +35,7 @@ cp extension.yml "$dest/"
 [ -f README.md ] && cp README.md "$dest/"
 [ -f .extensionignore ] && cp .extensionignore "$dest/"
 cp -R commands "$dest/"
+[ -d templates ] && cp -R templates "$dest/"
 mkdir -p "$dest/scripts"
 # Copy scripts nhưng loại venv/pycache/config.local
 find scripts -type f \
