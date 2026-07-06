@@ -9,7 +9,7 @@ bổ sung thêm command mới theo nhu cầu.
 
 | Command | Mô tả |
 |---------|-------|
-| `speckit.dft-speckit.manual-xlsx` | Sinh testcase kiểm thử **thủ công** cho tester từ spec/acceptance criteria, xuất CSV rồi XLSX (cấu trúc cột và format cố định). Alias: `speckit.dft-speckit.manual-testcase`. |
+| `speckit.dft-speckit.manual-xlsx` | Sinh testcase kiểm thử **thủ công** cho tester từ spec/acceptance criteria, xuất CSV rồi XLSX (cấu trúc cột và format cố định).  |
 | _(sắp có)_ | Các command DFT khác sẽ được thêm vào đây. |
 
 ## Thêm command mới

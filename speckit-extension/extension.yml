@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "dft-speckit"
   name: "DFT Spec Kit Extension"
-  version: "1.0.0"
+  version: "1.0.1"
   description: "Bộ command dùng chung của DFT cho Spec Kit — tập hợp các command hỗ trợ quy trình spec-driven development của công ty. Sẽ mở rộng dần nhiều command."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/dft/agent-skills"
@@ -18,8 +18,6 @@ provides:
     - name: "speckit.dft-speckit.manual-xlsx"
       file: "commands/manual-xlsx.md"
       description: "Sinh testcase thủ công cho tester từ spec/acceptance criteria, xuất CSV rồi XLSX (format cố định)."
-      aliases:
-        - "speckit.dft-speckit.manual-testcase"
 
 tags:
   - dft
