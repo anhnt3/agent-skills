@@ -37,7 +37,7 @@ speckit-extension/
 Yêu cầu một project đã `specify init`.
 
 ```bash
-specify extension add dft-speckit --dev /đường/dẫn/tới/speckit-extension
+specify extension add dft-speckit --force --dev /đường/dẫn/tới/speckit-extension
 specify extension list
 ```
 
@@ -55,7 +55,7 @@ Chỉ cần `python3` — script tự dựng `.venv` + cài `openpyxl` ở lần
 
 ## Phát hành (release lên GitHub)
 
-Cài qua `specify extension add dft-speckit --from <url>` yêu cầu URL trỏ tới **file zip** chứa
+Cài qua `specify extension add dft-speckit --force --from <url>` yêu cầu URL trỏ tới **file zip** chứa
 extension (thư mục gốc `dft-speckit/` có `extension.yml` bên trong).
 
 ### Tự động qua GitHub Actions (khuyến nghị)
@@ -73,7 +73,7 @@ git push origin dft-speckit-v1.0.0
 Sau khi workflow xong, cài bằng:
 
 ```bash
-specify extension add dft-speckit --from \
+specify extension add dft-speckit --force --from \
   https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v1.0.0/dft-speckit-1.0.0.zip
 ```
 
