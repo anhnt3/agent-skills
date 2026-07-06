@@ -17,12 +17,14 @@ version="${1:-$(grep -E '^[[:space:]]*version:' preset.yml | head -1 | sed -E 's
 [ -n "$version" ] || { echo "Không xác định được version"; exit 1; }
 tag="${pkg}-v${version}"
 zip="dist/${pkg}-${version}.zip"
+repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+url="https://github.com/${repo}/releases/download/${tag}/${pkg}-${version}.zip"
 
 ./build-zip.sh "$version"
 
 notes="Spec-Kit preset. Cài:
 \`\`\`bash
-specify preset add --from https://github.com/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/releases/download/${tag}/${pkg}-${version}.zip
+specify preset add --from ${url}
 \`\`\`"
 
 if gh release view "$tag" >/dev/null 2>&1; then
@@ -30,6 +32,12 @@ if gh release view "$tag" >/dev/null 2>&1; then
   gh release upload "$tag" "$zip" --clobber
 else
   gh release create "$tag" "$zip" --title "${pkg} ${version}" --notes "$notes"
+fi
+
+# Cập nhật URL cài trong README về đúng release vừa tạo.
+if [ -f README.md ]; then
+  sed -i '' -E "s#specify preset add --from https://github.com/[^ ]*dft-mstem-[^ ]*\.zip#specify preset add --from ${url}#g" README.md
+  echo "README: cập nhật URL -> $url"
 fi
 
 echo "Done: $(gh release view "$tag" --json url --jq .url)"
