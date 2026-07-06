@@ -1,0 +1,40 @@
+schema_version: "1.0"
+
+preset:
+  id: "ba-interview-vi"
+  name: "BA Interview (Vietnamese)"
+  version: "1.0.0"
+  description: "Override speckit.specify: business analyst phỏng vấn tuần tự qua AskUserQuestion, khung constitution, wire mock→backend, tiếng Việt."
+  author: "Nguyen Tuan Anh"
+  repository: "https://github.com/your-org/spec-kit-preset-ba-interview-vi"
+  license: "MIT"
+
+requires:
+  # >=0.6.0: bản đầu tiên các preset khác dựa vào để dùng AskUserQuestion trên Claude Code
+  speckit_version: ">=0.6.0"
+
+provides:
+  templates:
+    - type: "template"
+      name: "spec-template"
+      file: "templates/spec-addendum.md"
+      description: "Append mặt Nghiệp vụ (WHAT) của hiến chương + bảng wire mock→backend theo màn"
+      strategy: "append"
+
+    - type: "template"
+      name: "plan-template"
+      file: "templates/plan-addendum.md"
+      description: "Append Constitution Check mặt Kỹ thuật (HOW): test, versioning, observability, cơ chế bảo mật/toàn vẹn/tenant"
+      strategy: "append"
+
+    - type: "command"
+      name: "speckit.specify"
+      file: "commands/speckit.specify.md"
+      description: "Wrap specify: khảo sát mock + nợ kỹ thuật, phỏng vấn 1 câu/lần theo khung constitution, chỉ ghi spec sau khi đạt hiểu chung"
+      strategy: "wrap"
+
+tags:
+  - "specify"
+  - "interview"
+  - "vietnamese"
+  - "business-analysis"
