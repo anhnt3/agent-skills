@@ -36,7 +36,7 @@ fi
 
 # Cập nhật URL cài trong README về đúng release vừa tạo.
 if [ -f README.md ]; then
-  sed -i '' -E "s#specify extension add ${pkg} --from https://github.com/[^ ]*${pkg}-[^ ]*\.zip#specify extension add ${pkg} --from ${url}#g" README.md
+  sed -i '' -E "s#https://github.com/[^ )]*/releases/download/${pkg}-v[^ )/]*/${pkg}-[^ )]*\.zip#${url}#g" README.md
   echo "README: cập nhật URL -> $url"
 fi
 

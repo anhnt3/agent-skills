@@ -36,7 +36,7 @@ fi
 
 # Cập nhật URL cài trong README về đúng release vừa tạo.
 if [ -f README.md ]; then
-  sed -i '' -E "s#specify preset add --from https://github.com/[^ ]*dft-mstem-[^ ]*\.zip#specify preset add --from ${url}#g" README.md
+  sed -i '' -E "s#https://github.com/[^ )]*/releases/download/${pkg}-v[^ )/]*/${pkg}-[^ )]*\.zip#${url}#g" README.md
   echo "README: cập nhật URL -> $url"
 fi
 
