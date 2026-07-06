@@ -2,10 +2,12 @@ Trước khi chạy quy trình specify core bên dưới, áp dụng preset **BA
 
 ## Giai đoạn 1 — Khảo sát (đọc, không đoán)
 Tự tìm trong repo, KHÔNG giả định đường dẫn cố định. Không tìm ra thì **hỏi lại** vị trí, đừng đoán:
-- **Roadmap dự án** — xác định chức năng ứng với `$ARGUMENTS` (tìm file roadmap; không rõ thì hỏi).
+- **Roadmap dự án** (`docs/roadmap.md` nếu có) — xác định chức năng ứng với `$ARGUMENTS`. Nếu `$ARGUMENTS` là một **ID roadmap** (vd `RM-001`): đọc đúng item đó, gồm cả mục **`Nợ phát sinh`** (dùng làm input phỏng vấn), rồi **set `Trạng thái` item đó = `đang`** trong `docs/roadmap.md`.
 - **Mockup frontend của chức năng** (component + mock-service): trích field, validation, luồng, label, message. Đánh dấu cái nào đang mock cần wire backend.
 - **Nợ kỹ thuật liên quan** (TODO/FIXME/known issues).
 - **Hiến chương** (`.specify/memory/constitution.md`) — đọc toàn bộ nguyên tắc; dùng làm khung phỏng vấn.
+
+**Nợ phát sinh sang chức năng khác**: trong lúc khảo sát/phỏng vấn, nếu phát hiện việc thuộc **chức năng/màn khác** (sẽ làm sau), append một bullet vào mục `Nợ phát sinh` của item tương ứng trong `docs/roadmap.md` (không làm ngay ở spec này). Không có roadmap → bỏ qua.
 
 Tóm tắt khảo sát kèm dấu nguồn `[từ mock]`/`[suy luận]`/`[cần bạn quyết]` trước khi phỏng vấn.
 
