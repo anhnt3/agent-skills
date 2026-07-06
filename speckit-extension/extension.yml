@@ -23,6 +23,11 @@ provides:
       file: "commands/roadmap.md"
       description: "Lập/cập nhật roadmap build từ frontend mockup — xếp thứ tự wire backend từng màn, ghi docs/roadmap.md (không clobber trạng thái/nợ)."
 
+  templates:
+    - name: "roadmap-template"
+      file: "templates/roadmap-template.md"
+      description: "Khung cố định cho docs/roadmap.md — bảng tổng thứ tự + khối chi tiết mỗi item (ID/wave/phụ thuộc/trạng thái/nợ)."
+
 tags:
   - dft
   - internal

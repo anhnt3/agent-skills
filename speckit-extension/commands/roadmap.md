@@ -18,23 +18,12 @@ Trình bày đề xuất kèm **lý do thứ tự** (cái gì chặn cái gì).
 ## 3. Chốt ưu tiên (interview)
 Hỏi qua **AskUserQuestion** — mỗi lần MỘT câu, 2–4 option, `(Recommended)` đầu, kèm lý do + trade-off. Xác nhận/điều chỉnh thứ tự, ưu tiên, gộp/tách. Fact tra từ mock; **thứ tự là quyết định của người dùng** — đặt từng cái ra, chờ trả lời.
 
-## 4. Ghi `docs/roadmap.md`
-**KHÔNG clobber**: nếu file đã tồn tại, **giữ nguyên** cột `Trạng thái` và mục `Nợ phát sinh` của các item cũ; chỉ cập nhật thứ tự/nội dung khi người dùng yêu cầu. Item mới thêm vào đúng wave.
+## 4. Ghi `docs/roadmap.md` theo khung CỐ ĐỊNH
+**Dùng khung cố định, KHÔNG tự chế cấu trúc** (để mỗi lần sinh ra format giống hệt):
+- Lấy khung: chạy `specify preset resolve roadmap-template` để lấy đường dẫn file khung; không resolve được → đọc `templates/roadmap-template.md` trong thư mục extension đã cài; vẫn không thấy → hỏi.
+- Copy đúng cấu trúc khung (bảng tổng + khối chi tiết mỗi item), chỉ **điền** placeholder `[…]`, thay `[DATE]` bằng ngày hiện tại. Giữ nguyên tên cột, thứ tự mục, format.
+- **ID ổn định** (`RM-001`, `RM-002`, …) khớp giữa bảng tổng và khối chi tiết — để `/speckit.specify <ID>` lấy được.
 
-Mỗi item có **ID ổn định** (vd `RM-001` hoặc `<module>-<slug>`) để `/speckit.specify <ID>` lấy được.
-
-Cấu trúc file:
-- **Bảng tổng** (thứ tự build): `ID | Màn | Module | Wave | Phụ thuộc | Trạng thái`.
-  - Trạng thái: `chưa` (mặc định) / `đang` / `xong`.
-- **Chi tiết mỗi item** (khối riêng theo ID):
-  ```
-  ### RM-001 — <Tên màn> (<module>, Wave <n>)
-  - Mô tả: <ngắn>
-  - Thực thể/CRUD: <...>
-  - Phụ thuộc: <ID khác / auth / permission / N/A>
-  - Trạng thái: chưa
-  - Nợ phát sinh:
-    - (trống — mục này để specify của chức năng khác tự ghi việc dời sang item này)
-  ```
+**KHÔNG clobber**: nếu `docs/roadmap.md` đã tồn tại, **giữ nguyên** cột `Trạng thái` và mục `Nợ phát sinh` của item cũ; chỉ thêm item mới vào đúng wave / tính lại thứ tự khi người dùng yêu cầu.
 
 Kết thúc: báo số item, thứ tự wave, và nhắc `/speckit.specify <ID>` để bắt đầu từng mục.
