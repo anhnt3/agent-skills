@@ -4,7 +4,7 @@ Trước khi chạy quy trình specify core bên dưới, áp dụng preset **BA
 - `docs/roadmap.md` — xác định chức năng ứng với `$ARGUMENTS`.
 - Mockup Angular của chức năng (`angular/src/app/modules/admin/pages/...` + mock-service): trích field, validation, luồng, label, message. Đánh dấu cái nào đang mock cần wire backend.
 - Nợ kỹ thuật liên quan (TODO/FIXME/known issues).
-- `.specify/memory/constitution.md` — đọc toàn bộ 11 nguyên tắc; dùng làm khung phỏng vấn.
+- `.specify/memory/constitution.md` — đọc toàn bộ nguyên tắc; dùng làm khung phỏng vấn.
 
 Tóm tắt khảo sát kèm dấu nguồn `[từ mock]`/`[suy luận]`/`[cần bạn quyết]` trước khi phỏng vấn.
 

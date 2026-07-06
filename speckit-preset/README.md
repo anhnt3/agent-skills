@@ -21,6 +21,9 @@ Hai override bổ trợ nhau:
 **3. Template `plan-template`** (`strategy: append`) — ép *cổng kỹ thuật (mặt HOW)*:
 - Mục **Constitution Check — Kỹ thuật** (GATE trước Phase 0): nhóm HOW II/III/VIII/IX + cơ chế của I/V/VI/X/XI (test, versioning, observability, Keycloak/JWT, rowversion/DB constraint, ABP multi-tenancy).
 
+**4. Template `constitution-template`** (`strategy: replace`) — *ship hiến chương*:
+- Chứa nguyên văn 11 nguyên tắc (Angular mockup → backend ABP). Addendum spec/plan tham chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
+
 > Tách WHAT (spec) vs HOW (plan) theo đúng triết lý spec-kit: spec cho business đọc, plan gánh kỹ thuật. Constitution Check gate sống ở plan (đúng như constitution quy định).
 
 ## Cài đặt
@@ -30,6 +33,14 @@ Nội bộ (dev, từ thư mục này):
 ```bash
 specify preset add --dev ./speckit-preset
 ```
+
+**Kích hoạt hiến chương (project mới chưa có hiến chương):** `preset add` không tự ghi vào file sống `.specify/memory/constitution.md` — nó chỉ đổi template. Copy hiến chương shipped vào memory để khung phỏng vấn có nội dung:
+
+```bash
+cp .specify/presets/ba-interview-vi/templates/constitution.md .specify/memory/constitution.md
+```
+
+Bỏ qua bước này nếu project đã có sẵn hiến chương phù hợp (vd admin_mbf).
 
 Kiểm tra:
 
