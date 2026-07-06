@@ -4,7 +4,7 @@ Override `/speckit.specify` thành một phiên business-analyst phỏng vấn t
 
 ## Preset này làm gì
 
-Hai override bổ trợ nhau:
+Các override bổ trợ nhau (7 override, gom theo mục đích):
 
 **1. Command `speckit.specify`** (`strategy: wrap`) — điều khiển *cách hỏi*:
 - Đóng vai **business analyst** theo domain dự án, thảo luận + spec bằng **tiếng Việt**.
@@ -18,8 +18,9 @@ Hai override bổ trợ nhau:
 - Mục **Tuân thủ Hiến chương — Nghiệp vụ**: chỉ mặt business-rule/hành vi của các nguyên tắc I/IV/V/VI/VII/X/XI (điền hoặc `N/A vì...`).
 - Bảng **wire mock→backend theo màn**.
 
-**3. Template `plan-template`** (`strategy: append`) — ép *cổng kỹ thuật (mặt HOW)*:
+**3. Template `plan-template`** (`strategy: append`) + **command `speckit.plan`** (`strategy: wrap`) — ép *cổng kỹ thuật (mặt HOW)*:
 - Mục **Constitution Check — Kỹ thuật** (GATE trước Phase 0): nhóm HOW II/III/VIII/IX + cơ chế của I/V/VI/X/XI (test, versioning, observability, Keycloak/JWT, rowversion/DB constraint, ABP multi-tenancy).
+- Wrap `speckit.plan` chèn **bước bắt buộc resolve+ghép addendum** trước khi tạo plan.md. Cùng guard ở wrap `speckit.specify`: append addendum không bake vào file core trên đĩa — phải `specify preset resolve <template>` rồi đọc & ghép các layer (core → addendum), KHÔNG đọc thẳng `.specify/templates/*.md`.
 
 **4. Template `constitution-template`** (`strategy: replace`) — *ship hiến chương*:
 - Chứa nguyên văn 11 nguyên tắc (Angular mockup → backend ABP). Addendum spec/plan tham chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
@@ -50,7 +51,7 @@ Bỏ qua bước này nếu project đã có sẵn hiến chương phù hợp (v
 Kiểm tra:
 
 ```bash
-specify preset info dft-mstem       # xem 6 override (2 command + 4 template)
+specify preset info dft-mstem       # xem 7 override (3 command + 4 template)
 specify preset resolve spec-template      # thấy composition chain: core → addendum
 specify preset list
 ```
@@ -64,7 +65,7 @@ specify preset remove dft-mstem
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v1.3.0/dft-mstem-1.3.0.zip
+specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v1.4.0/dft-mstem-1.4.0.zip
 ```
 
 ## Publish (GitHub release zip)

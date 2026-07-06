@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "dft-mstem"
   name: "DFT mSTEM"
-  version: "1.3.0"
+  version: "1.4.0"
   description: "Override speckit.specify: business analyst phỏng vấn tuần tự qua AskUserQuestion, khung constitution, wire mock→backend, tiếng Việt."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/your-org/spec-kit-preset-dft-mstem"
@@ -47,7 +47,13 @@ provides:
     - type: "command"
       name: "speckit.specify"
       file: "commands/speckit.specify.md"
-      description: "Wrap specify: khảo sát mock + nợ kỹ thuật, phỏng vấn 1 câu/lần theo khung constitution, chỉ ghi spec sau khi đạt hiểu chung"
+      description: "Wrap specify: khảo sát mock + nợ kỹ thuật, phỏng vấn 1 câu/lần theo khung constitution, resolve+ghép addendum, chỉ ghi spec sau khi đạt hiểu chung"
+      strategy: "wrap"
+
+    - type: "command"
+      name: "speckit.plan"
+      file: "commands/speckit.plan.md"
+      description: "Wrap plan: bắt buộc resolve+ghép plan addendum (Constitution Check kỹ thuật) trước khi tạo plan.md"
       strategy: "wrap"
 
 tags:
