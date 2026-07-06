@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "ba-interview-vi"
   name: "BA Interview (Vietnamese)"
-  version: "1.1.0"
+  version: "1.2.0"
   description: "Override speckit.specify: business analyst phỏng vấn tuần tự qua AskUserQuestion, khung constitution, wire mock→backend, tiếng Việt."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/your-org/spec-kit-preset-ba-interview-vi"
@@ -32,6 +32,17 @@ provides:
       file: "templates/plan-addendum.md"
       description: "Append Constitution Check mặt Kỹ thuật (HOW): test, versioning, observability, cơ chế bảo mật/toàn vẹn/tenant"
       strategy: "append"
+
+    - type: "template"
+      name: "ui-ux-checklist"
+      file: "templates/ui-ux-checklist.md"
+      description: "Bộ checklist cố định UI/UX (nguyên tắc IV), CHK001–010 — spec-completeness gate"
+
+    - type: "command"
+      name: "speckit.checklist"
+      file: "commands/speckit.checklist.md"
+      description: "Wrap checklist: fast-path copy bộ IV cố định khi args nhắc ui-ux/convention/IV; ngược lại chạy sinh động core"
+      strategy: "wrap"
 
     - type: "command"
       name: "speckit.specify"

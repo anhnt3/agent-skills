@@ -24,6 +24,11 @@ Hai override bổ trợ nhau:
 **4. Template `constitution-template`** (`strategy: replace`) — *ship hiến chương*:
 - Chứa nguyên văn 11 nguyên tắc (Angular mockup → backend ABP). Addendum spec/plan tham chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
 
+**5. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định*:
+- `/speckit.checklist ui-ux` (hoặc args nhắc `convention`/`IV`) → **copy nguyên bộ IV cố định** (CHK001–010) vào `checklists/ui-ux.md`, giống hệt mỗi lần (không sinh động).
+- Args khác → chạy checklist sinh động của core như thường.
+- Là spec-completeness gate cho nguyên tắc IV: bổ trợ spec-addendum (addendum *điền* UX theo màn, checklist *gate* đã điền đủ chưa).
+
 > Tách WHAT (spec) vs HOW (plan) theo đúng triết lý spec-kit: spec cho business đọc, plan gánh kỹ thuật. Constitution Check gate sống ở plan (đúng như constitution quy định).
 
 ## Cài đặt
