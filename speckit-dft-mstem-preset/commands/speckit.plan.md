@@ -1,5 +1,8 @@
 Trước khi chạy quy trình plan core bên dưới:
 
+## Khảo sát codebase (đọc, không đoán)
+Trước khi điền Technical Context / Structure Decision, khảo sát **frontend và backend** hiện có của dự án — đọc code, DTO, aggregate, convention, migration liên quan chức năng. Plan phải dựa trên cái đang có (tái dùng gì, wire vào đâu), không chọn layout mẫu generic.
+
 ## BƯỚC BẮT BUỘC — resolve template (chống bỏ sót addendum)
 Preset ghi đè `plan-template` bằng `strategy: append` — addendum KHÔNG bake vào file core trên đĩa, chỉ hiện khi resolve. Trước khi tạo `plan.md`, PHẢI:
 1. Chạy `specify preset resolve plan-template`.
