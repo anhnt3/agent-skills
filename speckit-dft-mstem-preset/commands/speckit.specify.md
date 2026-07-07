@@ -14,6 +14,12 @@ Tự tìm trong repo, KHÔNG giả định đường dẫn cố định. Không 
 
 **Nợ phát sinh sang chức năng khác**: trong lúc khảo sát/phỏng vấn, nếu phát hiện việc thuộc **chức năng/màn khác** (sẽ làm sau), append một bullet vào mục `Nợ phát sinh` của item tương ứng trong `docs/roadmap.md` (không làm ngay ở spec này). Không có roadmap → bỏ qua.
 
+**Chốt ranh giới liên hệ chức năng (làm cuối GĐ1, trước khi phỏng vấn FE để định phạm vi).** Mock hầu như luôn giả lập màn độc lập nên KHÔNG lộ liên hệ — đây là vùng `[cần bạn quyết]` thuần, phải hỏi thẳng bằng AskUserQuestion, neo vào roadmap. Ba câu đóng, đủ phủ mà không scope-creep:
+- **Upstream** — chức năng này đọc dữ liệu do chức năng/màn nào khác tạo?
+- **Downstream** — chức năng/màn nào khác đọc/phụ thuộc dữ liệu chức năng này tạo?
+- **Dùng chung** — trạng thái/quy tắc nào chia sẻ với chức năng khác, phải nhất quán?
+Với mỗi liên hệ tìm thấy: đối chiếu item roadmap tương ứng; phần thuộc màn khác (làm sau) → append `Nợ phát sinh` vào item đó, KHÔNG đào ở spec này. Không có roadmap → hỏi trực tiếp người dùng, bỏ neo. Kết quả ranh giới này định phạm vi cho GĐ2/GĐ3.
+
 Tóm tắt khảo sát kèm dấu nguồn `[từ mock]`/`[suy luận]`/`[cần bạn quyết]` trước khi phỏng vấn.
 
 ## Giai đoạn 2 — Phỏng vấn theo cây thiết kế
@@ -34,6 +40,7 @@ Chốt nghiệp vụ backend mà mock không lộ, **ở mức WHAT/WHY, không 
 - **Quy tắc nghiệp vụ** — ràng buộc phải đúng bất kể ai thao tác (duy nhất, trạng thái hợp lệ, cách tính).
 - **Quyền** — vai trò/đối tượng nào được làm gì.
 - **Hệ quả nghiệp vụ** — hành động xảy ra thì kéo theo gì (thông báo ai, cập nhật gì, đồng bộ đâu).
+- **Nhất quán liên chức năng** — với các liên hệ đã chốt ở cuối GĐ1: trạng thái/quy tắc dùng chung giữa chức năng này và chức năng khác phải khớp thế nào, ai là **chủ dữ liệu** (nguồn sự thật), thay đổi bên này ràng buộc gì bên kia. Ở mức nghiệp vụ WHAT/WHY (khớp trạng thái đơn giữa màn A/B, ai chủ) — KHÔNG bàn shared table/khóa ngoại (để `/speckit.plan`). Không có liên hệ nào: `"N/A vì..."`.
 - **Việc tự chạy nền** — có việc hệ thống tự làm không do người dùng bấm không: chạy định kỳ/theo lịch (báo cáo hằng ngày, đồng bộ đêm, nhắc hạn) hay chạy ngầm sau một hành động (xử lý hàng loạt). Nếu có: khi nào chạy, kết quả nghiệp vụ là gì.
 - **Nguồn dữ liệu ngoài** — cần lấy/gửi dữ liệu hệ thống khác không.
 - Thêm nhánh khi phát sinh. Nhánh không áp dụng: `"N/A vì..."`, không hỏi lấy lệ.
@@ -43,7 +50,8 @@ Mỗi nhánh giải xong: tóm tắt quyết định rồi sang nhánh khác. **
 ## VÔ HIỆU HÓA luật core mâu thuẫn (đọc trước khi chạy core)
 Phần core bên dưới có luật riêng — **preset ghi đè các luật sau**:
 - Core: "Make informed guesses / tối đa 3 [NEEDS CLARIFICATION] / hỏi gộp dạng bảng markdown". **BỎ.** Đã phỏng vấn cạn kiệt ở Giai đoạn 2, nên tới bước Specification Quality Validation của core: coi như **0 marker**, KHÔNG bày lại bảng clarification, KHÔNG informed-guess những quyết định thuộc về người dùng. Quyết định chưa chốt = quay lại hỏi bằng AskUserQuestion (1 câu/lần), không tự đoán.
-- Mọi phần khác của core (tạo thư mục/branch/feature.json, quality checklist, hooks, completion report) giữ nguyên.
+- **KHÔNG tạo branch.** Branch do hook `before_specify` (git extension) tạo, không phải lệnh core. Preset ép: **bỏ qua/không chạy hook tạo branch**, giữ nguyên branch hiện tại của người dùng. Vẫn tạo `spec.md` + thư mục `specs/<...>/` + `feature.json` như thường (chúng do lệnh core tạo, không phải hook). Nếu môi trường bắt buộc chạy hook không bỏ được → dừng, báo người dùng tự tắt hook `before_specify` trong `.specify/extensions.yml`.
+- Mọi phần khác của core (tạo thư mục/feature.json, quality checklist, hooks khác, completion report) giữ nguyên.
 
 {CORE_TEMPLATE}
 
