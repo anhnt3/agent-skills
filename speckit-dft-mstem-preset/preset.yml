@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "dft-mstem"
   name: "DFT mSTEM"
-  version: "2.4.0"
+  version: "2.6.0"
   description: "Override speckit.specify/plan: business analyst phỏng vấn tuần tự qua AskUserQuestion, khung constitution, tiếng Việt. Dùng template mặc định của spec-kit (không còn addendum template)."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/your-org/spec-kit-preset-dft-mstem"
