@@ -1,13 +1,13 @@
 ---
-description: Lập/cập nhật roadmap build từ frontend mockup — xếp thứ tự wire backend từng màn/chức năng, ghi docs/roadmap.md.
+description: Lập/cập nhật roadmap build từ codebase hiện có — xếp thứ tự làm từng màn/chức năng, ghi docs/roadmap.md.
 ---
 
-# Roadmap build từ mock
+# Roadmap build từ codebase
 
-Frontend mockup đã có đủ màn/chức năng. Nhiệm vụ: sinh/cập nhật **`docs/roadmap.md`** xếp **thứ tự wire backend** từng màn. Toàn bộ tiếng Việt. `$ARGUMENTS` (nếu có) là chỉ dẫn thêm (vd chỉ 1 module, hoặc yêu cầu tính lại thứ tự).
+Codebase đã có đủ màn/chức năng (mockup, module chưa hoàn thiện, hoặc phần cần làm tiếp). Nhiệm vụ: sinh/cập nhật **`docs/roadmap.md`** xếp **thứ tự làm** từng màn/chức năng. Toàn bộ tiếng Việt. `$ARGUMENTS` (nếu có) là chỉ dẫn thêm (vd chỉ 1 module, hoặc yêu cầu tính lại thứ tự).
 
-## 1. Quét mock (đọc, không đoán)
-Tự tìm & liệt kê **mọi màn/chức năng** trong frontend mockup (component + mock-service). Không tìm ra vị trí mock → **hỏi lại**, đừng đoán. Mỗi màn ghi nhận: tên, module, mô tả ngắn, thực thể/CRUD chính, và **phụ thuộc rõ** (auth, permission, shared entity, màn khác).
+## 1. Quét codebase (đọc, không đoán)
+Tự tìm & liệt kê **mọi màn/chức năng** liên quan trong codebase (frontend, backend, service, module…). Không tìm ra vị trí → **hỏi lại**, đừng đoán. Mỗi màn/chức năng ghi nhận: tên, module, mô tả ngắn, thực thể/CRUD chính, và **phụ thuộc rõ** (auth, permission, shared entity, chức năng khác).
 
 ## 2. Đề xuất thứ tự (wave)
 Xếp build theo phụ thuộc:
@@ -16,7 +16,7 @@ Xếp build theo phụ thuộc:
 Trình bày đề xuất kèm **lý do thứ tự** (cái gì chặn cái gì).
 
 ## 3. Chốt ưu tiên (interview)
-Hỏi qua **AskUserQuestion** — mỗi lần MỘT câu, 2–4 option, `(Recommended)` đầu, kèm lý do + trade-off. Xác nhận/điều chỉnh thứ tự, ưu tiên, gộp/tách. Fact tra từ mock; **thứ tự là quyết định của người dùng** — đặt từng cái ra, chờ trả lời.
+Hỏi qua **AskUserQuestion** — mỗi lần MỘT câu, 2–4 option, `(Recommended)` đầu, kèm lý do + trade-off. Xác nhận/điều chỉnh thứ tự, ưu tiên, gộp/tách. Fact tra từ codebase; **thứ tự là quyết định của người dùng** — đặt từng cái ra, chờ trả lời.
 
 ## 4. Ghi `docs/roadmap.md` theo khung CỐ ĐỊNH
 **Dùng khung cố định, KHÔNG tự chế cấu trúc** (để mỗi lần sinh ra format giống hệt):

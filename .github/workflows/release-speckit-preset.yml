@@ -6,9 +6,10 @@ name: Release dft-mstem preset
 #   specify preset add --from \
 #     https://github.com/<org>/<repo>/releases/download/<tag>/dft-mstem-<version>.zip
 on:
-  push:
-    tags:
-      - "dft-mstem-v*"
+  # Auto-release tạm tắt. Bỏ comment để bật lại.
+  # push:
+  #   tags:
+  #     - "dft-mstem-v*"
   workflow_dispatch:
     inputs:
       version:

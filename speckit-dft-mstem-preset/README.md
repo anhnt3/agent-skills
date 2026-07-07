@@ -4,34 +4,29 @@ Override `/speckit.specify` thành một phiên business-analyst phỏng vấn t
 
 ## Preset này làm gì
 
-Các override bổ trợ nhau (7 override, gom theo mục đích):
+Các override bổ trợ nhau (5 override, gom theo mục đích):
 
 **1. Command `speckit.specify`** (`strategy: wrap`) — điều khiển *cách hỏi*:
 - Đóng vai **business analyst** theo domain dự án, thảo luận + spec bằng **tiếng Việt**.
-- **Khảo sát trước khi hỏi**: tự tìm roadmap dự án (không rõ thì hỏi), mockup frontend (field/validation/luồng/label/message), nợ kỹ thuật liên quan, và `.specify/memory/constitution.md`.
+- **Khảo sát trước khi hỏi**: tự tìm roadmap dự án (không rõ thì hỏi), codebase, nợ kỹ thuật liên quan, và `.specify/memory/constitution.md`.
 - **Phỏng vấn theo cây thiết kế**: mỗi nguyên tắc trong `constitution.md` là một nhánh; hỏi qua **AskUserQuestion**, mỗi lần một câu, 2–4 option, có `(Recommended)` + lý do + trade-off.
-- Bắt buộc rà **wire mock→backend** trên mọi màn (trừ trivial).
 - Đánh dấu nguồn mỗi kết luận: `[từ mock]` / `[suy luận]` / `[cần bạn quyết]`.
-- **Chỉ ghi spec sau khi bạn xác nhận** đạt hiểu chung. Phần scaffolding core (tạo `specs/<n>-<name>/spec.md`, quality checklist, hooks) kéo vào qua `{CORE_TEMPLATE}` — luôn đồng bộ bản core.
+- **Chỉ ghi spec sau khi bạn xác nhận** đạt hiểu chung. `spec.md` dùng **spec-template mặc định** của spec-kit — toàn bộ scaffolding core (tạo `specs/<n>-<name>/spec.md`, quality checklist, hooks) kéo vào qua `{CORE_TEMPLATE}`.
 
-**2. Template `spec-template`** (`strategy: append`) — ép *spec output có gì (mặt WHAT)*:
-- Mục **Tuân thủ Hiến chương — Nghiệp vụ**: chỉ mặt business-rule/hành vi của các nguyên tắc I/IV/V/VI/VII/X/XI (điền hoặc `N/A vì...`).
-- Bảng **wire mock→backend theo màn**.
+**2. Command `speckit.plan`** (`strategy: wrap`) — điều khiển *cách plan*:
+- **Khảo sát codebase liên quan feature** (frontend + backend đang có) trước khi điền Technical Context / Structure Decision — plan dựa trên cái đang có, không chọn layout generic.
+- `plan.md` dùng **plan-template mặc định**; cổng Constitution Check của core phải pass trước Phase 0.
 
-**3. Template `plan-template`** (`strategy: append`) + **command `speckit.plan`** (`strategy: wrap`) — ép *cổng kỹ thuật (mặt HOW)*:
-- Mục **Constitution Check — Kỹ thuật** (GATE trước Phase 0): nhóm HOW II/III/VIII/IX + cơ chế của I/V/VI/X/XI (test, versioning, observability, Keycloak/JWT, rowversion/DB constraint, ABP multi-tenancy).
-- Wrap `speckit.plan` chèn **bước bắt buộc resolve+ghép addendum** trước khi tạo plan.md. Cùng guard ở wrap `speckit.specify`: append addendum không bake vào file core trên đĩa — phải `specify preset resolve <template>` rồi đọc & ghép các layer (core → addendum), KHÔNG đọc thẳng `.specify/templates/*.md`.
+**3. Template `constitution-template`** (`strategy: replace`) — *ship hiến chương*:
+- Chứa nguyên văn 11 nguyên tắc (Angular mockup → backend ABP). Khung phỏng vấn tham chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
 
-**4. Template `constitution-template`** (`strategy: replace`) — *ship hiến chương*:
-- Chứa nguyên văn 11 nguyên tắc (Angular mockup → backend ABP). Addendum spec/plan tham chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
-
-**5. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định + chấm*:
+**4. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định + chấm*:
 - `/speckit.checklist ui-ux @spec.md` → 3 bước: **stamp** bộ IV cố định (CHK001–010) → **chấm** theo spec (tick `[x]` pass + nguồn, `⚠️ Gap`, `➖ N/A`, bảng Tổng) → **thảo luận vá** từng gap qua AskUserQuestion, cập nhật spec.md rồi tick pass.
 - Chỉ điền mục còn `[ ]` trống; **giữ nguyên tick + note người đã ghi** (không clobber).
 - Không kèm spec → chỉ stamp list trống. Args khác → chạy checklist sinh động của core.
-- Là spec-completeness gate cho nguyên tắc IV: bổ trợ spec-addendum (addendum *điền* UX theo màn, checklist *chấm* đã điền đủ chưa + vá gap).
+- Là spec-completeness gate cho nguyên tắc IV (UI/UX).
 
-> Tách WHAT (spec) vs HOW (plan) theo đúng triết lý spec-kit: spec cho business đọc, plan gánh kỹ thuật. Constitution Check gate sống ở plan (đúng như constitution quy định).
+> `speckit.specify` và `speckit.plan` dùng template mặc định của spec-kit, chỉ override *cách hỏi/cách plan*, không override cấu trúc output.
 
 ## Cài đặt
 
@@ -52,8 +47,8 @@ Bỏ qua bước này nếu project đã có sẵn hiến chương phù hợp (v
 Kiểm tra:
 
 ```bash
-specify preset info dft-mstem       # xem 7 override (3 command + 4 template)
-specify preset resolve spec-template      # thấy composition chain: core → addendum
+specify preset info dft-mstem       # xem 5 override (3 command + 2 template)
+specify preset resolve spec-template      # spec-template = core mặc định (preset không override)
 specify preset list
 ```
 
@@ -66,7 +61,7 @@ specify preset remove dft-mstem
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v1.9.0/dft-mstem-1.9.0.zip
+specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v2.0.0/dft-mstem-2.0.0.zip
 ```
 
 ## Publish (GitHub release zip)

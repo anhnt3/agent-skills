@@ -6,9 +6,10 @@ name: Release dft-speckit extension
 #   specify extension add dft-speckit --from \
 #     https://github.com/<org>/<repo>/releases/download/<tag>/dft-speckit-<version>.zip
 on:
-  push:
-    tags:
-      - "dft-speckit-v*"
+  # Auto-release tạm tắt. Bỏ comment để bật lại.
+  # push:
+  #   tags:
+  #     - "dft-speckit-v*"
   workflow_dispatch:
     inputs:
       version:
