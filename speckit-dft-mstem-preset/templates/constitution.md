@@ -36,12 +36,14 @@ Chuẩn kỹ thuật khách quan, KHÔNG lấy codebase mockup hiện tại làm
 _Vì:_ chất lượng đến từ ràng buộc máy kiểm được, không từ việc lặp lại lựa chọn người viết trước.
 
 ### III. Kỷ luật Kiểm thử
-Dự án khởi đầu 0 test thật; nguyên tắc này đảo ngược điều đó, từng bước.
-- Backend: mỗi aggregate, app service, endpoint có phân quyền PHẢI kèm xUnit test; quy tắc nghiệp vụ có test tầng domain. Thay test `Sample*` mặc định bằng test thật, không để lẫn.
+- Backend: mỗi aggregate, app service, endpoint có phân quyền PHẢI kèm unit test; quy tắc nghiệp vụ có test tầng domain. Thay test `Sample*` mặc định bằng test thật, không để lẫn.
 - Frontend: service gọi API PHẢI có unit test (mock HTTP); component có logic (guard, render theo quyền, form) PHẢI có test. Ghi đè mặc định `skipTests`.
 - DTO đổi một phía mà phía kia chưa cập nhật thì một test/kiểm tra kiểu PHẢI fail.
-- Test đúng tầng: logic nghiệp vụ và phép tính (thuế, tổng, validation) test ở unit; E2E chỉ phủ critical journey, giữ mỏng — không đẩy toán nghiệp vụ qua browser.
-- Integration test dùng hạ tầng thật: EF Core query/migration/service-DB kiểm trên DB thật (Testcontainers), không giả lập DB.
+- **Test pyramid** — 3 tầng, đáy rộng đỉnh hẹp:
+  - _Unit (đáy, nhiều nhất):_ logic nghiệp vụ, phép tính (thuế, tổng, validation), domain rule, FE service (mock HTTP), component có logic. Nhanh, cô lập, không I/O.
+  - _Integration (giữa):_ EF Core query/migration/service-DB trên DB thật (Testcontainers, không giả lập DB); app service + phân quyền qua ABP test host. Kiểm ghép nối các module.
+  - _E2E (đỉnh, ít nhất):_ chỉ phủ critical journey (login + phân quyền, luồng CRUD chính) qua browser thật (Playwright), giữ mỏng — không đẩy toán nghiệp vụ hay case biên qua browser.
+- Test đúng tầng: logic/phép tính test ở unit, không leo lên E2E; E2E chỉ xác nhận đường đi user thật sự chạy end-to-end.
 - Không merge khi test các đường trên đỏ hoặc thiếu.
 
 _Vì:_ test là bản ghi hành vi đã thống nhất và rào chắn hồi quy.

@@ -61,7 +61,7 @@ specify preset remove dft-mstem
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v2.1.0/dft-mstem-2.1.0.zip
+specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v2.2.0/dft-mstem-2.2.0.zip
 ```
 
 ## Publish (GitHub release zip)
