@@ -10,7 +10,7 @@ Trước khi specify từng màn, dựng **domain tổng thể** cho một hoặ
 
 ## User Input
 
-$ARGUMENTS
+`$ARGUMENTS`
 
 Kỳ vọng: **một hoặc danh sách giá trị cột `Module`** trong `docs/roadmap.md`, phân tách bằng dấu phẩy hoặc khoảng trắng (vd `system/admins, system/groups, system/roles`). Roadmap KHÔNG đánh số module — nhận tên module, không nhận số.
 

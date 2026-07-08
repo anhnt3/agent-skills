@@ -88,7 +88,7 @@ Sau khi workflow xong, cài bằng:
 
 ```bash
 specify extension add dft-speckit --force --from \
-  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v1.6.0/dft-speckit-1.6.0.zip
+  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v1.7.0/dft-speckit-1.7.0.zip
 ```
 
 > Cũng có thể chạy tay qua tab **Actions → Release dft-speckit extension → Run workflow** và nhập version.

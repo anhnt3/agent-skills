@@ -7,7 +7,7 @@
 ## Ngôn ngữ & Nội dung
 
 - [ ] CHK001 **Tiếng Việt bản địa, không ngoại lệ.** Tiếng Việt là ngôn ngữ sản phẩm; mọi text UI có dấu; `vi-VN`, UTC+7; ngày `dd/MM/yyyy`, tiền `VNĐ`, thập phân dấu `,`. Không màn hình/thông báo nào tiếng Anh hay thiếu dấu. Chuỗi không nhúng vào logic (để i18n về sau khả thi).
-- [ ] CHK002 **Message chuẩn hóa, không tự chế.** Phản hồi thành công/lỗi theo mẫu chung, không alert tùy tiện; mỗi kết quả thao tác và mỗi lỗi thống nhất về nội dung câu quy định — không paraphrase. Thuật ngữ cố định: "Chỉnh sửa", "Tạo mới", "Xuất tài liệu" (không "Sửa/Edit/Cập nhật", không "Xuất CSV/Excel").
+- [ ] CHK002 **Message chuẩn hóa, không tự chế.** Phản hồi thành công/lỗi theo mẫu chung, không alert tùy tiện; mỗi kết quả thao tác và mỗi lỗi thống nhất về nội dung câu quy định — không paraphrase. 
 
 ## Nhập liệu & Validation
 

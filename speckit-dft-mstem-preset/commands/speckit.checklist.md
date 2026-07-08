@@ -22,7 +22,7 @@ Mỗi verdict PHẢI trích nguồn spec; không có nguồn = Gap. Thêm cuối
 ### Bước 3 — Thảo luận & vá gap
 Với MỖI Gap:
 1. Hỏi qua **AskUserQuestion** (một câu/lần, 2–4 option, `(Recommended)` đầu, kèm lý do) cách vá.
-2. Sau khi người dùng chốt, **sửa trực tiếp `spec.md`**: cập nhật/append đúng requirement liên quan (FR-xxx, mục §IV, …), giữ cấu trúc + dấu nguồn `[từ mock]`/`[suy luận]`/`[cần bạn quyết]`. Sửa đúng chỗ gap, không viết lại phần khác.
+2. Sau khi người dùng chốt, **sửa trực tiếp `spec.md`**: cập nhật/append đúng requirement liên quan (FR-xxx, mục §IV, …), giữ cấu trúc + dấu nguồn `[từ khảo sát]`/`[suy luận]`/`[cần bạn quyết]`. Sửa đúng chỗ gap, không viết lại phần khác.
 3. Chấm lại mục đó; đạt thì tick `[x]` + nguồn mới. Cập nhật `## Tổng`.
 Hết gap (hoặc người dùng chấp nhận để lại): DỪNG, báo tổng kết các thay đổi đã ghi vào spec.md.
 
