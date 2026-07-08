@@ -1,6 +1,8 @@
 <!--
 Sync Impact Report
-- Version: 1.0.0 (bản generic — áp dụng cho hệ fullstack doanh nghiệp bất kỳ, không gắn 1 stack cụ thể).
+- Version: 1.1.0 (bản generic — áp dụng cho hệ fullstack doanh nghiệp bất kỳ, không gắn 1 stack cụ thể).
+- Sửa 1.1.0 (MINOR): IV.3 siết thành "Validation hai tầng bắt buộc" — client PHẢI validate (UX) và
+  server PHẢI validate lại (rào chắn), backend-only KHÔNG đạt. Chặn việc chỉ validate ở backend.
 - Nguyên tắc (11):
   I. Contract-First  II. Chất lượng Mã nguồn  III. Kỷ luật Kiểm thử  IV. Nhất quán UX
   V. Hiệu năng  VI. Bảo mật & Phân quyền  VII. Nghiệp vụ Tiến hóa  VIII. Observability
@@ -77,8 +79,12 @@ tệ) do `CLAUDE.md`/design system của dự án định nghĩa, nhất quán v
    tiện; mỗi kết quả thao tác và mỗi lỗi thống nhất về nội dung câu quy định — không paraphrase.
    Thuật ngữ hành động (sửa/tạo/xuất...) thống nhất toàn hệ thống theo bảng thuật ngữ chuẩn của dự
    án.
-3. **Validation trước khi tin dữ liệu.** Trim, chặn quá max, chặn all-whitespace ở required; kiểu
-   tài chính không bao giờ float; mỗi field có giới hạn và luật định dạng xác định.
+3. **Validation hai tầng, không tầng nào thay thế tầng nào.** Client/form **PHẢI** validate ngay
+   khi nhập để phản hồi tức thì (trim, chặn quá max, chặn all-whitespace ở required, luật định dạng
+   từng field) và hiển thị lỗi inline (IV.4); server **PHẢI** validate lại toàn bộ như rào chắn thật
+   (VI) — mọi bất biến miền còn cưỡng chế ở domain + DB (X). Thiếu validate client = lỗi UX; thiếu
+   validate server = lỗi bảo mật; backend-only KHÔNG đạt. Kiểu tài chính không bao giờ float; mỗi
+   field có giới hạn và luật định dạng xác định.
 4. **Vị trí quyết định ý nghĩa.** Lỗi validation field hiển thị inline dưới field (không chỉ đổi
    màu viền). Kết quả thao tác / lỗi hệ thống hiển thị qua kênh riêng (toast/banner) nhất quán vị
    trí. Không trộn hai kênh.
@@ -229,4 +235,4 @@ README của từng phần code cung cấp chi tiết vận hành cụ thể (st
   Tracking, vi phạm không biện minh chặn merge.
 - Tài liệu sống: dự kiến nhiều bản sửa MINOR khi các module được nối (Nguyên tắc VII).
 
-**Version**: 1.0.0 | **Ratified (Phê chuẩn)**: [NGÀY PHÊ CHUẨN] | **Last Amended (Sửa gần nhất)**: [NGÀY PHÊ CHUẨN]
+**Version**: 1.1.0 | **Ratified (Phê chuẩn)**: [NGÀY PHÊ CHUẨN] | **Last Amended (Sửa gần nhất)**: 2026-07-08
