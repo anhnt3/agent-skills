@@ -9,7 +9,9 @@ bổ sung thêm command mới theo nhu cầu.
 
 | Command | Mô tả |
 |---------|-------|
-| `speckit.dft-speckit.manual-xlsx` | Sinh testcase kiểm thử **thủ công** cho tester từ spec/acceptance criteria, xuất CSV rồi XLSX (cấu trúc cột và format cố định).  |
+| `speckit.dft-speckit.qa-spec-cycle` | **QA trọn vòng từ 1 file spec** — 13 pha: sinh testcase thủ công (xlsx 2 sheet), sinh test tự động theo pyramid, tự dựng môi trường và chạy, báo cáo, triage + fix có kiểm soát, ghi ma trận truy vết. Technology-agnostic (đặc thù stack đọc từ `.agents/qa-context.md`). Bao trùm luôn command `manual-xlsx` cũ ở Pha 4. |
+| `speckit.dft-speckit.road-map-from-codebase` | Lập/cập nhật roadmap build từ codebase — xếp thứ tự từng màn, ghi `docs/roadmap.md`. |
+| `speckit.dft-speckit.domain-design` | Thiết kế/cập nhật domain tổng thể cho 1 module trong roadmap, ghi `docs/domain/<module>.md`. |
 | _(sắp có)_ | Các command DFT khác sẽ được thêm vào đây. |
 
 ## Thêm command mới
@@ -25,10 +27,22 @@ bổ sung thêm command mới theo nhu cầu.
 speckit-extension/
 ├── extension.yml              # manifest (khai báo mọi command)
 ├── commands/                  # mỗi file .md = 1 command
-│   └── manual-xlsx.md
+│   ├── qa-spec-cycle.md       # QA trọn vòng 13 pha từ 1 spec
+│   ├── road-map-from-codebase.md
+│   └── domain-design.md
+├── references/                # tài liệu chi tiết từng pha của qa-spec-cycle
+│   ├── qa-context-template.md
+│   ├── coverage-matrix.md
+│   ├── manual-xlsx-format.md
+│   ├── test-generation.md
+│   ├── quality-gate.md
+│   ├── environment-bringup.md
+│   ├── blocker-playbook.md
+│   ├── failure-classification.md
+│   └── traceability.md
 ├── scripts/                   # script hỗ trợ dùng chung cho các command
-│   └── csv_to_xlsx.py         # CSV -> XLSX (tự dựng venv + openpyxl lần đầu)
-├── .extensionignore
+│   └── csv_to_xlsx.py         # CSV/JSON -> XLSX 2 sheet (tự dựng venv + openpyxl lần đầu)
+├── templates/
 └── README.md
 ```
 
@@ -41,7 +55,7 @@ specify extension add dft-speckit --force --dev /đường/dẫn/tới/speckit-e
 specify extension list
 ```
 
-Sau khi cài, command khả dụng trong AI agent qua `/speckit.dft-speckit.manual-xlsx`.
+Sau khi cài, command khả dụng trong AI agent qua `/speckit.dft-speckit.qa-spec-cycle`.
 
 ## Chạy script trực tiếp (không qua specify)
 
@@ -74,7 +88,7 @@ Sau khi workflow xong, cài bằng:
 
 ```bash
 specify extension add dft-speckit --force --from \
-  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v1.5.0/dft-speckit-1.5.0.zip
+  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v1.6.0/dft-speckit-1.6.0.zip
 ```
 
 > Cũng có thể chạy tay qua tab **Actions → Release dft-speckit extension → Run workflow** và nhập version.
@@ -89,18 +103,21 @@ speckit-extension/build-zip.sh 1.0.0    # hoặc chỉ định version
 
 Upload zip đó lên Release (hoặc host nội bộ) rồi dùng URL với `--from`.
 
-## Định dạng cố định
+## Định dạng cố định (Pha 4 của `qa-spec-cycle`)
 
-CSV bắt buộc đúng **14 cột, đúng thứ tự**:
+CSV/JSON của testcase thủ công bắt buộc đúng **16 cột, đúng thứ tự** — script validate header cứng
+(`EXPECTED_HEADER`) và raise lỗi nếu sai tên/thứ tự/số field:
 
 ```
-ID | Tiêu đề | Nhóm | Ưu tiên | Loại | Tiền điều kiện | Dữ liệu test | Các bước thực hiện | Kết quả mong đợi | Truy vết | Kết quả thực tế | Trạng thái | Bug ID | Ghi chú
+ID | Tiêu đề | Nhóm | Ưu tiên | Loại | Tiền điều kiện | Dữ liệu test | Các bước thực hiện | Kết quả mong đợi | Truy vết | Test tự động | Kết quả tự động | Kết quả thực tế | Trạng thái | Bug ID | Ghi chú
 ```
 
-10 cột đầu = thiết kế (versioned); 4 cột cuối = thực thi (tester điền, để trống trong
-file nguồn). XLSX xuất ra có header nền xanh, tô màu ưu tiên P1/P2/P3, dropdown Trạng
-thái, freeze panes và auto-filter.
+Cột 1–11 = thiết kế (versioned); cột 12 (`Kết quả tự động`) = skill/CI ghi (chỉ-đọc với tester);
+4 cột cuối (13–16) = thực thi (tester điền, để trống trong file nguồn). XLSX xuất ra **2 sheet**
+(Testcases + Ma trận truy vết): header nền xanh, tô màu ưu tiên P1/P2/P3, dropdown Trạng thái,
+freeze panes và auto-filter. Chi tiết đầy đủ: [`references/manual-xlsx-format.md`](references/manual-xlsx-format.md).
 
 ## Nguồn gốc
 
-Migrate từ skill `.claude/skills/manual-testcase-xlsx` (giữ nguyên bản gốc).
+Migrate từ skill `.claude/skills/qa-spec-cycle` (giữ nguyên bản gốc). Command này thay thế command
+`manual-xlsx` cũ — vòng QA đầy đủ bao trùm luôn phần sinh testcase thủ công ở Pha 4.

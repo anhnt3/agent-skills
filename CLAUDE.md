@@ -30,8 +30,28 @@ Adding a new extension command:
 
 Local dev install:
 ```bash
-specify extension add dft-speckit --force --dev /path/to/speckit-extension
+# --dev: the extension ARGUMENT is the local path (not a flag value). Passing the
+# path as a trailing arg after a name fails with "unexpected extra argument".
+specify extension add /path/to/speckit-extension --dev --force
 specify preset add --dev ./speckit-dft-mstem-preset
+```
+Dev install copies the **whole directory** (drags in `.omc/`, `dist/`, `release.sh`, `build-zip.sh`) — noise, but harmless. The release zip is clean (see below); use the zip path to verify what actually ships.
+
+Testing the packaged install (verifies build-zip output, not just the source tree):
+```bash
+# 1. Build + eyeball the zip contents
+speckit-extension/build-zip.sh && unzip -l speckit-extension/dist/dft-speckit-<ver>.zip
+# 2. Serve locally (--from rejects file:// paths; needs HTTPS/localhost) and install
+#    into a throwaway `specify init --here --integration claude` project.
+(cd speckit-extension/dist && python3 -m http.server 8799 &)
+yes y | specify extension add dft-speckit --from http://localhost:8799/dft-speckit-<ver>.zip --force
+# --from prompts an "Untrusted Source" confirmation -> pipe `yes y`.
+```
+The installed tree lands at `<project>/.specify/extensions/dft-speckit/`. **Gotcha this caught:** commands reference bundled `references/*.md` and `scripts/*.py` by the path `.specify/extensions/dft-speckit/<...>`, so `build-zip.sh` must `cp -R` every such support dir. A support dir that exists in the source but isn't copied in `build-zip.sh` ships a broken command (the manifest's `provides` only lists commands/templates — it does **not** gate what gets bundled). After install, assert the referenced dirs are present, e.g. `ls .../references/` returns all 9 files.
+
+Smoke-test `csv_to_xlsx.py` standalone (its `.venv` self-bootstrap needs network on first run only):
+```bash
+python3 speckit-extension/scripts/csv_to_xlsx.py cases.json out.xlsx   # or 16-col CSV
 ```
 
 Release (each package has its own `build-zip.sh` + `release.sh`, reading version from its manifest):
