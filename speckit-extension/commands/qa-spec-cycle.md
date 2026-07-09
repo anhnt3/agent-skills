@@ -39,16 +39,16 @@ Kỳ vọng: đường dẫn tới `spec.md` hoặc thư mục feature. Nếu tr
 Ghi trạng thái pha vào `<thư mục spec>/qa-run.md` ngay sau khi hoàn thành mỗi pha (để resume). Nếu
 `qa-run.md` đã tồn tại khi bắt đầu → đọc ledger, tiếp tục từ pha dở dang, không làm lại từ đầu.
 
-- [ ] **Pha 0 — Intake.** Xác định file spec (từ `$ARGUMENTS` hoặc hỏi), rút feature-id + PREFIX (vd `DEV`) dùng cho ID testcase. Tạo `qa-run.md` nếu chưa có, hoặc đọc ledger nếu đã có.
+- [ ] **Pha 0 — Intake.** Xác định file spec (từ `$ARGUMENTS` hoặc hỏi), rút feature-id + PREFIX (vd `DEV`) dùng cho ID testcase. **Trích nguyên văn danh sách id FR/AC từ chính file spec** (không từ trí nhớ), đếm `N`, ghi cả danh sách + `N` vào `qa-run.md` — đây là mỏ neo đối chiếu của Pha 3/9/Done-when. Tạo `qa-run.md` nếu chưa có, hoặc đọc ledger nếu đã có (đã có ID testcase trong xlsx → tái dùng nguyên văn, cấm renumber, xem Pha 4).
 - [ ] **Pha 1 — Context.** Có `.agents/qa-context.md` → load. Thiếu → scan + phỏng vấn tạo mới theo template slim. → chi tiết: `.specify/extensions/dft-speckit/references/qa-context-template.md`
 - [ ] **Pha 2 — Scan & baseline.** Dò framework/thư mục test hiện có (điền vào qa-context những field còn thiếu), test đã có cho spec này chưa, môi trường sẵn sàng chưa → **thông báo phát hiện**, không hỏi lại cái đã dò được. → chi tiết: `.specify/extensions/dft-speckit/references/qa-context-template.md`
-- [ ] **Pha 3 — Coverage matrix.** Từ mỗi FR/AC + mức risk → chọn tầng test (unit/integration/E2E/manual-only) + lý do. → chi tiết: `.specify/extensions/dft-speckit/references/coverage-matrix.md`
-- [ ] **Pha 4 — Manual TC → xlsx.** Mỗi acceptance scenario/rule → 1 testcase. Output cố định tại `<thư mục spec>/testcases-manual.xlsx` (Pha 8/11 đọc/ghi lại đúng file này qua chạy lại script, script tự merge nên giữ nguyên cột tester đã điền). Cách ưu tiên (ít lỗi hơn): viết `testcases-manual.json` (16 khóa/case) rồi convert; CSV 16-cột cũng được chấp nhận. Chạy `.specify/extensions/dft-speckit/scripts/csv_to_xlsx.py` để dựng file `.xlsx` 2 sheet (Testcases + Ma trận truy vết); 4 cột thực thi để trống cho tester. Báo số case đã sinh. Script chỉ cần `python3`; lần chạy đầu tự tạo venv + cài `openpyxl` (cần mạng lần đầu đó). → chi tiết: `.specify/extensions/dft-speckit/references/manual-xlsx-format.md`
+- [ ] **Pha 3 — Coverage matrix.** Từ mỗi FR/AC + mức risk → chọn tầng test (unit/integration/E2E/manual-only) + lý do. **Cổng đếm: ma trận phải phủ đủ `N` id đã chốt ở Pha 0** — id nào không có dòng nào → ghi tường minh là `GAP` kèm lý do, cấm bỏ trắng. → chi tiết: `.specify/extensions/dft-speckit/references/coverage-matrix.md`
+- [ ] **Pha 4 — Manual TC → xlsx.** Mỗi acceptance scenario/rule → 1 testcase. Output cố định tại `<thư mục spec>/testcases-manual.xlsx` (Pha 8/11 đọc/ghi lại đúng file này qua chạy lại script, script tự merge nên giữ nguyên cột tester đã điền). **`ID` là khóa merge**: case đã tồn tại trong xlsx phải giữ nguyên văn ID cũ; script in `WARNING: ... ID ... sẽ mất` khi lệch → dừng, sửa ID, chạy lại. Cách ưu tiên (ít lỗi hơn): viết `testcases-manual.json` (16 khóa/case) rồi convert; CSV 16-cột cũng được chấp nhận. Chạy `.specify/extensions/dft-speckit/scripts/csv_to_xlsx.py` để dựng file `.xlsx` 2 sheet (Testcases + Ma trận truy vết); 4 cột thực thi để trống cho tester. Báo số case đã sinh. Script chỉ cần `python3`; lần chạy đầu tự tạo venv + cài `openpyxl` (cần mạng lần đầu đó). → chi tiết: `.specify/extensions/dft-speckit/references/manual-xlsx-format.md`
 - [ ] **Pha 5 — Author auto test.** Sinh test theo tầng đã chọn ở coverage matrix (không map 1:1 từ manual TC), dùng framework khai báo trong qa-context; comment truy vết FR + TC trong mỗi test; requirement manual-only ghi rõ lý do trong ma trận. → chi tiết: `.specify/extensions/dft-speckit/references/test-generation.md`, `.specify/extensions/dft-speckit/references/coverage-matrix.md`
 - [ ] **Pha 6 — Quality gate.** Chạy compile/type-check của project (lệnh lấy từ qa-context); grep xác nhận selector/endpoint được assert thật sự tồn tại trong source; chặn assert tầm thường/rỗng. → chi tiết: `.specify/extensions/dft-speckit/references/quality-gate.md`
 - [ ] **Pha 7 — Readiness (no-defer).** Tự dựng môi trường (services → migrate/seed → start backend/frontend background → cài deps test → poll tới ready) rồi gỡ blocker (auth, selector thiếu, seed). Lệnh phá hoại (migrate/seed/reset/khởi tạo có trạng thái) chỉ chạy vào **test target dùng-một-lần** đã khai báo trong qa-context; thiếu khai báo → dừng, hỏi (Recommended trước). **Cổng cứng khi cần người quyết** — escalate đúng phần không tự làm được, nêu rõ thiếu gì + lệnh gợi ý, chờ người dùng xử lý rồi tiếp tục, không bỏ ngang. → chi tiết: `.specify/extensions/dft-speckit/references/environment-bringup.md`, `.specify/extensions/dft-speckit/references/blocker-playbook.md`
 - [ ] **Pha 8 — Run + record.** Chạy suite thật; ghi auto-status vào cột/sheet auto (không đụng cột người); test chưa chạy được → ghi "chưa chạy" trung thực, không âm thầm pass. → chi tiết: `.specify/extensions/dft-speckit/references/traceability.md`
-- [ ] **Pha 9 — Present.** **Cổng cứng: phải trình bày trước khi qua pha 10.** Báo cáo pass/fail + coverage theo từng FR + gap rõ ràng + phân bố pyramid (unit/integration/E2E/manual-only) + kết quả quality gate + trạng thái môi trường.
+- [ ] **Pha 9 — Present.** **Cổng cứng: phải trình bày trước khi qua pha 10.** Báo cáo pass/fail + coverage theo **đủ `N` id FR/AC chốt ở Pha 0** (id vắng mặt trong ma trận → liệt kê là GAP) + gap rõ ràng + phân bố pyramid (unit/integration/E2E/manual-only) + kết quả quality gate + trạng thái môi trường.
 - [ ] **Pha 10 — Triage + bounded fix.** Phân loại mỗi fail: test-defect / infra-blocker / product-bug. Auto-fix test-defect và infra-blocker. **Cổng cứng khi gặp product-bug** — không tự sửa code sản phẩm; trình chẩn đoán + đề xuất patch, chờ duyệt từng cái, fix cái được duyệt + chạy lại, log phần dư thành issue rồi dừng. → chi tiết: `.specify/extensions/dft-speckit/references/failure-classification.md`
 - [ ] **Pha 11 — Finalize truy vết.** Hoàn thiện ma trận trong xlsx: mỗi FR/AC ↔ manual TC ↔ test tự động (file::name) ↔ tầng ↔ trạng thái ↔ gap. → chi tiết: `.specify/extensions/dft-speckit/references/traceability.md`
 - [ ] **Pha 12 — Update CLAUDE.md/AGENTS.md.** Nếu chưa có mục "cách test" → thêm (tooling, cách dựng môi trường, lệnh chạy từng tầng — lấy nguyên từ qa-context, không hardcode lại trong command). File này lái mọi phiên agent sau → **show diff và chờ xác nhận trước khi ghi**, không ghi âm thầm.
@@ -63,10 +63,13 @@ Ghi trạng thái pha vào `<thư mục spec>/qa-run.md` ngay sau khi hoàn thà
 ## Chế độ non-interactive
 
 Khi command chạy không có người trực tiếp (subagent/CI/autopilot) và gặp 1 trong các cổng cứng ở trên
-(escalate Pha 7, present Pha 9, product-bug Pha 10) → **KHÔNG được** tự bỏ qua cổng, tự ý duyệt fix
+(escalate Pha 7, product-bug Pha 10) → **KHÔNG được** tự bỏ qua cổng, tự ý duyệt fix
 code sản phẩm, hay ghi test chưa chạy thành "pass". Thay vào đó: ghi 1 bản ghi blocker vào
 `qa-run.md` (đang ở pha nào, cần gì, vì sao dừng) rồi **HALT**. Chạy lại sau (có người) → đọc
 `qa-run.md`, tiếp tục đúng từ điểm blocker.
+
+Pha 9 (present) **không** phải điểm HALT: vẫn xuất đầy đủ báo cáo rồi chạy tiếp Pha 10 (auto-fix
+test-defect/infra-blocker — không cần người duyệt); chỉ dừng khi chạm product-bug.
 
 ## Ủy thác cho subagent (khi có Task/Agent tool)
 
@@ -79,9 +82,9 @@ quả grep) làm phình context của agent chính.
 | Pha | Con nhận | Con trả về |
 |---|---|---|
 | 5 — Author test | Quyết định coverage-matrix + qa-context + spec | File test đã ghi + danh sách FR/TC mỗi file phủ |
-| 6 — Quality gate | Đường dẫn test vừa sinh + source root | `PASS`, hoặc danh sách `MISSING` đã xác nhận (không phải dynamic) |
-| 7 — Readiness | Khối "Môi trường & lệnh dựng" + test DB dùng-một-lần đã khai báo | Log ghi ra file + `READY`/`BLOCKED` + lý do — **quyết định escalate vẫn ở orchestrator** |
-| 8 — Run + record | Lệnh chạy từng tầng | stdout → log file; kết quả ghi vào `qa-run.md`/xlsx; trả pass/fail + id test fail |
+| 6 — Quality gate | Đường dẫn test vừa sinh + source root | **Fact thô**: đuôi log compile/type-check, danh sách `MISSING` đã xác nhận (không phải dynamic), vị trí assert tầm thường + đường dẫn artifact — **cha ra phán quyết PASS/FAIL**, con không tự tuyên bố PASS |
+| 7 — Readiness | Khối "Môi trường & lệnh dựng" + test DB dùng-một-lần đã khai báo | Log ghi ra file + fact `READY`/`BLOCKED` + lý do — **quyết định escalate vẫn ở orchestrator** |
+| 8 — Run + record | Lệnh chạy từng tầng | stdout → log file; trả pass/fail + id test fail + đường dẫn log. **Con không ghi `qa-run.md`/xlsx** — chỉ cha ghi |
 
 **Giữ trong orchestrator, KHÔNG ủy thác:** mọi cổng cứng (Pha 7 escalate, Pha 9 present, Pha 10 duyệt
 product-bug, HALT ở chế độ non-interactive), `qa-run.md` ledger + xlsx (single source of truth), mọi
@@ -101,5 +104,5 @@ cha vẫn HALT + ghi blocker như bình thường, bất kể pha nào chạy tr
 - Test tự động tồn tại, truy vết được về FR/AC, **đã chạy thật** (không skip/defer); quality gate pass.
 - Môi trường được command tự dựng, hoặc phần không tự làm được đã escalate đúng và được xử lý tiếp sau khi người dùng can thiệp.
 - Suite xanh, hoặc mọi gap/fail còn lại được liệt kê tường minh trong ma trận truy vết và trong phần present.
-- Ma trận truy vết đầy đủ: mỗi FR/AC → manual TC + test tự động + tầng + trạng thái.
+- Ma trận truy vết đầy đủ: **đủ `N` id FR/AC chốt ở Pha 0**, mỗi id có manual TC + test tự động + tầng + trạng thái, hoặc được đánh dấu `GAP` kèm lý do.
 - `CLAUDE.md`/`AGENTS.md` có mục "cách test" (đã thêm nếu trước đó chưa có).

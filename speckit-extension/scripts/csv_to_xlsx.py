@@ -201,6 +201,20 @@ def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases"):
     safe_sheet_name = _safe_sheet(sheet_name)
     preserved = _read_existing_exec(out_path, safe_sheet_name)
 
+    # ID là khóa merge cột 13-16 (dữ liệu tester). ID cũ không còn trong input mới
+    # = dữ liệu tester của case đó bị bỏ. Cảnh báo thay vì mất im lặng.
+    new_ids = {str(r[0] or "").strip() for r in rows}
+    lost = sorted(
+        i for i, vals in preserved.items()
+        if i not in new_ids and any(str(v).strip() for v in vals)
+    )
+    if lost:
+        print(
+            f"WARNING: {len(lost)} ID có dữ liệu tester trong xlsx cũ nhưng không có "
+            f"trong input mới, các ô thực thi sẽ mất: {', '.join(lost)}",
+            file=sys.stderr,
+        )
+
     header_fill = PatternFill("solid", fgColor="305496")
     header_font = Font(bold=True, color="FFFFFF")
     auto_fill = PatternFill("solid", fgColor="E2EFDA")   # cột máy (auto)
