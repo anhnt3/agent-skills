@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "dft-preset"
   name: "DFT Spec Kit Preset"
-  version: "4.1.0"
+  version: "0.0.1"
   description: "Override speckit.constitution/specify/plan/checklist: hiến chương sinh từ quét codebase + phỏng vấn (ngân sách 5 nguyên tắc, cổng tự kiểm MUST/Rationale); business analyst phỏng vấn qua AskUserQuestion (gom câu độc lập; trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp), sổ theo dõi persist ra file, tiếng Việt. Dùng template mặc định của spec-kit."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/anhnt3/agent-skills"
