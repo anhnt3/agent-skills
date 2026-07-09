@@ -10,7 +10,7 @@ Các override bổ trợ nhau (5 override, gom theo mục đích):
 - Đóng vai **business analyst** theo domain dự án, thảo luận + spec bằng **tiếng Việt**.
 - **Khảo sát trước khi hỏi**: tự tìm roadmap dự án (không rõ thì hỏi), codebase, nợ kỹ thuật liên quan, và `.specify/memory/constitution.md`.
 - **Phỏng vấn theo cây thiết kế**: mỗi nguyên tắc trong `constitution.md` là một nhánh; hỏi qua **AskUserQuestion**, mỗi lần một câu, 2–4 option, có `(Recommended)` + lý do + trade-off.
-- Đánh dấu nguồn mỗi kết luận: `[từ mock]` / `[suy luận]` / `[cần bạn quyết]`.
+- Đánh dấu nguồn mỗi kết luận: `[từ khảo sát]` / `[suy luận]` / `[cần bạn quyết]`.
 - **Chỉ ghi spec sau khi bạn xác nhận** đạt hiểu chung. `spec.md` dùng **spec-template mặc định** của spec-kit — toàn bộ scaffolding core (tạo `specs/<n>-<name>/spec.md`, quality checklist, hooks) kéo vào qua `{CORE_TEMPLATE}`.
 
 **2. Command `speckit.plan`** (`strategy: wrap`) — điều khiển *cách plan*:
@@ -61,7 +61,7 @@ specify preset remove dft-mstem
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v2.8.0/dft-mstem-2.8.0.zip
+specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v2.9.0/dft-mstem-2.9.0.zip
 ```
 
 ## Publish (GitHub release zip)
@@ -89,4 +89,5 @@ Cài từ asset qua `specify preset add --from <url>`. Lưu ý: `--from` chỉ n
 ## Yêu cầu
 
 - `speckit_version >= 0.6.0` (cần AskUserQuestion trên Claude Code).
-- Dự án đã `specify init`, có `.specify/memory/constitution.md` và một file roadmap (vị trí tùy dự án; command tự tìm, không rõ thì hỏi).
+- Dự án đã `specify init`, có `.specify/memory/constitution.md` (khung phỏng vấn GĐ2; thiếu thì preset cảnh báo + dùng bộ nhánh mặc định).
+- Roadmap (tùy chọn, nguồn làm giàu): vị trí tùy dự án, command tự tìm, không rõ thì hỏi; không có cũng chạy đầy đủ 3 giai đoạn.
