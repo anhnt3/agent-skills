@@ -37,6 +37,11 @@ cp preset.yml "$dest/"
 cp -R commands "$dest/"
 cp -R templates "$dest/"
 
+# Loại rác runtime/OS lỡ nằm trong commands/ hoặc templates/ (.omc là state của OMC,
+# bị gitignore nên không thấy trong git status nhưng vẫn bị `cp -R` kéo vào zip).
+find "$dest" -name '.omc' -type d -prune -exec rm -rf {} +
+find "$dest" -name '.DS_Store' -type f -delete
+
 ( cd "$stage" && zip -rq "$out" "$pkg" )
 echo "OK: $out"
 unzip -l "$out" | sed -n '1,20p'

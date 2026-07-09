@@ -1,4 +1,4 @@
-# Convention Checklist: UI/UX Consistency (Nguyên tắc IV)
+# Convention Checklist: UI/UX Consistency
 
 **Purpose**: Spec-completeness gate cho UI/UX — spec PHẢI mô tả rõ các mục dưới, đủ để tester đọc spec là viết lại được testcase + SRS mà không cần hỏi lại.
 **Created**: [DATE]

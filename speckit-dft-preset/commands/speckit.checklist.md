@@ -21,7 +21,7 @@ Mỗi verdict PHẢI trích nguồn spec; không có nguồn = Gap. Thêm cuối
 
 ### Bước 3 — Thảo luận & vá gap
 Với các Gap:
-1. Hỏi cách vá qua **AskUserQuestion** — mỗi lượt gom 1–4 gap **độc lập nhau** (gap này vá thế nào không đổi cách vá gap kia; gap phụ thuộc tách lượt sau), mỗi gap một câu 2–4 option kèm lý do + trade-off. `(Recommended)` CHỈ khi có căn cứ (spec, nguyên tắc IV, mẫu màn khác cùng hệ thống — nêu căn cứ ngay trong option); không căn cứ thì không đánh.
+1. Hỏi cách vá qua **AskUserQuestion** — mỗi lượt gom 1–4 gap **độc lập nhau** (gap này vá thế nào không đổi cách vá gap kia; gap phụ thuộc tách lượt sau), mỗi gap một câu 2–4 option kèm lý do + trade-off. `(Recommended)` CHỈ khi có căn cứ (spec, nguyên tắc UI/UX trong hiến chương nếu dự án có, mẫu màn khác cùng hệ thống — nêu căn cứ ngay trong option); không căn cứ thì không đánh.
 2. Sau khi người dùng chốt, **sửa trực tiếp `spec.md`**: cập nhật/append đúng requirement liên quan (FR-xxx, mục §IV, …), giữ cấu trúc + dấu nguồn `[từ khảo sát]`/`[suy luận]`/`[cần bạn quyết]`. Sửa đúng chỗ gap, không viết lại phần khác.
 3. Chấm lại mục đó; đạt thì tick `[x]` + nguồn mới. Cập nhật `## Tổng`.
 Hết gap (hoặc người dùng chấp nhận để lại): DỪNG, báo tổng kết các thay đổi đã ghi vào spec.md.

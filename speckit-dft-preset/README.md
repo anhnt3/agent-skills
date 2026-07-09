@@ -1,10 +1,21 @@
 # DFT Spec Kit Preset
 
-Override `/speckit.specify` thành một phiên business-analyst phỏng vấn tuần tự trước khi ghi spec, và ép spec output điền đủ 11 nguyên tắc hiến chương.
+Override `/speckit.constitution` thành phiên soạn hiến chương từ codebase + phỏng vấn, và `/speckit.specify` thành phiên business-analyst phỏng vấn tuần tự trước khi ghi spec.
 
 ## Preset này làm gì
 
 Các override bổ trợ nhau (5 override, gom theo mục đích):
+
+**0. Command `speckit.constitution`** (`strategy: wrap`) — *sinh hiến chương dùng được cho máy*:
+- **Giáo dục trước, hỏi sau**: giải thích cơ chế thật — `analyze`/`converge` chỉ bốc *tên nguyên tắc* + *các câu chứa `MUST`/`SHOULD`* thành rule set. Nguyên tắc không có từ chuẩn tắc là **nguyên tắc vô hình**.
+- **Làn A — quét codebase**: rút các luật dự án ĐANG cưỡng chế (cổng test, lint, phân lớp, hợp đồng API, secret/auth, migration, dependency). Mỗi luật **bắt buộc nêu nguồn**; không nêu được nguồn thì đó là mong muốn, không phải luật đang thực thi.
+- **Làn B — phỏng vấn** (tối đa 3–4 lượt AskUserQuestion): chỉ hỏi thứ code không trả lời được — điều tuyệt đối không được xảy ra, sự cố đau nhất từng gặp, ràng buộc pháp lý.
+- **Hợp nhất**: bảng đối chiếu hai làn, mỗi dòng chốt một trong bốn: `MUST` · `MUST + miễn trừ` · `→ Ràng buộc Kiến trúc` · `Bỏ`. **Ngân sách 5 nguyên tắc, trần cứng 7.**
+- **`MUST + miễn trừ`** dành cho luật đúng mà code cũ chưa đạt: giữ lực `MUST` cho code mới, đồng thời ghi vùng miễn trừ vào mục `Phạm vi áp dụng` — nếu không, `/speckit.converge` sẽ sinh task khắc phục cho toàn bộ code cũ.
+- **Cổng tự kiểm chặn cứng** trước khi giao core: mỗi nguyên tắc ≥1 `MUST`/`MUST NOT`, có `**Rationale:**`, ≤7 nguyên tắc, không còn placeholder `[ALL_CAPS]`.
+- **Ngôn ngữ lai**: văn xuôi tiếng Việt, nhưng token chuẩn tắc viết `MUST`/`MUST NOT`/`SHOULD` in hoa — đó là chuỗi mà `analyze`/`converge` khớp; chúng không biết `PHẢI`.
+- Core lo phần còn lại qua `{CORE_TEMPLATE}`: semver, Sync Impact Report, checklist lan truyền, extension hooks.
+- Chạy được cả **greenfield** (không có code → làn A suy giảm, nói rõ với người dùng) lẫn **brownfield**, và phân biệt **phê chuẩn lần đầu** với **sửa đổi** (chỉ đi tìm phần chênh, không viết lại từ đầu).
 
 **1. Command `speckit.specify`** (`strategy: wrap`) — điều khiển *cách hỏi*:
 - Đóng vai **business analyst** theo domain dự án, thảo luận + spec bằng **tiếng Việt**.
@@ -18,14 +29,11 @@ Các override bổ trợ nhau (5 override, gom theo mục đích):
 - **Khảo sát codebase liên quan feature** (frontend + backend đang có) trước khi điền Technical Context / Structure Decision — plan dựa trên cái đang có, không chọn layout generic.
 - `plan.md` dùng **plan-template mặc định**; cổng Constitution Check của core phải pass trước Phase 0.
 
-**3. Template `constitution-template`** (`strategy: replace`) — *ship hiến chương*:
-- Chứa nguyên văn 11 nguyên tắc (bản generic cho hệ fullstack doanh nghiệp, không gắn stack cụ thể). Vòng kiểm GĐ4 đối chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
-
-**4. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định + chấm*:
+**3. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định + chấm*:
 - `/speckit.checklist ui-ux @spec.md` → 3 bước: **stamp** bộ IV cố định (CHK001–010) → **chấm** theo spec (tick `[x]` pass + nguồn, `⚠️ Gap`, `➖ N/A`, bảng Tổng) → **thảo luận vá** từng gap qua AskUserQuestion, cập nhật spec.md rồi tick pass.
 - Chỉ điền mục còn `[ ]` trống; **giữ nguyên tick + note người đã ghi** (không clobber).
 - Không kèm spec → chỉ stamp list trống. Args khác → chạy checklist sinh động của core.
-- Là spec-completeness gate cho nguyên tắc IV (UI/UX).
+- Là spec-completeness gate cho UI/UX. Bộ này **độc lập** với hiến chương: nó vẫn chạy dù hiến chương có nguyên tắc UI/UX hay không, và không neo vào số thứ tự nguyên tắc nào (hiến chương do `/speckit.constitution` sinh ra là động, ≤7 nguyên tắc).
 
 > `speckit.specify` và `speckit.plan` dùng template mặc định của spec-kit, chỉ override *cách hỏi/cách plan*, không override cấu trúc output.
 
@@ -37,18 +45,14 @@ Nội bộ (dev, từ thư mục này):
 specify preset add --dev ./speckit-dft-preset
 ```
 
-**Kích hoạt hiến chương (project mới chưa có hiến chương):** `preset add` không tự ghi vào file sống `.specify/memory/constitution.md` — nó chỉ đổi template. Copy hiến chương shipped vào memory để khung phỏng vấn có nội dung:
+**Tạo hiến chương (project mới):** chạy `/speckit.constitution`. Không cần copy file thủ công.
 
-```bash
-cp .specify/presets/dft-preset/templates/constitution.md .specify/memory/constitution.md
-```
-
-Bỏ qua bước này nếu project đã có sẵn hiến chương phù hợp (vd admin_mbf).
+> Preset **không thể** ship hiến chương qua `type: template`: `specify init` gieo `.specify/memory/constitution.md` từ template core **trước** khi preset được cài, và đọc bằng đường dẫn trực tiếp nên bỏ qua `PresetResolver`. Override command `speckit.constitution` là cách duy nhất ghi được vào file sống. Chi tiết + bằng chứng: [`docs/research/constitution-quality.md`](../docs/research/constitution-quality.md) §6.
 
 Kiểm tra:
 
 ```bash
-specify preset info dft-preset       # xem 5 override (3 command + 2 template)
+specify preset info dft-preset            # xem 5 override (4 command + 1 template)
 specify preset resolve spec-template      # spec-template = core mặc định (preset không override)
 specify preset list
 ```
@@ -62,7 +66,7 @@ specify preset remove dft-preset
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-preset-v4.0.0/dft-preset-4.0.0.zip
+specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-preset-v4.1.0/dft-preset-4.1.0.zip
 ```
 
 ## Publish (GitHub release zip)
@@ -84,11 +88,11 @@ Cài từ asset qua `specify preset add --from <url>`. Lưu ý: `--from` chỉ n
 
 ## Khi nào dùng / không dùng
 
-- **Dùng**: chức năng có mockup + mock-service cần chuyển sang backend thật, dự án có `constitution.md` làm khung review.
-- **Không dùng**: spec nhanh không cần phỏng vấn, hoặc dự án không có mockup/constitution.
+- **Dùng**: dự án cần một hiến chương thực sự cưỡng chế được; chức năng có mockup + mock-service cần chuyển sang backend thật.
+- **Không dùng**: spec nhanh không cần phỏng vấn.
 
 ## Yêu cầu
 
 - `speckit_version >= 0.6.0` (cần AskUserQuestion trên Claude Code).
-- Dự án đã `specify init`, có `.specify/memory/constitution.md` (vòng kiểm GĐ4; thiếu thì preset cảnh báo + bỏ GĐ4, các giai đoạn phỏng vấn vẫn chạy đủ).
+- Dự án đã `specify init`. Chưa có `.specify/memory/constitution.md` cũng không sao — chạy `/speckit.constitution` để tạo. Với `/speckit.specify`, thiếu hiến chương thì preset cảnh báo + bỏ GĐ4, các giai đoạn phỏng vấn vẫn chạy đủ.
 - Roadmap (tùy chọn, nguồn làm giàu): vị trí tùy dự án, command tự tìm, không rõ thì hỏi; không có cũng chạy đầy đủ các giai đoạn.

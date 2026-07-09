@@ -3,8 +3,8 @@ schema_version: "1.0"
 preset:
   id: "dft-preset"
   name: "DFT Spec Kit Preset"
-  version: "4.0.0"
-  description: "Override speckit.specify/plan: business analyst phỏng vấn qua AskUserQuestion (gom câu độc lập; trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp), sổ theo dõi persist ra file, khung constitution, tiếng Việt. Dùng template mặc định của spec-kit."
+  version: "4.1.0"
+  description: "Override speckit.constitution/specify/plan/checklist: hiến chương sinh từ quét codebase + phỏng vấn (ngân sách 5 nguyên tắc, cổng tự kiểm MUST/Rationale); business analyst phỏng vấn qua AskUserQuestion (gom câu độc lập; trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp), sổ theo dõi persist ra file, tiếng Việt. Dùng template mặc định của spec-kit."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/anhnt3/agent-skills"
   license: "MIT"
@@ -16,15 +16,15 @@ requires:
 provides:
   templates:
     - type: "template"
-      name: "constitution-template"
-      file: "templates/constitution.md"
-      description: "Ship hiến chương 11 nguyên tắc (bản generic cho hệ fullstack doanh nghiệp); specify dùng làm vòng kiểm cuối, plan dùng làm Constitution Check"
-      strategy: "replace"
-
-    - type: "template"
       name: "ui-ux-checklist"
       file: "templates/ui-ux-checklist.md"
-      description: "Bộ checklist cố định UI/UX (nguyên tắc IV), CHK001–010 — spec-completeness gate"
+      description: "Bộ checklist cố định UI/UX, CHK001–010 — spec-completeness gate, độc lập với việc hiến chương có nguyên tắc UI/UX hay không"
+
+    - type: "command"
+      name: "speckit.constitution"
+      file: "commands/speckit.constitution.md"
+      description: "Wrap constitution: giải thích cơ chế analyze/converge bốc rule set theo MUST; làn A quét codebase rút luật đang cưỡng chế (bắt buộc nêu nguồn), làn B phỏng vấn mong muốn (≤4 lượt AskUserQuestion), hợp nhất hai làn thành ≤7 nguyên tắc; nguyên tắc code chưa đạt ghi 'MUST + miễn trừ' vào Phạm vi áp dụng để converge không sinh bão CRITICAL trên code cũ; cổng tự kiểm chặn cứng (mỗi nguyên tắc ≥1 MUST + Rationale, không placeholder). Core lo semver/Sync Impact Report/propagation."
+      strategy: "wrap"
 
     - type: "command"
       name: "speckit.checklist"
