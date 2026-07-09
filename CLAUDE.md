@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Two independently-packaged, independently-released add-ons for [Spec Kit](https://github.github.io/spec-kit/) (`specify` CLI). Both target DFT's internal spec-driven development workflow; content and user-facing prose are in Vietnamese.
 
 - **`speckit-extension/`** — a multi-command **extension** (`extension.yml`, id `dft-speckit`). *Adds new* slash commands (namespaced `speckit.dft-speckit.<name>`) plus templates. Grows over time; new commands are added here, not in the preset.
-- **`speckit-dft-mstem-preset/`** — a **preset** (`preset.yml`, id `dft-mstem`). *Overrides existing* core commands (`speckit.specify`, `speckit.plan`, `speckit.checklist`) via `strategy: wrap`/`replace`, and ships a constitution + UI/UX checklist template. Turns `/speckit.specify` into a sequential business-analyst interview (via AskUserQuestion) driven by the 11-principle constitution.
+- **`speckit-dft-preset/`** — a **preset** (`preset.yml`, id `dft-preset`). *Overrides existing* core commands (`speckit.specify`, `speckit.plan`, `speckit.checklist`) via `strategy: wrap`/`replace`, and ships a constitution + UI/UX checklist template. Turns `/speckit.specify` into a sequential business-analyst interview (via AskUserQuestion) driven by the 11-principle constitution.
 
 The two are orthogonal: extension = new commands, preset = behavior overrides on core commands.
 
@@ -33,7 +33,7 @@ Local dev install:
 # --dev: the extension ARGUMENT is the local path (not a flag value). Passing the
 # path as a trailing arg after a name fails with "unexpected extra argument".
 specify extension add /path/to/speckit-extension --dev --force
-specify preset add --dev ./speckit-dft-mstem-preset
+specify preset add --dev ./speckit-dft-preset
 ```
 Dev install copies the **whole directory** (drags in `.omc/`, `dist/`, `release.sh`, `build-zip.sh`) — noise, but harmless. The release zip is clean (see below); use the zip path to verify what actually ships.
 
@@ -60,7 +60,7 @@ Release (each package has its own `build-zip.sh` + `release.sh`, reading version
 speckit-extension/release.sh              # or: release.sh 1.2.0 to force version
 # Automated: push a matching tag -> GitHub Actions workflow builds + releases
 git tag dft-speckit-v1.1.0 && git push origin dft-speckit-v1.1.0   # extension
-git tag dft-mstem-v2.0.0  && git push origin dft-mstem-v2.0.0      # preset
+git tag dft-preset-v2.0.0  && git push origin dft-preset-v2.0.0      # preset
 ```
 The tag version **must** match the version in the manifest or the workflow fails. Workflows: `.github/workflows/release-speckit-{extension,preset}.yml`.
 

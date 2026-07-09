@@ -60,7 +60,7 @@ Tổng hợp:
 - **Rule chung** áp nhiều màn (định nghĩa 1 lần).
 
 ### 5. Interview chỗ mơ hồ (AskUserQuestion)
-Hỏi **mỗi lần MỘT câu**, 2–4 option, `(Recommended)` đầu kèm lý do + trade-off. Chỉ hỏi cái **quyết định model, không suy được từ code**:
+Hỏi qua AskUserQuestion, mỗi lượt gom **1–4 câu độc lập nhau** (vd on-delete của các FK khác nhau, aggregate boundary của các cụm entity khác nhau — đáp án câu này không đổi nội dung câu kia); câu phụ thuộc kết quả câu trước → tách lượt sau. Mỗi câu 2–4 option kèm lý do + trade-off; `(Recommended)` CHỈ khi có căn cứ từ code/nguồn bước 2 (nêu căn cứ ngay trong option) — quyết định thiết kế mà code không cho căn cứ thì không đánh Recommended, gợi ý bừa là dẫn người dùng chốt ý của bạn. Chỉ hỏi cái **quyết định model, không suy được từ code**:
 - Quan hệ N-N cần bảng nối hay không.
 - Aggregate boundary (entity con thuộc root nào).
 - On-delete: Restrict vs Cascade vs SetNull khi có tham chiếu.

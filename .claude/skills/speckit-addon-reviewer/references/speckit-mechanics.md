@@ -13,7 +13,7 @@ Biết cơ chế core mới bắt được lỗi ngữ nghĩa. Tóm tắt phần
 
 | | Preset | Extension |
 |---|---|---|
-| Manifest | `preset.yml` (id kiểu `dft-mstem`) | `extension.yml` (id kiểu `dft-speckit`) |
+| Manifest | `preset.yml` (id kiểu `dft-preset`) | `extension.yml` (id kiểu `dft-speckit`) |
 | Làm gì | **Override** core command hiện có | **Thêm** command/template mới |
 | Cơ chế | `strategy: wrap` (chèn `{CORE_TEMPLATE}`) hoặc `replace` (thay hẳn) | command namespace `speckit.<ext-id>.<name>` |
 | Template | `strategy: replace` swap core template (constitution, checklist...) | ship template mới |

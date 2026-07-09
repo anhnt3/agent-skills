@@ -54,6 +54,12 @@ Extension = thêm command/template/script/hook mới qua `extension.yml`. Comman
 ### Generic vs specific
 - [ ] Giả định cứng nào về cấu trúc dự án? Chạy trên dự án khác được không? Có fallback?
 
+### Chi phí người trả lời & độ bền vận hành (BA lens)
+- [ ] Command có hỏi người dùng nhiều lượt / chạy flow dài không? Áp nguyên section cùng tên
+      trong `preset-checklist.md`: worst-case số lượt hỏi + gom câu, phân tầng trọng yếu,
+      recommended-bias, persist trạng thái ra file, nơi bàn giao vật lý giữa các lệnh,
+      side-effect trước xác nhận, nhánh cho ngoại lệ khuôn.
+
 ### Best-practices / bloat
 - [ ] SKILL/command quá dài, over-specify, nhắc lặp? Gộp lại được không?
 - [ ] Có cách nào **verify** extension chạy đúng sau cài (smoke test) không? Nếu không, đề xuất.

@@ -9,7 +9,7 @@ Codebase đã có đủ màn/chức năng (mockup, module chưa hoàn thiện, h
 ## 1. Quét codebase (đọc, không đoán)
 Tự tìm & liệt kê **mọi màn/chức năng** liên quan trong codebase (frontend, backend, service, module…). Không tìm ra vị trí → **hỏi lại**, đừng đoán. Mỗi màn/chức năng ghi nhận: tên, module, mô tả ngắn, thực thể/CRUD chính, và **phụ thuộc rõ** (auth, permission, shared entity, chức năng khác).
 
-**Chốt số N**: đếm màn từ nguồn liệt-kê-được (router/menu/thư mục pages/module list), ghi rõ nguồn + `N = <số>`. N là mỏ neo cho bước 5 — không đếm từ trí nhớ. `$ARGUMENTS` giới hạn phạm vi (vd 1 module) → `N` đếm trong phạm vi đó, gate bước 5 cũng tính theo phạm vi đó.
+**Chốt số N**: đếm màn từ nguồn liệt-kê-được (router/menu/thư mục pages/module list), ghi rõ nguồn + `N = <số>`. N là mỏ neo cho bước 5 — không đếm từ trí nhớ. `$ARGUMENTS` giới hạn phạm vi (vd 1 module) → `N` đếm trong phạm vi đó, gate bước 5 cũng tính theo phạm vi đó. Không tìm được nguồn liệt-kê-được nào (không router/menu rõ ràng) → hỏi người dùng liệt kê các màn/chức năng, chốt `N` từ câu trả lời — CẤM tự bịa danh sách rồi tự đếm.
 
 ## 2. Đề xuất thứ tự (wave)
 Xếp build theo phụ thuộc:
@@ -18,7 +18,9 @@ Xếp build theo phụ thuộc:
 Trình bày đề xuất kèm **lý do thứ tự** (cái gì chặn cái gì).
 
 ## 3. Chốt ưu tiên (interview)
-Hỏi qua **AskUserQuestion** — mỗi lần MỘT câu, 2–4 option, `(Recommended)` đầu, kèm lý do + trade-off. Xác nhận/điều chỉnh thứ tự, ưu tiên, gộp/tách. Fact tra từ codebase; **thứ tự là quyết định của người dùng** — đặt từng cái ra, chờ **phản hồi thật** của người dùng. Cấm tự tuyên bố người dùng đã đồng ý; chưa có phản hồi thật → dừng, KHÔNG ghi file.
+Hỏi qua **AskUserQuestion**, mỗi lượt gom **1–4 câu độc lập nhau** (đáp án câu này không đổi nội dung câu kia — vd các câu về những wave khác nhau); câu phụ thuộc kết quả câu trước → tách lượt sau. Mỗi câu 2–4 option kèm lý do + trade-off; `(Recommended)` CHỈ khi có căn cứ (lý do phụ thuộc từ bước 2) và nêu căn cứ ngay trong option — không căn cứ thì không đánh.
+
+Hỏi cái đáng hỏi, không rải đều: **ranh giới wave, thứ tự có ràng buộc phụ thuộc, gộp/tách chức năng** là quyết định trọng yếu — phải hỏi; **vị trí tương đối trong cùng wave** (không đụng phụ thuộc) đã nằm trong bảng đề xuất bước 2 — người dùng chỉnh trực tiếp trên đề xuất, không tốn mỗi item một lượt hỏi. Fact tra từ codebase; **thứ tự là quyết định của người dùng** — chờ **phản hồi thật**. Cấm tự tuyên bố người dùng đã đồng ý; chưa có phản hồi thật → dừng, KHÔNG ghi file.
 
 ## 4. Ghi `docs/roadmap.md` theo khung CỐ ĐỊNH
 **Dùng khung cố định, KHÔNG tự chế cấu trúc** (để mỗi lần sinh ra format giống hệt):
@@ -30,7 +32,7 @@ Hỏi qua **AskUserQuestion** — mỗi lần MỘT câu, 2–4 option, `(Recomm
 ## 5. Kiểm lại (trước khi báo xong)
 - Đếm lại từ nguồn ở bước 1: số item trong bảng tổng phải ≥ `N`. Thiếu → quét tiếp, KHÔNG báo xong.
 - Mọi ID trong bảng tổng có khối chi tiết tương ứng và ngược lại.
-- File cũ: mọi `Trạng thái` ≠ `chưa` và mọi `Nợ phát sinh` cũ còn nguyên.
+- File cũ: mọi item cũ giữ **nguyên giá trị `Trạng thái` trước đó** (kể cả `đang`/`xong` — không bị reset về `chưa` do copy khung) và mọi `Nợ phát sinh` cũ còn nguyên.
 - Không còn placeholder `[…]` sót lại.
 
 Kết thúc: báo số item, thứ tự wave, và nhắc `/speckit.dft-speckit.domain-design <module>` rồi `/speckit.specify <ID>` để bắt đầu từng mục.

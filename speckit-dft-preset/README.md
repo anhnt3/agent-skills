@@ -1,4 +1,4 @@
-# DFT mSTEM — Spec Kit Preset
+# DFT Spec Kit Preset
 
 Override `/speckit.specify` thành một phiên business-analyst phỏng vấn tuần tự trước khi ghi spec, và ép spec output điền đủ 11 nguyên tắc hiến chương.
 
@@ -8,8 +8,9 @@ Các override bổ trợ nhau (5 override, gom theo mục đích):
 
 **1. Command `speckit.specify`** (`strategy: wrap`) — điều khiển *cách hỏi*:
 - Đóng vai **business analyst** theo domain dự án, thảo luận + spec bằng **tiếng Việt**.
-- **Khảo sát trước khi hỏi**: tự tìm roadmap dự án (không rõ thì hỏi), codebase, nợ kỹ thuật liên quan, và `.specify/memory/constitution.md`.
-- **Phỏng vấn theo cây thiết kế**: mỗi nguyên tắc trong `constitution.md` là một nhánh; hỏi qua **AskUserQuestion**, mỗi lần một câu, 2–4 option, có `(Recommended)` + lý do + trade-off.
+- **Khảo sát trước khi hỏi**: tự tìm roadmap dự án (không rõ thì hỏi), domain doc, codebase, nợ kỹ thuật liên quan, và `.specify/memory/constitution.md`.
+- **Phỏng vấn theo trục nghiệp vụ** (GĐ2 trên màn hình → GĐ3 nghiệp vụ nền) qua **AskUserQuestion**, gom 1–4 câu độc lập mỗi lượt. Quyết định **trọng yếu** (dữ liệu/quyền/luồng) hỏi từng câu; quyết định **thứ yếu** (sort mặc định, empty-state, wording) model đề xuất kèm căn cứ rồi duyệt gộp cuối giai đoạn. `(Recommended)` chỉ được đánh khi có căn cứ từ khảo sát. Hiến chương KHÔNG phải khung hỏi — là vòng kiểm GĐ4.
+- **Sổ theo dõi vét cạn persist ra file** `.specify/interviews/<slug>.md` trong lúc phỏng vấn (chống mất trạng thái khi phiên dài), kết thúc chuyển thành `specs/<feature>/interview-notes.md`. Ràng buộc kỹ thuật từ GĐ4 ghi vào section `Ràng buộc kỹ thuật kế thừa` trong `spec.md` — kênh bàn giao cho `/speckit.plan`.
 - Đánh dấu nguồn mỗi kết luận: `[từ khảo sát]` / `[suy luận]` / `[cần bạn quyết]`.
 - **Chỉ ghi spec sau khi bạn xác nhận** đạt hiểu chung. `spec.md` dùng **spec-template mặc định** của spec-kit — toàn bộ scaffolding core (tạo `specs/<n>-<name>/spec.md`, quality checklist, hooks) kéo vào qua `{CORE_TEMPLATE}`.
 
@@ -18,7 +19,7 @@ Các override bổ trợ nhau (5 override, gom theo mục đích):
 - `plan.md` dùng **plan-template mặc định**; cổng Constitution Check của core phải pass trước Phase 0.
 
 **3. Template `constitution-template`** (`strategy: replace`) — *ship hiến chương*:
-- Chứa nguyên văn 11 nguyên tắc (Angular mockup → backend ABP). Khung phỏng vấn tham chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
+- Chứa nguyên văn 11 nguyên tắc (bản generic cho hệ fullstack doanh nghiệp, không gắn stack cụ thể). Vòng kiểm GĐ4 đối chiếu đúng bộ này, nên preset **tự chứa luật** — dùng được cho project mới không có sẵn hiến chương.
 
 **4. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định + chấm*:
 - `/speckit.checklist ui-ux @spec.md` → 3 bước: **stamp** bộ IV cố định (CHK001–010) → **chấm** theo spec (tick `[x]` pass + nguồn, `⚠️ Gap`, `➖ N/A`, bảng Tổng) → **thảo luận vá** từng gap qua AskUserQuestion, cập nhật spec.md rồi tick pass.
@@ -33,13 +34,13 @@ Các override bổ trợ nhau (5 override, gom theo mục đích):
 Nội bộ (dev, từ thư mục này):
 
 ```bash
-specify preset add --dev ./speckit-dft-mstem-preset
+specify preset add --dev ./speckit-dft-preset
 ```
 
 **Kích hoạt hiến chương (project mới chưa có hiến chương):** `preset add` không tự ghi vào file sống `.specify/memory/constitution.md` — nó chỉ đổi template. Copy hiến chương shipped vào memory để khung phỏng vấn có nội dung:
 
 ```bash
-cp .specify/presets/dft-mstem/templates/constitution.md .specify/memory/constitution.md
+cp .specify/presets/dft-preset/templates/constitution.md .specify/memory/constitution.md
 ```
 
 Bỏ qua bước này nếu project đã có sẵn hiến chương phù hợp (vd admin_mbf).
@@ -47,7 +48,7 @@ Bỏ qua bước này nếu project đã có sẵn hiến chương phù hợp (v
 Kiểm tra:
 
 ```bash
-specify preset info dft-mstem       # xem 5 override (3 command + 2 template)
+specify preset info dft-preset       # xem 5 override (3 command + 2 template)
 specify preset resolve spec-template      # spec-template = core mặc định (preset không override)
 specify preset list
 ```
@@ -55,13 +56,13 @@ specify preset list
 Gỡ:
 
 ```bash
-specify preset remove dft-mstem
+specify preset remove dft-preset
 ```
 
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-mstem-v2.9.0/dft-mstem-2.9.0.zip
+specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-preset-v4.0.0/dft-preset-4.0.0.zip
 ```
 
 ## Publish (GitHub release zip)
@@ -69,14 +70,14 @@ specify preset add --from https://github.com/anhnt3/agent-skills/releases/downlo
 Đóng gói + release giống `speckit-extension`:
 
 ```bash
-./build-zip.sh                 # -> dist/dft-mstem-<version>.zip (đọc version từ preset.yml)
+./build-zip.sh                 # -> dist/dft-preset-<version>.zip (đọc version từ preset.yml)
 ```
 
-Release tự động: push tag `dft-mstem-v<version>` (khớp `preset.version` trong preset.yml) → workflow `.github/workflows/release-speckit-preset.yml` build zip + tạo GitHub Release kèm asset.
+Release tự động: push tag `dft-preset-v<version>` (khớp `preset.version` trong preset.yml) → workflow `.github/workflows/release-speckit-preset.yml` build zip + tạo GitHub Release kèm asset.
 
 ```bash
-git tag dft-mstem-v1.0.0
-git push origin dft-mstem-v1.0.0
+git tag dft-preset-v1.0.0
+git push origin dft-preset-v1.0.0
 ```
 
 Cài từ asset qua `specify preset add --from <url>`. Lưu ý: `--from` chỉ nhận HTTPS (hoặc localhost) — không nhận đường dẫn file local.
@@ -89,5 +90,5 @@ Cài từ asset qua `specify preset add --from <url>`. Lưu ý: `--from` chỉ n
 ## Yêu cầu
 
 - `speckit_version >= 0.6.0` (cần AskUserQuestion trên Claude Code).
-- Dự án đã `specify init`, có `.specify/memory/constitution.md` (khung phỏng vấn GĐ2; thiếu thì preset cảnh báo + dùng bộ nhánh mặc định).
-- Roadmap (tùy chọn, nguồn làm giàu): vị trí tùy dự án, command tự tìm, không rõ thì hỏi; không có cũng chạy đầy đủ 3 giai đoạn.
+- Dự án đã `specify init`, có `.specify/memory/constitution.md` (vòng kiểm GĐ4; thiếu thì preset cảnh báo + bỏ GĐ4, các giai đoạn phỏng vấn vẫn chạy đủ).
+- Roadmap (tùy chọn, nguồn làm giàu): vị trí tùy dự án, command tự tìm, không rõ thì hỏi; không có cũng chạy đầy đủ các giai đoạn.

@@ -1,15 +1,15 @@
-name: Release dft-mstem preset
+name: Release dft-preset preset
 
-# Chạy khi push tag dạng "dft-mstem-v1.0.0".
-# Đóng gói speckit-dft-mstem-preset/ thành zip chuẩn và tạo GitHub Release kèm asset.
+# Chạy khi push tag dạng "dft-preset-v1.0.0".
+# Đóng gói speckit-dft-preset/ thành zip chuẩn và tạo GitHub Release kèm asset.
 # Sau đó cài bằng:
 #   specify preset add --from \
-#     https://github.com/<org>/<repo>/releases/download/<tag>/dft-mstem-<version>.zip
+#     https://github.com/<org>/<repo>/releases/download/<tag>/dft-preset-<version>.zip
 on:
   # Auto-release tạm tắt. Bỏ comment để bật lại.
   # push:
   #   tags:
-  #     - "dft-mstem-v*"
+  #     - "dft-preset-v*"
   workflow_dispatch:
     inputs:
       version:
@@ -31,17 +31,17 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             version="${{ github.event.inputs.version }}"
-            tag="dft-mstem-v${version}"
+            tag="dft-preset-v${version}"
           else
             tag="${GITHUB_REF_NAME}"
-            version="${tag#dft-mstem-v}"
+            version="${tag#dft-preset-v}"
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Kiểm tra version khớp preset.yml
         run: |
-          manifest_ver="$(grep -E '^[[:space:]]*version:' speckit-dft-mstem-preset/preset.yml | head -1 | sed -E 's/.*version:[[:space:]]*"?([^"#]+)"?.*/\1/' | tr -d '[:space:]')"
+          manifest_ver="$(grep -E '^[[:space:]]*version:' speckit-dft-preset/preset.yml | head -1 | sed -E 's/.*version:[[:space:]]*"?([^"#]+)"?.*/\1/' | tr -d '[:space:]')"
           if [ "$manifest_ver" != "${{ steps.ver.outputs.version }}" ]; then
             echo "::error::version trong preset.yml ($manifest_ver) không khớp tag (${{ steps.ver.outputs.version }})"
             exit 1
@@ -49,13 +49,13 @@ jobs:
 
       - name: Build zip
         run: |
-          chmod +x speckit-dft-mstem-preset/build-zip.sh
-          speckit-dft-mstem-preset/build-zip.sh "${{ steps.ver.outputs.version }}"
+          chmod +x speckit-dft-preset/build-zip.sh
+          speckit-dft-preset/build-zip.sh "${{ steps.ver.outputs.version }}"
 
       - name: Tạo GitHub Release + upload asset
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
-          name: dft-mstem ${{ steps.ver.outputs.version }}
+          name: dft-preset ${{ steps.ver.outputs.version }}
           generate_release_notes: true
-          files: speckit-dft-mstem-preset/dist/dft-mstem-${{ steps.ver.outputs.version }}.zip
+          files: speckit-dft-preset/dist/dft-preset-${{ steps.ver.outputs.version }}.zip

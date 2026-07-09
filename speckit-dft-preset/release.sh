@@ -12,7 +12,7 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$here"
 
-pkg="dft-mstem"
+pkg="dft-preset"
 version="${1:-$(grep -E '^[[:space:]]*version:' preset.yml | head -1 | sed -E 's/.*version:[[:space:]]*"?([^"#]+)"?.*/\1/' | tr -d '[:space:]')}"
 [ -n "$version" ] || { echo "Không xác định được version"; exit 1; }
 tag="${pkg}-v${version}"

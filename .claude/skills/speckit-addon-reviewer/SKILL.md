@@ -6,7 +6,9 @@ description: >-
   Kiểm cả hai trục: lint cơ học tất định (manifest khai đủ, token {CORE_TEMPLATE},
   build-zip copy support dir, version bump) VÀ chất lượng prompt để model chạy
   chính xác không bỏ sót (đối chiếu core, hook conflict, săn đường-thoát/escape-hatch,
-  vét cạn, ambiguity, generic-vs-specific, Anthropic skill best-practices).
+  vét cạn, ambiguity, generic-vs-specific, Anthropic skill best-practices) VÀ lens BA
+  cho command tương tác (chi phí lượt hỏi/fatigue, phân tầng trọng yếu, recommended-bias,
+  persist trạng thái, bàn giao vật lý giữa các lệnh, side-effect trước xác nhận).
   DÙNG SKILL NÀY bất cứ khi nào người dùng nói "review preset", "review extension",
   "kiểm speckit addon", "đánh giá command speckit", "spec-kit preset/extension có ổn
   không", hoặc trỏ vào một thư mục có preset.yml/extension.yml và muốn đánh giá —
@@ -25,7 +27,10 @@ hoặc bỏ sót bước, và lỗi đóng gói khiến command gãy âm thầm 
 Review addon Spec Kit khó ở chỗ: file `.md` là **prompt cho model**, không phải code —
 không compiler nào bắt lỗi. Lỗi đắt nhất không phải cú pháp mà là: hai chỉ thị chọi nhau
 (preset bảo bỏ hook, core bảo MUST chạy), một "gate" có vẻ chặt nhưng model lách được,
-một giả định cứng khiến addon chết trên dự án khác. Song song, có lớp lỗi cơ học tất định
+một giả định cứng khiến addon chết trên dự án khác — và một lớp tinh vi hơn: prompt
+**tối ưu cho model tuân thủ nhưng quên chi phí con người và độ bền vận hành** (phỏng vấn
+40 lượt gây fatigue, trạng thái chỉ sống trong hội thoại chết theo compaction, bàn giao
+giữa các lệnh không có nơi ghi vật lý). Song song, có lớp lỗi cơ học tất định
 (manifest quên khai, build-zip quên copy `references/`) mà grep bắt được ngay, đừng phí
 model cho nó. Skill này tách đúng hai lớp và dồn sức phán đoán vào lớp thực sự cần.
 
@@ -96,6 +101,14 @@ Ghi mọi finding tất định vào báo cáo (severity theo mức gãy: cài g
   hạ tầng không.
 - **Anthropic skill best-practices**: concise, thuật ngữ nhất quán, không over-specify,
   prompt bloat (in lại nguyên bảng nhiều lần, nhắc cùng luật 3 lần), degrees-of-freedom hợp lý.
+- **Chi phí người trả lời & độ bền vận hành (BA lens — bắt buộc với command tương tác)**:
+  đếm worst-case số lượt hỏi (fatigue → trả lời ẩu → spec "đầy đủ" mà sai); quyết định có
+  phân tầng trọng yếu hay mọi thứ đều tốn một lượt; option `(Recommended)` có buộc căn cứ
+  không (anchoring bias — user mệt bấm gợi ý → ý model đội lốt xác nhận user); trạng thái
+  quy trình có persist ra file hay chết theo compaction; bàn giao giữa các lệnh
+  (specify→plan→tasks) có nơi ghi VẬT LÝ không; side-effect ghi file trước khi user xác
+  nhận; nhánh hợp lệ cho ngoại lệ khuôn (feature không UI, repo không roadmap). Chi tiết:
+  section cùng tên trong `preset-checklist.md`.
 - **An toàn hook/script** (extension): hook command không nhận input chưa lọc; script không
   eval untrusted; không lộ secret.
 

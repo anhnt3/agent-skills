@@ -26,7 +26,7 @@ Kỳ vọng: đường dẫn tới `spec.md` hoặc thư mục feature. Nếu tr
 
 1. **Technology-agnostic** — không viết lệnh/tên framework cụ thể vào command; luôn tra qa-context hoặc scan.
 2. **Scan trước, hỏi sau** — cái gì codebase trả lời được thì tự dò rồi thông báo ("Phát hiện X → dùng Y"); chỉ hỏi khi thật sự cần người quyết.
-3. **Câu hỏi luôn có phương án Recommended đầu tiên + lý do** (dùng AskUserQuestion khi có sẵn).
+3. **Hỏi gọn** — dùng AskUserQuestion khi có sẵn, mỗi lượt gom 1–4 câu độc lập nhau (câu phụ thuộc tách lượt sau); `(Recommended)` đặt đầu CHỈ khi có căn cứ từ scan/qa-context ("Phát hiện X → khuyến nghị Y", nêu căn cứ ngay trong option) — không căn cứ thì không đánh Recommended.
 4. **Pyramid integrity** — auto test author theo requirement × risk × tầng-thấp-nhất-chứng-minh-được, KHÔNG map 1:1 từ manual TC.
 5. **No fake-green** — cổng cơ học chặn assert rỗng / selector-endpoint không tồn tại, trước khi present.
 6. **No-defer** — dựng môi trường là việc của command; cấm bỏ test vì "thiếu môi trường", chỉ escalate đúng phần không tự làm được.

@@ -46,6 +46,36 @@ Preset = override core command qua `preset.yml`. Review theo hai trục.
       constitution thiếu → bộ nhánh mặc định) không?
 - [ ] README có tự mâu thuẫn về cái gì bắt buộc vs tùy chọn không?
 
+### Chi phí người trả lời & độ bền vận hành (BA lens — bắt buộc với command tương tác)
+
+Prompt phỏng vấn/hỏi-đáp thường được viết tối ưu cho model tuân thủ, quên mất hai thứ:
+người ngồi trả lời và vòng đời phiên chạy. Đây là lớp lỗi tác giả gần như không tự thấy.
+
+- [ ] **Đếm worst-case số lượt hỏi** của flow (câu/lượt × sàn tối thiểu × số màn/nhánh...).
+      Phỏng vấn tuần tự vượt ~15–20 lượt = cờ đỏ *interview fatigue*: từ đó người dùng trả
+      lời ẩu, spec "đầy đủ" mà sai. Có gom câu độc lập chung lượt không (AskUserQuestion cho
+      phép tới 4 câu/lần — command tự trói xuống 1 là tự gây hại)?
+- [ ] **Phân tầng trọng yếu**: mọi quyết định có ngang nhau không (sort mặc định tốn một
+      lượt như máy trạng thái nghiệp vụ)? Quyết định low-stakes nên là đề-xuất-kèm-căn-cứ
+      rồi duyệt gộp; high-stakes mới đáng một lượt hỏi riêng.
+- [ ] **Recommended/anchoring bias**: option gợi ý có buộc căn cứ (từ khảo sát/artifact)
+      không? Prompt cấm model đoán nhưng bắt mọi câu phải có `(Recommended)` = mở cửa sau
+      cho chính informed-guess — user mệt bấm gợi ý, ý model đội lốt xác nhận user.
+- [ ] **Persist trạng thái**: bảng theo dõi/neo đếm/quyết định đã chốt có được ghi ra file
+      không, hay chỉ sống trong hội thoại? Flow dài gần như chắc chắn bị compaction — trạng
+      thái chỉ trong context là single point of failure. Có luật "đọc lại từ file, cấm dựng
+      lại từ trí nhớ" không?
+- [ ] **Bàn giao vật lý giữa các lệnh** (specify→plan→tasks): dữ liệu lệnh sau cần kế thừa
+      có nơi ghi cụ thể (file/section được nêu tên) không? "Ghi lại để lệnh sau kế thừa" mà
+      không nói ghi vào đâu = bay hơi cùng phiên chat.
+- [ ] **Xác nhận cuối giai đoạn duyệt cái gì**: recap NỘI DUNG quyết định, hay chỉ bảng
+      trạng thái quy trình? Người dùng ký nội dung, không ký tiến độ.
+- [ ] **Side-effect trước xác nhận**: command có ghi/sửa file (roadmap, doc, status) trước
+      khi người dùng xác nhận phạm vi không? Phiên hủy giữa chừng để lại vết bẩn gì?
+- [ ] **Nhánh cho ngoại lệ khuôn**: feature không UI (K=0), repo không roadmap/domain doc,
+      dự án fresh — mỗi trường hợp có đường đi hợp lệ không, hay prompt ép nặn ra artifact
+      cho có?
+
 ### Best-practices / bloat
 - [ ] Prompt bloat: in lại nguyên bảng nhiều lần, nhắc cùng một luật 3 chỗ, over-specify việc
       model đã biết? Gộp/tham chiếu lại được không?

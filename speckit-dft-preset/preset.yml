@@ -1,0 +1,51 @@
+schema_version: "1.0"
+
+preset:
+  id: "dft-preset"
+  name: "DFT Spec Kit Preset"
+  version: "4.0.0"
+  description: "Override speckit.specify/plan: business analyst phỏng vấn qua AskUserQuestion (gom câu độc lập; trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp), sổ theo dõi persist ra file, khung constitution, tiếng Việt. Dùng template mặc định của spec-kit."
+  author: "Nguyen Tuan Anh"
+  repository: "https://github.com/anhnt3/agent-skills"
+  license: "MIT"
+
+requires:
+  # >=0.6.0: bản đầu tiên các preset khác dựa vào để dùng AskUserQuestion trên Claude Code
+  speckit_version: ">=0.6.0"
+
+provides:
+  templates:
+    - type: "template"
+      name: "constitution-template"
+      file: "templates/constitution.md"
+      description: "Ship hiến chương 11 nguyên tắc (bản generic cho hệ fullstack doanh nghiệp); specify dùng làm vòng kiểm cuối, plan dùng làm Constitution Check"
+      strategy: "replace"
+
+    - type: "template"
+      name: "ui-ux-checklist"
+      file: "templates/ui-ux-checklist.md"
+      description: "Bộ checklist cố định UI/UX (nguyên tắc IV), CHK001–010 — spec-completeness gate"
+
+    - type: "command"
+      name: "speckit.checklist"
+      file: "commands/speckit.checklist.md"
+      description: "Wrap checklist: fast-path stamp bộ IV cố định + chấm theo spec (tick/gap/N-A có nguồn) + thảo luận vá gap; args khác chạy sinh động core"
+      strategy: "wrap"
+
+    - type: "command"
+      name: "speckit.specify"
+      file: "commands/speckit.specify.md"
+      description: "Wrap specify: khảo sát repo + nợ kỹ thuật, phỏng vấn theo trục nghiệp vụ (trên màn hình → nghiệp vụ nền) — gom 1–4 câu độc lập/lượt, quyết định trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp; sổ theo dõi vét cạn persist ra .specify/interviews/; đối chiếu constitution như vòng kiểm; ràng buộc kỹ thuật bàn giao cho plan qua section trong spec.md. Dùng spec-template mặc định."
+      strategy: "wrap"
+
+    - type: "command"
+      name: "speckit.plan"
+      file: "commands/speckit.plan.md"
+      description: "Wrap plan: đọc section 'Ràng buộc kỹ thuật kế thừa' trong spec.md (do specify ghi) làm đầu vào bắt buộc + khảo sát codebase liên quan feature trước khi điền Technical Context. Dùng plan-template mặc định."
+      strategy: "wrap"
+
+tags:
+  - "specify"
+  - "interview"
+  - "vietnamese"
+  - "business-analysis"

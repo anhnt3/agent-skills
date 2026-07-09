@@ -15,13 +15,13 @@ Kích hoạt fast-path khi `$ARGUMENTS` chứa (token độc lập, không phân
 ### Bước 2 — Chấm (chỉ khi có spec)
 Nếu `$ARGUMENTS` chỉ tới spec.md (hoặc feature có spec.md): đọc spec, chấm **từng mục còn `[ ]` trống** (KHÔNG đụng mục người đã `[x]`):
 - **Pass** → tick `[x]`, ghi cuối dòng ` — ✅ nguồn: <FR-xxx/§IV/…>`.
-- **N/A** → giữ `[ ]`, ghi ` — ➖ N/A: <lý do>`.
+- **N/A** → giữ `[ ]`, ghi ` — ➖ N/A: <lý do cụ thể gắn feature này, vd "màn chỉ đọc, không có form nhập">`. CẤM lý do trống hoặc chung chung ("không áp dụng", "không liên quan").
 - **Gap** (spec thiếu/mơ hồ, tester không viết được testcase) → giữ `[ ]`, ghi ` — ⚠️ Gap: <thiếu gì>`.
-Mỗi verdict PHẢI trích nguồn spec; không có nguồn = Gap. Thêm cuối file mục `## Tổng` (đếm Pass/N/A/Gap).
+Mỗi verdict PHẢI trích nguồn spec; không có nguồn = Gap. Thêm cuối file mục `## Tổng` (đếm Pass/N/A/Gap) kèm dòng đối chiếu: **Pass + N/A + Gap phải = tổng số mục CHK của bộ cố định** (đếm từ file bộ, không ước lượng); lệch = còn mục chưa chấm, quay lại chấm nốt.
 
 ### Bước 3 — Thảo luận & vá gap
-Với MỖI Gap:
-1. Hỏi qua **AskUserQuestion** (một câu/lần, 2–4 option, `(Recommended)` đầu, kèm lý do) cách vá.
+Với các Gap:
+1. Hỏi cách vá qua **AskUserQuestion** — mỗi lượt gom 1–4 gap **độc lập nhau** (gap này vá thế nào không đổi cách vá gap kia; gap phụ thuộc tách lượt sau), mỗi gap một câu 2–4 option kèm lý do + trade-off. `(Recommended)` CHỈ khi có căn cứ (spec, nguyên tắc IV, mẫu màn khác cùng hệ thống — nêu căn cứ ngay trong option); không căn cứ thì không đánh.
 2. Sau khi người dùng chốt, **sửa trực tiếp `spec.md`**: cập nhật/append đúng requirement liên quan (FR-xxx, mục §IV, …), giữ cấu trúc + dấu nguồn `[từ khảo sát]`/`[suy luận]`/`[cần bạn quyết]`. Sửa đúng chỗ gap, không viết lại phần khác.
 3. Chấm lại mục đó; đạt thì tick `[x]` + nguồn mới. Cập nhật `## Tổng`.
 Hết gap (hoặc người dùng chấp nhận để lại): DỪNG, báo tổng kết các thay đổi đã ghi vào spec.md.
