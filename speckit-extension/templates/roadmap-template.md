@@ -1,6 +1,6 @@
 # Roadmap Build — [TÊN DỰ ÁN]
 
-**Mục tiêu**: thứ tự wire backend từng màn/chức năng từ frontend mockup.
+**Mục tiêu**: thứ tự build/hoàn thiện từng màn/chức năng.
 **Cập nhật**: [DATE]
 **Trạng thái item**: `chưa` (mặc định) / `đang` / `xong`.
 

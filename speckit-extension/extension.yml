@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "dft-speckit"
   name: "DFT Spec Kit Extension"
-  version: "1.7.0"
+  version: "1.9.0"
   description: "Bộ command dùng chung của DFT cho Spec Kit — tập hợp các command hỗ trợ quy trình spec-driven development của công ty. Sẽ mở rộng dần nhiều command."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/dft/agent-skills"
@@ -25,7 +25,7 @@ provides:
 
     - name: "speckit.dft-speckit.domain-design"
       file: "commands/domain-design.md"
-      description: "Thiết kế/cập nhật domain tổng thể cho 1 module trong roadmap — rút entity/FK/enum/rule, ghi docs/domain/<module>.md làm nền cho /speckit.specify từng màn."
+      description: "Thiết kế/cập nhật domain tổng thể cho một hoặc nhiều module trong roadmap (gom cả danh sách vào 1 doc) — rút entity/FK/enum/rule, ghi docs/domain/<module>.md làm nền cho /speckit.specify từng màn."
 
   templates:
     - name: "roadmap-template"

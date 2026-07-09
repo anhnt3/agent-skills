@@ -18,11 +18,11 @@ Kỳ vọng: **một hoặc danh sách giá trị cột `Module`** trong `docs/r
 
 Mỗi phần tử nhận dạng:
 - **Khớp chính xác** một module (vd `khdn/devices`) → mọi item module đó.
-- **Prefix** (vd `system` hoặc `system/*`) → mọi module bắt đầu bằng prefix. Tương đương liệt kê tay các module con.
+- **Prefix** (vd `system` hoặc `system/*`) → mọi module bắt đầu bằng prefix. Tương đương liệt kê tay các module con. Roadmap không dùng quy ước `<khu-vực>/<module>` (không có `/`) → prefix chỉ khớp đầu chuỗi; nói rõ điều này khi báo phạm vi.
 
 Gộp mọi item của mọi phần tử = phạm vi domain của **1 doc**.
 
-- **Tên file**: nếu mọi phần tử chung 1 prefix → dùng prefix (vd cả 3 `system/*` → `docs/domain/system.md`). Không chung prefix → hỏi người dùng đặt tên cụm (AskUserQuestion), hoặc nối bằng `-`.
+- **Tên file**: theo quy tắc ở bước 6.
 - Trống → đọc roadmap, **liệt kê các module** kèm số item, gợi ý cụm nên gom (prefix/phụ thuộc chung), hỏi người dùng chọn (AskUserQuestion) — cho chọn nhiều gom 1 doc.
 - Phần tử nào không khớp → liệt kê module có thật, hỏi lại. **Đừng đoán.**
 
@@ -32,15 +32,17 @@ Gộp mọi item của mọi phần tử = phạm vi domain của **1 doc**.
 
 ### 1. Chốt phạm vi từ roadmap
 `docs/roadmap.md` KHÔNG tồn tại → **dừng**, nhắc chạy `/speckit.dft-speckit.road-map-from-codebase` trước.
-Có roadmap: lọc item theo **mọi phần tử** trong `<arg>` (khớp chính xác cột Module hoặc prefix — xem User Input), **gộp lại** thành 1 phạm vi. Ghi lại danh sách RM-ID + tên màn + thực thể/CRUD + phụ thuộc. Không phần tử nào khớp item → báo và dừng.
-**Phụ thuộc chéo module**: nếu item trong phạm vi phụ thuộc RM thuộc **module khác** (vd Bán thiết bị phụ thuộc Doanh nghiệp), ghi nhận entity module khác đó là **tham chiếu ngoài** (external) — sẽ trỏ FK tới, KHÔNG định nghĩa lại ở doc này (xem bước 4).
+Có roadmap: lọc item theo **mọi phần tử** trong `<arg>` (khớp chính xác cột Module hoặc prefix — xem User Input), **gộp lại** thành 1 phạm vi. Ghi lại danh sách RM-ID + tên màn + thực thể/CRUD + phụ thuộc. Không phần tử nào khớp item → báo và dừng. Item có cột Module trống/không đọc được → báo tường minh, KHÔNG im lặng bỏ.
+**Chốt số N**: đếm thẳng từ `docs/roadmap.md` số item khớp phạm vi, ghi `N = <số>`. N là mỏ neo cho bước 7 — bước 7 đếm lại từ roadmap, không tin danh sách bước này.
+**Phụ thuộc chéo module**: với mỗi RM-ID ở cột Phụ thuộc, tra ngược cột Module của RM-ID đó trong roadmap để biết nó trong hay ngoài phạm vi. Nếu item trong phạm vi phụ thuộc RM thuộc **module khác** (vd Bán thiết bị phụ thuộc Doanh nghiệp), ghi nhận entity module khác đó là **tham chiếu ngoài** (external) — sẽ trỏ FK tới, KHÔNG định nghĩa lại ở doc này (xem bước 4).
 
 ### 2. Đọc nguồn, KHÔNG đoán
 Rút model từ code thật trong codebase, không bịa. Tự tìm nguồn liên quan tới module (đừng giả định layout — quét thật):
 - **Phía client/mockup**: model/type/interface + service của module — field, kiểu, quan hệ ngầm (id tham chiếu), enum, danh sách trạng thái.
 - **Phía server (nếu module đã bắt đầu)**: entity/model, DTO, enum, error code, migration/schema — bất kể ngôn ngữ/framework.
-- **Nguồn framework hợp lệ** (không chỉ code trong repo): base class / package / module nền tảng mà entity kế thừa hoặc framework cung cấp sẵn (vd lớp cha audit/aggregate, module Identity/permission có sẵn). Nhận diện qua: class kế thừa base của framework, package đã import, cấu hình module. Cite framework/base class làm nguồn = hợp lệ, KHÔNG tính là "bịa" — miễn không chế field không có thật.
+- **Nguồn framework hợp lệ** (không chỉ code trong repo): base class / package / module nền tảng mà entity kế thừa hoặc framework cung cấp sẵn (vd lớp cha audit/aggregate, module Identity/permission có sẵn). Nhận diện qua: class kế thừa base của framework, package đã import, cấu hình module. Cite framework/base class làm nguồn = hợp lệ, KHÔNG tính là "bịa" — **với điều kiện nêu đích danh tên class/package + nơi thấy nó** (vd `kế thừa BaseAuditEntity, khai ở src/Domain/Common`). Cite chung chung ("framework Identity có sẵn") KHÔNG hợp lệ, coi như bịa.
 - Không tìm được nguồn (kể cả framework) cho một entity → ghi vào mục "Câu hỏi mở", KHÔNG bịa field. Không xác định được vị trí code → hỏi lại, đừng đoán.
+- **"Câu hỏi mở" không phải chỗ né việc**: mỗi mục ghi vào đó phải kèm lý do kiểm chứng được ("đã quét `<đường dẫn/pattern>`, không thấy nguồn"). Cấm ghi mục trống lý do.
 
 ### 3. Ưu tiên dùng lại đồ framework đã cho
 Trước khi định nghĩa entity/field/enum MỚI, kiểm tra framework/nền tảng của codebase **đã cung cấp sẵn** cái đó chưa (vd: user/role/permission/tenant, trường audit, khóa, soft-delete, cây phân cấp…). Có sẵn →
@@ -63,19 +65,21 @@ Hỏi **mỗi lần MỘT câu**, 2–4 option, `(Recommended)` đầu kèm lý 
 - Aggregate boundary (entity con thuộc root nào).
 - On-delete: Restrict vs Cascade vs SetNull khi có tham chiếu.
 - Field chung nên nằm ở entity nào (tránh trùng lặp).
-Fact tra từ code; **quyết định thiết kế là của người dùng** — đặt từng cái, chờ trả lời.
+Fact tra từ code; **quyết định thiết kế là của người dùng** — đặt từng cái, **chờ phản hồi thật của người dùng**, cấm tự suy "chắc đồng ý". Không chắc một thứ là fact hay quyết định → coi là **quyết định**, phải hỏi. On-delete của FK mà việc xóa có nghĩa nghiệp vụ thật → phải hỏi, không lặng lẽ lấy mặc định Restrict.
 
 ### 6. Ghi `docs/domain/<module>.md` theo khung CỐ ĐỊNH
 - Lấy khung: `specify preset resolve domain-template`; không resolve được → đọc `templates/domain-template.md` trong extension đã cài; vẫn không thấy → hỏi.
 - Tên file: prefix chung của danh sách nếu có (vd cả 3 `system/*` → `system`), không thì tên cụm người dùng đặt / nối `-`. Chuẩn hóa: lowercase, thay mọi ký tự ngoài `[a-z0-9-]` bằng `-`, gộp `-` liền kề (vd `khdn/devices` → `docs/domain/khdn-devices.md`; `system` → `docs/domain/system.md`). Tạo thư mục `docs/domain/` nếu chưa có.
-- Copy đúng cấu trúc khung, chỉ **điền** placeholder `[…]`, thay `[DATE]` bằng ngày hiện tại. Giữ nguyên tên cột, thứ tự mục, format.
-- **KHÔNG clobber**: nếu file đã tồn tại, giữ nguyên mục **"Câu hỏi mở / nợ domain"** và mọi quyết định đã chốt; chỉ bổ sung/sửa entity khi người dùng yêu cầu hoặc specify phát hiện thiếu.
+- **File CHƯA tồn tại** → copy đúng cấu trúc khung, chỉ **điền** placeholder `[…]`, thay `[DATE]` bằng ngày hiện tại. Giữ nguyên tên cột, thứ tự mục, format.
+- **File ĐÃ tồn tại** → **ĐỌC file hiện tại trước**, chỉ chèn/sửa entity tại chỗ; **KHÔNG copy khung đè**. Giữ nguyên mục **"Câu hỏi mở / nợ domain"** và mọi quyết định đã chốt; chỉ bổ sung/sửa entity khi người dùng yêu cầu hoặc specify phát hiện thiếu. Câu hỏi mở cũ nay bước 2 đã tìm được nguồn → gạch khỏi mục đó và điền vào entity (giải nợ, không để tồn đọng).
 
 ### 7. Verification (trước khi báo xong)
-- Mọi RM-ID của module xuất hiện ở cột "Dùng ở (RM)" của ít nhất 1 entity (không entity nào → cảnh báo phạm vi sót).
-- Mọi FK ở mục 3 trỏ tới: entity có thật ở mục 1 (nội bộ), HOẶC entity **external** đã nêu module sở hữu, HOẶC mục "Câu hỏi mở" (module sở hữu chưa có doc). FK trỏ vào hư vô → fail.
+- **Đếm lại từ `docs/roadmap.md`** (không dùng lại danh sách bước 1): số item khớp phạm vi phải bằng `N`; mọi RM-ID trong N đó xuất hiện ở cột "Dùng ở (RM)" của ít nhất 1 entity. Lệch → phạm vi sót, fail.
+- Mọi FK ở mục 3 trỏ tới: entity có thật ở mục 1 (nội bộ), HOẶC entity **external** đã nêu module sở hữu, HOẶC mục "Câu hỏi mở" (module sở hữu chưa có doc). FK có entity đích **nằm trong phạm vi doc này** mà bị đẩy sang "Câu hỏi mở" → fail (phải định nghĩa). FK trỏ vào hư vô → fail.
+- Mọi mục trong "Câu hỏi mở" có lý do kiểm chứng được (đã quét đâu, không thấy gì). Mục trống lý do → fail.
+- Mục 4 (enum/error code) và mục 5 (rule chung): mỗi dòng truy được về nguồn bước 2 hoặc quyết định người dùng ở bước 5.
 - Không còn placeholder `[…]` sót lại trong file.
-- Không entity nào field bịa (mọi field truy được về nguồn ở bước 2, hoặc nằm trong "Câu hỏi mở").
+- Không entity nào field bịa: mọi field truy được về nguồn ở bước 2 — nguồn framework phải nêu **đích danh class/package**, "framework nói chung" → fail — hoặc nằm trong "Câu hỏi mở".
 
 Kết thúc: báo doc đã tạo/cập nhật (danh sách module đã gom, đường dẫn file, số entity, số FK, số câu hỏi mở còn lại), và nhắc:
 `/speckit.specify <RM-ID>` — mỗi màn đọc `docs/domain/<module>.md` làm nền model.

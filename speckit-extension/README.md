@@ -11,7 +11,7 @@ bổ sung thêm command mới theo nhu cầu.
 |---------|-------|
 | `speckit.dft-speckit.qa-spec-cycle` | **QA trọn vòng từ 1 file spec** — 13 pha: sinh testcase thủ công (xlsx 2 sheet), sinh test tự động theo pyramid, tự dựng môi trường và chạy, báo cáo, triage + fix có kiểm soát, ghi ma trận truy vết. Technology-agnostic (đặc thù stack đọc từ `.agents/qa-context.md`). Bao trùm luôn command `manual-xlsx` cũ ở Pha 4. |
 | `speckit.dft-speckit.road-map-from-codebase` | Lập/cập nhật roadmap build từ codebase — xếp thứ tự từng màn, ghi `docs/roadmap.md`. |
-| `speckit.dft-speckit.domain-design` | Thiết kế/cập nhật domain tổng thể cho 1 module trong roadmap, ghi `docs/domain/<module>.md`. |
+| `speckit.dft-speckit.domain-design` | Thiết kế/cập nhật domain tổng thể cho một hoặc nhiều module trong roadmap (gom 1 doc), ghi `docs/domain/<module>.md`. |
 | _(sắp có)_ | Các command DFT khác sẽ được thêm vào đây. |
 
 ## Thêm command mới
@@ -88,7 +88,7 @@ Sau khi workflow xong, cài bằng:
 
 ```bash
 specify extension add dft-speckit --force --from \
-  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v1.7.0/dft-speckit-1.7.0.zip
+  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v1.9.0/dft-speckit-1.9.0.zip
 ```
 
 > Cũng có thể chạy tay qua tab **Actions → Release dft-speckit extension → Run workflow** và nhập version.
