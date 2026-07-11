@@ -30,7 +30,8 @@ Hỏi cái đáng hỏi, không rải đều: **ranh giới wave, thứ tự có
 - **ID ổn định** (`RM-001`, `RM-002`, …) khớp giữa bảng tổng và khối chi tiết — để `/speckit.specify <ID>` lấy được. Cấp **tăng dần theo lần thêm**, **KHÔNG bao giờ đánh số lại** khi đổi thứ tự (domain doc và spec cũ trỏ vào ID này). Thứ tự build thể hiện bằng cột `Wave` + vị trí dòng, KHÔNG bằng con số trong ID.
 
 ## 5. Kiểm lại (trước khi báo xong)
-- Đếm lại từ nguồn ở bước 1: số item trong bảng tổng phải ≥ `N`. Thiếu → quét tiếp, KHÔNG báo xong.
+- Đối chiếu theo **DANH SÁCH**, không chỉ theo số đếm: mỗi màn trong danh sách `N` của bước 1 phải map được vào ≥1 item trong bảng tổng (tên lệch thì ghi cặp map tường minh); màn không map được → thêm item, KHÔNG báo xong. `số item ≥ N` là hệ quả, không phải phép kiểm — 12 item cũ với 12 màn mới vẫn có thể lệch nhau từng phần tử.
+- Item trong bảng không còn tìm thấy nguồn trong codebase (màn đã bị gỡ) → **giữ nguyên item** (no-clobber), ghi chú `không còn thấy trong codebase` vào khối chi tiết, báo người dùng quyết.
 - Mọi ID trong bảng tổng có khối chi tiết tương ứng và ngược lại.
 - File cũ: mọi item cũ giữ **nguyên giá trị `Trạng thái` trước đó** (kể cả `đang`/`xong` — không bị reset về `chưa` do copy khung) và mọi `Nợ phát sinh` cũ còn nguyên.
 - Không còn placeholder `[…]` sót lại.

@@ -36,10 +36,14 @@ Kỳ vọng: đường dẫn tới `spec.md` hoặc thư mục feature. Nếu tr
 
 ## Pipeline 13 pha
 
+**Bắt buộc**: trước khi bắt đầu một pha có ghi `→ chi tiết:`, PHẢI đọc file chi tiết đó (mỗi file một
+lần trong phiên — kể cả khi resume vào giữa pha). Dòng tóm tắt trong command này KHÔNG đủ để thực thi
+pha; thực thi mà chưa đọc chi tiết là vi phạm quy trình.
+
 Ghi trạng thái pha vào `<thư mục spec>/qa-run.md` ngay sau khi hoàn thành mỗi pha (để resume). Nếu
 `qa-run.md` đã tồn tại khi bắt đầu → đọc ledger, tiếp tục từ pha dở dang, không làm lại từ đầu.
 
-- [ ] **Pha 0 — Intake.** Xác định file spec (từ `$ARGUMENTS` hoặc hỏi), rút feature-id + PREFIX (vd `DEV`) dùng cho ID testcase. **Trích nguyên văn danh sách id FR/AC từ chính file spec** (không từ trí nhớ), đếm `N`, ghi cả danh sách + `N` vào `qa-run.md` — đây là mỏ neo đối chiếu của Pha 3/9/Done-when. Tạo `qa-run.md` nếu chưa có, hoặc đọc ledger nếu đã có (đã có ID testcase trong xlsx → tái dùng nguyên văn, cấm renumber, xem Pha 4).
+- [ ] **Pha 0 — Intake.** Xác định file spec (từ `$ARGUMENTS` hoặc hỏi), rút feature-id + PREFIX (vd `DEV`) dùng cho ID testcase. **Trích nguyên văn danh sách id FR/AC từ chính file spec** (không từ trí nhớ), đếm `N`, ghi cả danh sách + `N` vào `qa-run.md` — đây là mỏ neo đối chiếu của Pha 3/9/Done-when. Tạo `qa-run.md` nếu chưa có, hoặc đọc ledger nếu đã có (đã có ID testcase trong xlsx → tái dùng nguyên văn, cấm renumber, xem Pha 4). → chi tiết (format ledger chuẩn + quy tắc resume): `.specify/extensions/dft-speckit/references/traceability.md` §2–§3 — ledger free-form không theo format là phiên sau không resume được.
 - [ ] **Pha 1 — Context.** Có `.agents/qa-context.md` → load. Thiếu → scan + phỏng vấn tạo mới theo template slim. → chi tiết: `.specify/extensions/dft-speckit/references/qa-context-template.md`
 - [ ] **Pha 2 — Scan & baseline.** Dò framework/thư mục test hiện có (điền vào qa-context những field còn thiếu), test đã có cho spec này chưa, môi trường sẵn sàng chưa → **thông báo phát hiện**, không hỏi lại cái đã dò được. → chi tiết: `.specify/extensions/dft-speckit/references/qa-context-template.md`
 - [ ] **Pha 3 — Coverage matrix.** Từ mỗi FR/AC + mức risk → chọn tầng test (unit/integration/E2E/manual-only) + lý do. **Cổng đếm: ma trận phải phủ đủ `N` id đã chốt ở Pha 0** — id nào không có dòng nào → ghi tường minh là `GAP` kèm lý do, cấm bỏ trắng. → chi tiết: `.specify/extensions/dft-speckit/references/coverage-matrix.md`
@@ -63,10 +67,11 @@ Ghi trạng thái pha vào `<thư mục spec>/qa-run.md` ngay sau khi hoàn thà
 ## Chế độ non-interactive
 
 Khi command chạy không có người trực tiếp (subagent/CI/autopilot) và gặp 1 trong các cổng cứng ở trên
-(escalate Pha 7, product-bug Pha 10) → **KHÔNG được** tự bỏ qua cổng, tự ý duyệt fix
-code sản phẩm, hay ghi test chưa chạy thành "pass". Thay vào đó: ghi 1 bản ghi blocker vào
-`qa-run.md` (đang ở pha nào, cần gì, vì sao dừng) rồi **HALT**. Chạy lại sau (có người) → đọc
-`qa-run.md`, tiếp tục đúng từ điểm blocker.
+(escalate Pha 7, product-bug Pha 10, **xác nhận ghi CLAUDE.md/AGENTS.md ở Pha 12**) → **KHÔNG được** tự
+bỏ qua cổng, tự ý duyệt fix code sản phẩm, hay ghi test chưa chạy thành "pass". Thay vào đó: ghi 1 bản
+ghi blocker vào `qa-run.md` (đang ở pha nào, cần gì, vì sao dừng) rồi **HALT**. Riêng Pha 12: KHÔNG ghi
+`CLAUDE.md`/`AGENTS.md` khi không có người duyệt — ghi diff đề xuất vào `qa-run.md`, đánh dấu Pha 12
+`blocked`, rồi HALT. Chạy lại sau (có người) → đọc `qa-run.md`, tiếp tục đúng từ điểm blocker.
 
 Pha 9 (present) **không** phải điểm HALT: vẫn xuất đầy đủ báo cáo rồi chạy tiếp Pha 10 (auto-fix
 test-defect/infra-blocker — không cần người duyệt); chỉ dừng khi chạm product-bug.
@@ -85,6 +90,11 @@ quả grep) làm phình context của agent chính.
 | 6 — Quality gate | Đường dẫn test vừa sinh + source root | **Fact thô**: đuôi log compile/type-check, danh sách `MISSING` đã xác nhận (không phải dynamic), vị trí assert tầm thường + đường dẫn artifact — **cha ra phán quyết PASS/FAIL**, con không tự tuyên bố PASS |
 | 7 — Readiness | Khối "Môi trường & lệnh dựng" + test DB dùng-một-lần đã khai báo | Log ghi ra file + fact `READY`/`BLOCKED` + lý do — **quyết định escalate vẫn ở orchestrator** |
 | 8 — Run + record | Lệnh chạy từng tầng | stdout → log file; trả pass/fail + id test fail + đường dẫn log. **Con không ghi `qa-run.md`/xlsx** — chỉ cha ghi |
+
+**Prompt giao cho con PHẢI kèm**: đường dẫn file reference chi tiết của pha đó (bảng trên chỉ liệt kê
+dữ liệu; con là context mới tinh, không tự biết reference tồn tại) + chỉ thị "đọc file reference này
+TRƯỚC khi làm"; riêng Pha 5 kèm thêm **danh sách ID manual TC** (từ JSON/xlsx Pha 4) để comment truy
+vết `Manual TC:` không bịa ID.
 
 **Giữ trong orchestrator, KHÔNG ủy thác:** mọi cổng cứng (Pha 7 escalate, Pha 9 present, Pha 10 duyệt
 product-bug, HALT ở chế độ non-interactive), `qa-run.md` ledger + xlsx (single source of truth), mọi

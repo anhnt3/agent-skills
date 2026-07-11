@@ -30,7 +30,7 @@ Các override bổ trợ nhau (5 override, gom theo mục đích):
 - `plan.md` dùng **plan-template mặc định**; cổng Constitution Check của core phải pass trước Phase 0.
 
 **3. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định + chấm*:
-- `/speckit.checklist ui-ux @spec.md` → 3 bước: **stamp** bộ IV cố định (CHK001–010) → **chấm** theo spec (tick `[x]` pass + nguồn, `⚠️ Gap`, `➖ N/A`, bảng Tổng) → **thảo luận vá** từng gap qua AskUserQuestion, cập nhật spec.md rồi tick pass.
+- `/speckit.checklist ui-ux @spec.md` → 3 bước: **stamp** bộ IV cố định → **chấm** theo spec (tick `[x]` pass + nguồn, `⚠️ Gap`, `➖ N/A`, bảng Tổng) → **thảo luận vá** từng gap qua AskUserQuestion, cập nhật spec.md rồi tick pass.
 - Chỉ điền mục còn `[ ]` trống; **giữ nguyên tick + note người đã ghi** (không clobber).
 - Không kèm spec → chỉ stamp list trống. Args khác → chạy checklist sinh động của core.
 - Là spec-completeness gate cho UI/UX. Bộ này **độc lập** với hiến chương: nó vẫn chạy dù hiến chương có nguyên tắc UI/UX hay không, và không neo vào số thứ tự nguyên tắc nào (hiến chương do `/speckit.constitution` sinh ra là động, ≤7 nguyên tắc).
@@ -66,7 +66,7 @@ specify preset remove dft-preset
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-preset-v0.0.1/dft-preset-0.0.1.zip
+specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-preset-v0.0.2/dft-preset-0.0.2.zip
 ```
 
 ## Publish (GitHub release zip — thủ công, chủ đích)

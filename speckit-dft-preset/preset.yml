@@ -20,7 +20,7 @@ provides:
     - type: "template"
       name: "ui-ux-checklist"
       file: "templates/ui-ux-checklist.md"
-      description: "Bộ checklist cố định UI/UX, CHK001–010 — spec-completeness gate, độc lập với việc hiến chương có nguyên tắc UI/UX hay không"
+      description: "Bộ checklist cố định UI/UX — spec-completeness gate, độc lập với việc hiến chương có nguyên tắc UI/UX hay không"
 
     - type: "command"
       name: "speckit.constitution"

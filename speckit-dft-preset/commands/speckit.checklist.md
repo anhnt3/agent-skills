@@ -18,11 +18,11 @@ Kích hoạt fast-path khi `$ARGUMENTS` chứa (token độc lập, không phân
   - Thay `[DATE]` bằng ngày hiện tại, `[Link to spec.md]` bằng đường dẫn spec.md của feature.
 
 ### Bước 2 — Chấm (chỉ khi có spec)
-Nếu `$ARGUMENTS` chỉ tới spec.md (hoặc feature có spec.md): đọc spec, chấm **từng mục còn `[ ]` trống** (KHÔNG đụng mục người đã `[x]`):
+Nếu `$ARGUMENTS` chỉ tới spec.md (hoặc feature có spec.md): đọc spec, chấm theo luật — mục `[ ]` **chưa có verdict** → chấm mới; mục `⚠️ Gap` cũ → **chấm LẠI** theo spec hiện tại (gap đã được vá thì tick `[x]` + nguồn mới); mục đã `[x]` hoặc `➖ N/A` → **giữ nguyên**, không re-litigate:
 - **Pass** → tick `[x]`, ghi cuối dòng ` — ✅ nguồn: <FR-xxx/§IV/…>`.
 - **N/A** → giữ `[ ]`, ghi ` — ➖ N/A: <lý do cụ thể gắn feature này, vd "màn chỉ đọc, không có form nhập">`. CẤM lý do trống hoặc chung chung ("không áp dụng", "không liên quan").
 - **Gap** (spec thiếu/mơ hồ, tester không viết được testcase) → giữ `[ ]`, ghi ` — ⚠️ Gap: <thiếu gì>`.
-Mỗi verdict PHẢI trích nguồn spec; không có nguồn = Gap. Thêm cuối file mục `## Tổng` (đếm Pass/N/A/Gap) kèm dòng đối chiếu: **Pass + N/A + Gap phải = tổng số mục CHK của bộ cố định** (đếm từ file bộ, không ước lượng); lệch = còn mục chưa chấm, quay lại chấm nốt.
+Mỗi verdict PHẢI trích nguồn spec; không có nguồn = Gap. Tạo (nếu chưa có) hoặc **CẬP NHẬT** mục `## Tổng` ở cuối file — không append bản `## Tổng` thứ hai. Đếm: Pass = số mục tick `[x]` (kể cả mục người tự tick không có marker `— ✅`); kèm dòng đối chiếu: **Pass + N/A + Gap phải = tổng số mục CHK của bộ cố định** (đếm từ file bộ, không ước lượng); lệch = còn mục chưa chấm, quay lại chấm nốt.
 
 ### Bước 3 — Thảo luận & vá gap
 Với các Gap:
@@ -31,9 +31,9 @@ Với các Gap:
 3. Chấm lại mục đó; đạt thì tick `[x]` + nguồn mới. Cập nhật `## Tổng`.
 Hết gap (hoặc người dùng chấp nhận để lại): DỪNG, báo tổng kết các thay đổi đã ghi vào spec.md.
 
-Verdict đã gắn (`— ✅/⚠️/➖`) là trạng thái review, KHÔNG coi là "nội dung item cố định" khi re-run so sánh — re-run chỉ đồng bộ text mục CHK theo bộ cố định, giữ nguyên verdict + tick.
+Verdict đã gắn (`— ✅/⚠️/➖`) là trạng thái review, KHÔNG coi là "nội dung item cố định" khi re-run so sánh — luật này chỉ áp cho việc **đồng bộ text ở Bước 1** (giữ verdict + tick khi cập nhật nội dung item); việc chấm lại mục Gap thuộc Bước 2, theo luật ở đó.
 
-Không có spec → chỉ Bước 1, báo đã tạo list trống rồi DỪNG (không chạy core).
+Không có spec → chỉ Bước 1, báo đã tạo list trống rồi DỪNG (không sinh checklist động của core). **Mọi nhánh fast-path vẫn thực hiện Pre/Post-Execution Checks của core bên dưới** (extension hooks `before_checklist`/`after_checklist`) — fast-path chỉ thay phần sinh checklist, không tắt hooks.
 
 Ngược lại (args khác), chạy bình thường phần core bên dưới.
 
