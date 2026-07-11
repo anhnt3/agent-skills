@@ -33,6 +33,7 @@ mkdir -p "$dest"
 # Chỉ đưa các phần cần thiết của extension.
 cp extension.yml "$dest/"
 [ -f README.md ] && cp README.md "$dest/"
+[ -f LICENSE ] && cp LICENSE "$dest/"
 [ -f .extensionignore ] && cp .extensionignore "$dest/"
 cp -R commands "$dest/"
 [ -d templates ] && cp -R templates "$dest/"

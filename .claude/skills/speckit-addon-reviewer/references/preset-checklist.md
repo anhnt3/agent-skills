@@ -7,7 +7,17 @@ Preset = override core command qua `preset.yml`. Review theo hai trục.
 - [ ] Mọi command khai trong `provides` có file `commands/*.md` tồn tại; mọi file `.md` thực
       có được khai. Không mồ côi.
 - [ ] Mỗi command `strategy: wrap` chứa đúng **một** token `{CORE_TEMPLATE}`. `replace` thì
-      không có token (thay hẳn).
+      không có token (thay hẳn). (Cơ chế thật: upstream `str.replace` MỌI occurrence — nhiều token
+      = core body bị nhân bản, vẫn là lỗi; thiếu token = hard error lúc cài.)
+- [ ] Command wrap khai `strategy: wrap` ở **cả frontmatter file** (không chỉ manifest) + có
+      `description` — upstream có code path legacy đọc từ frontmatter, và description là thứ
+      hiển thị khi materialize thành skill.
+- [ ] **`description` frontmatter phải NGẮN, vừa một dòng (~≤60 ký tự)** — description dài bị
+      YAML emitter wrap nhiều dòng khi materialize, và `inject_argument_hint` của spec-kit chèn
+      `argument-hint:` ngay sau dòng đầu → **frontmatter SKILL.md gãy YAML** (bug thực nghiệm
+      trên 0.12.4). Kiểm bằng cách cài thật rồi parse YAML frontmatter của skill sinh ra.
+- [ ] Build-zip của preset tự lọc rác (`.omc/`, `.DS_Store`...) — KHÔNG có `.presetignore`;
+      preset bị copy nguyên thư mục lúc cài.
 - [ ] Template `strategy: replace` trỏ file `templates/*.md` tồn tại, swap đúng core template.
 - [ ] `id`, `version` hợp lệ; version đã bump nếu chuẩn bị release (README install URL +
       release.sh derive từ version).
@@ -79,6 +89,11 @@ người ngồi trả lời và vòng đời phiên chạy. Đây là lớp lỗ
 ### Best-practices / bloat
 - [ ] Prompt bloat: in lại nguyên bảng nhiều lần, nhắc cùng một luật 3 chỗ, over-specify việc
       model đã biết? Gộp/tham chiếu lại được không?
-- [ ] Coupling nội tạng core (neo tên section/wording cứng) → cờ rủi ro upstream đổi.
+- [ ] Coupling nội tạng core (neo tên section/wording cứng) → cờ rủi ro upstream đổi. Neo phải
+      kiểm chứng được bằng máy (vd `scripts/check-core-anchors.sh`) và README/CLAUDE.md phải ghi
+      "tested with spec-kit <version>".
+- [ ] **Snapshot-clobber**: override preset là bản materialize, bị ghi đè khi nâng cấp CLI
+      spec-kit / re-init. README preset có document bước re-reconcile sau upgrade
+      (`preset disable` → `enable` + `preset resolve` verify) không? Thiếu = finding.
 - [ ] Degrees of freedom: chỗ mơ hồ là **cố ý** (tùy ngữ cảnh) hay **vô tình** (quên định
       nghĩa)? Phân biệt.

@@ -34,9 +34,10 @@ else
   gh release create "$tag" "$zip" --title "${pkg} ${version}" --notes "$notes"
 fi
 
-# Cập nhật URL cài trong README về đúng release vừa tạo.
+# Cập nhật URL cài trong README về đúng release vừa tạo (perl -pi: portable macOS/Linux,
+# sed -i khác cú pháp giữa BSD và GNU).
 if [ -f README.md ]; then
-  sed -i '' -E "s#https://github.com/[^ )]*/releases/download/${pkg}-v[^ )/]*/${pkg}-[^ )]*\.zip#${url}#g" README.md
+  URL_NEW="$url" PKG="$pkg" perl -pi -e 's#https://github\.com/[^ )]*/releases/download/$ENV{PKG}-v[^ )/]*/$ENV{PKG}-[^ )]*\.zip#$ENV{URL_NEW}#g' README.md
   echo "README: cập nhật URL -> $url"
 fi
 

@@ -1,5 +1,6 @@
 ---
 description: Hiến chương dự án từ quét codebase và phỏng vấn.
+strategy: wrap
 ---
 
 Trước khi chạy quy trình constitution core bên dưới, áp dụng preset **Constitution Architect**. Toàn bộ thảo luận bằng **tiếng Việt**. Bạn là **kiến trúc sư trưởng** đang soạn hiến chương cho dự án: đọc code để biết dự án ĐANG cưỡng chế luật gì, phỏng vấn để biết chủ dự án MUỐN cưỡng chế luật gì, rồi hợp nhất hai nguồn đó thành một hiến chương ít mà sắc. `$ARGUMENTS` (nếu có) chứa gợi ý nguyên tắc hoặc mối quan tâm của người dùng.

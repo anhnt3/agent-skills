@@ -4,7 +4,7 @@
 
 `.agents/qa-context.md` là nơi **DUY NHẤT** chứa mọi thứ đặc thù stack: framework test từng tầng, thư
 mục test, lệnh chạy/serve/migrate/seed, cách dựng môi trường, cơ chế auth E2E, chiến lược selector,
-lệnh compile/type-check. Skill `qa-spec-cycle` bản thân **không hardcode** bất kỳ tên framework hay
+lệnh compile/type-check. Command `qa-spec-cycle` bản thân **không hardcode** bất kỳ tên framework hay
 lệnh cụ thể nào — mọi thao tác cụ thể trong các pha (author test, dựng env, quality gate...) đều **đọc
 từ file này**.
 
@@ -12,10 +12,10 @@ từ file này**.
 
 | Lớp | Chứa gì |
 |-----|---------|
-| **Skill (engine, agnostic)** | Thuật toán, 13 pha, nguyên tắc, câu hỏi phỏng vấn, format xlsx |
+| **Command (engine, agnostic)** | Thuật toán, 13 pha, nguyên tắc, câu hỏi phỏng vấn, format xlsx |
 | **`.agents/qa-context.md` (config, per-project)** | Framework, thư mục, **lệnh**, môi trường, auth, selector — tất cả đặc thù stack |
 
-Đổi stack (Angular → Vue, ABP → NestJS...) = sửa `qa-context.md`, **không đụng vào skill**.
+Đổi stack (Angular → Vue, ABP → NestJS...) = sửa `qa-context.md`, **không đụng vào command**.
 
 Cách file này được điền: **scan trước, hỏi sau** (xem §3/§4 dưới). Thiếu field nào → thử scan để tự
 suy ra và **thông báo** cho người dùng biết đã suy ra gì; chỉ hỏi khi scan không đủ tự tin.
@@ -28,7 +28,7 @@ suy ra và **thông báo** cho người dùng biết đã suy ra gì; chỉ hỏ
 4. [Sau khi điền](#4-sau-khi-điền)
 
 > **Lưu ý quan trọng:** file đích là `.agents/qa-context.md` (slim, 4 khối). **KHÔNG** tái sử dụng hay
-> tham chiếu một `qa-project-context.md` verbose có sẵn trong repo (nếu có) — đó là artefact của skill
+> tham chiếu một `qa-project-context.md` verbose có sẵn trong repo (nếu có) — đó là artefact của công cụ
 > khác, khác mục đích và khác cấu trúc. Nếu phát hiện file đó tồn tại, vẫn tạo `.agents/qa-context.md`
 > mới theo template dưới đây (có thể tham khảo nội dung cũ để rút thông tin, nhưng không copy nguyên
 > cấu trúc).
@@ -63,7 +63,7 @@ trị thật đã scan/hỏi được. Không được để lại `<placeholder
 ## Môi trường & lệnh dựng
 - Services:        <lệnh dựng service phụ thuộc, vd DB/cache/mail>          # <ghi chú port/ready-check>
 - Test DB (dùng-một-lần): <connection string/DB name/container riêng, tách biệt khỏi DB dev>
-- An toàn để migrate/seed/reset? (bắt buộc = có, nếu không thì skill sẽ hỏi): <có/không>
+- An toàn để migrate/seed/reset? (bắt buộc = có, nếu không thì command sẽ hỏi): <có/không>
 - Migrate/seed:    <lệnh migrate + seed dữ liệu — CHỈ chạy nhắm vào "Test DB" ở trên>
 - Start backend:   <lệnh chạy backend>                                       # <port, tín hiệu ready>
 - Start frontend:  <lệnh chạy frontend>                                      # <port, tín hiệu ready>
@@ -73,13 +73,13 @@ trị thật đã scan/hỏi được. Không được để lại `<placeholder
 
 `Test DB (dùng-một-lần)` là field **bắt buộc** trước khi pha *Dựng môi trường* (xem
 `environment-bringup.md` §3) được phép chạy bất kỳ lệnh phá-huỷ dữ liệu nào (migrate/seed/reset). Nếu
-field này thiếu hoặc chỉ trỏ tới DB dev, skill **phải dừng lại và hỏi** thay vì tự ý migrate/seed/reset
+field này thiếu hoặc chỉ trỏ tới DB dev, command **phải dừng lại và hỏi** thay vì tự ý migrate/seed/reset
 DB dev — xem chi tiết gate ở `environment-bringup.md` §3.
 
 Mỗi `<placeholder>` phải được thay bằng giá trị cụ thể của project đang xử lý — không bao giờ để
-skill tự ý gán một framework/lệnh mặc định nào "cho chắc".
+command tự ý gán một framework/lệnh mặc định nào "cho chắc".
 
-### Ví dụ đã điền (chỉ để minh hoạ cách điền — KHÔNG phải giá trị mặc định của skill)
+### Ví dụ đã điền (chỉ để minh hoạ cách điền — KHÔNG phải giá trị mặc định của command)
 
 ```markdown
 ## Công cụ test
@@ -93,7 +93,7 @@ skill tự ý gán một framework/lệnh mặc định nào "cho chắc".
 - Services:        docker compose up -d          # Postgres :5432, Mailpit :1026/:8026
 - Test DB (dùng-một-lần): admin_mbf_test trên cùng Postgres instance (connection string riêng qua
   `ConnectionStrings__Default` khi chạy DbMigrator cho test — KHÔNG dùng conn string dev mặc định)
-- An toàn để migrate/seed/reset? (bắt buộc = có, nếu không thì skill sẽ hỏi): có
+- An toàn để migrate/seed/reset? (bắt buộc = có, nếu không thì command sẽ hỏi): có
 - Migrate/seed:    dotnet run --project src/admin_mbf.DbMigrator  # nhắm vào admin_mbf_test, không phải admin_mbf
 - Start backend:   dotnet run --project src/admin_mbf.HttpApi.Host   # :44368, ready khi Swagger 200
 - Start frontend:  npm start -- --port 4300                          # ready khi app-root render
@@ -102,7 +102,7 @@ skill tự ý gán một framework/lệnh mặc định nào "cho chắc".
 ```
 
 Đây chỉ là ví dụ của một repo cụ thể (ABP + Angular). Với project khác (Node/Express + React, Django +
-Vue, v.v.), toàn bộ cột "Framework"/"Lệnh" sẽ khác hoàn toàn — skill không được giả định bất kỳ giá trị
+Vue, v.v.), toàn bộ cột "Framework"/"Lệnh" sẽ khác hoàn toàn — command không được giả định bất kỳ giá trị
 nào trong ví dụ trên là mặc định.
 
 ## 2. Scan trước — tín hiệu tự dò để điền, không hỏi

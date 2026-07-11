@@ -6,7 +6,7 @@ không tồn tại trong source (ảo giác). Cổng này bắt các trường h
 diễn.
 
 > *Nếu có Task/Agent tool: chạy pha này trong subagent con, chỉ nhận summary + artifact (xem "Ủy thác
-> cho subagent" trong SKILL.md). Không có tool → làm inline.*
+> cho subagent" trong command `qa-spec-cycle.md`). Không có tool → làm inline.*
 
 ## Nội dung
 
@@ -28,7 +28,7 @@ mới sinh không compile được, dừng ngay — không cần chạy các bư
 - Có nhiều tầng (vd FE + BE) → chạy compile-check cho **từng tầng có test mới**.
 - Lỗi compile/type-check ở bất kỳ tầng nào → gate **fail ngay**, liệt kê lỗi, quay lại Pha 5 sửa test.
 
-**Ví dụ (repo này):** `tsc --noEmit` cho `angular/` (nếu có test FE mới); `dotnet build admin_mbf.slnx`
+**Ví dụ (một repo ABP + Angular):** `tsc --noEmit` cho `angular/` (nếu có test FE mới); `dotnet build admin_mbf.slnx`
 cho `aspnet-core/` (nếu có test BE mới).
 
 ## Bước 2 — Grep selector/endpoint tồn tại trong source
@@ -73,7 +73,7 @@ thư mục integration/API/E2E test, src-dir = thư mục controller/route/appse
 `<selector-pattern>` (chiến lược selector, vd `data-testid` kebab-case) và các `<src-dir>`/`<test-dir>`
 tương ứng cho từng tầng.
 
-**Ví dụ (repo này — selector FE):**
+**Ví dụ (một repo ABP + Angular — selector FE):**
 
 ```bash
 grep -rhoE 'data-testid="[a-z0-9-]+"' angular/e2e | sort -u | sed -E 's/.*"(.*)"/\1/' | while read -r sel; do
@@ -83,7 +83,7 @@ grep -rhoE 'data-testid="[a-z0-9-]+"' angular/e2e | sort -u | sed -E 's/.*"(.*)"
 done
 ```
 
-**Ví dụ (repo này — endpoint BE, ABP auto-route theo AppService method):**
+**Ví dụ (một repo ABP + Angular — endpoint BE, ABP auto-route theo AppService method):**
 
 ```bash
 grep -rhoE "'/api/[a-zA-Z0-9/{}-]+'" angular/e2e aspnet-core/test | sort -u | while read -r ep; do

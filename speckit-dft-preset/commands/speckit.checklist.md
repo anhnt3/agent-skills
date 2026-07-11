@@ -1,3 +1,8 @@
+---
+description: Fast-path bộ checklist UI/UX cố định; args khác chạy core.
+strategy: wrap
+---
+
 Trước khi chạy checklist core bên dưới, kiểm tra **fast-path bộ cố định**.
 
 ## Fast-path: bộ checklist cố định (deterministic)

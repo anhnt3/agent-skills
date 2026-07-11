@@ -42,7 +42,10 @@ speckit-extension/
 │   └── traceability.md
 ├── scripts/                   # script hỗ trợ dùng chung cho các command
 │   └── csv_to_xlsx.py         # CSV/JSON -> XLSX 2 sheet (tự dựng venv + openpyxl lần đầu)
-├── templates/
+├── templates/                 # khung output cố định (resolve qua `specify preset resolve <tên>`)
+│   ├── roadmap-template.md    # khung docs/roadmap.md cho road-map-from-codebase
+│   └── domain-template.md     # khung docs/domain/<module>.md cho domain-design
+├── LICENSE
 └── README.md
 ```
 
@@ -72,28 +75,22 @@ Chỉ cần `python3` — script tự dựng `.venv` + cài `openpyxl` ở lần
 Cài qua `specify extension add dft-speckit --force --from <url>` yêu cầu URL trỏ tới **file zip** chứa
 extension (thư mục gốc `dft-speckit/` có `extension.yml` bên trong).
 
-### Tự động qua GitHub Actions (khuyến nghị)
-
-Workflow [`.github/workflows/release-speckit-extension.yml`](../.github/workflows/release-speckit-extension.yml)
-chạy khi push tag `dft-speckit-v<version>`, tự build zip và tạo GitHub Release kèm asset.
+### Release thủ công qua `release.sh` (đường duy nhất, chủ đích)
 
 ```bash
-# 1. Cập nhật version trong extension.yml (vd 1.0.0) rồi commit.
-# 2. Tag + push (version phải khớp extension.yml, nếu không workflow báo lỗi):
-git tag dft-speckit-v1.0.0
-git push origin dft-speckit-v1.0.0
+# 1. Bump version trong extension.yml (tăng đơn điệu từ baseline 0.0.1) rồi commit.
+# 2. Chạy (yêu cầu `gh auth login`):
+speckit-extension/release.sh            # build zip -> tạo/cập nhật Release + upload asset + cập nhật URL README
 ```
 
-Sau khi workflow xong, cài bằng:
+Sau khi release xong, cài bằng:
 
 ```bash
 specify extension add dft-speckit --force --from \
   https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v0.0.1/dft-speckit-0.0.1.zip
 ```
 
-> Cũng có thể chạy tay qua tab **Actions → Release dft-speckit extension → Run workflow** và nhập version.
-
-### Build zip thủ công (local)
+### Build zip riêng lẻ (không release)
 
 ```bash
 speckit-extension/build-zip.sh          # đọc version từ extension.yml
@@ -101,7 +98,8 @@ speckit-extension/build-zip.sh 1.0.0    # hoặc chỉ định version
 # -> speckit-extension/dist/dft-speckit-<version>.zip
 ```
 
-Upload zip đó lên Release (hoặc host nội bộ) rồi dùng URL với `--from`.
+Upload zip đó lên Release (hoặc host nội bộ) rồi dùng URL với `--from`. Lưu ý: `--from` không verify
+sha256 — trade-off đã chấp nhận của kênh phân phối này.
 
 ## Định dạng cố định (Pha 4 của `qa-spec-cycle`)
 
@@ -112,7 +110,7 @@ CSV/JSON của testcase thủ công bắt buộc đúng **16 cột, đúng thứ
 ID | Tiêu đề | Nhóm | Ưu tiên | Loại | Tiền điều kiện | Dữ liệu test | Các bước thực hiện | Kết quả mong đợi | Truy vết | Test tự động | Kết quả tự động | Kết quả thực tế | Trạng thái | Bug ID | Ghi chú
 ```
 
-Cột 1–11 = thiết kế (versioned); cột 12 (`Kết quả tự động`) = skill/CI ghi (chỉ-đọc với tester);
+Cột 1–11 = thiết kế (versioned); cột 12 (`Kết quả tự động`) = command/CI ghi (chỉ-đọc với tester);
 4 cột cuối (13–16) = thực thi (tester điền, để trống trong file nguồn). XLSX xuất ra **2 sheet**
 (Testcases + Ma trận truy vết): header nền xanh, tô màu ưu tiên P1/P2/P3, dropdown Trạng thái,
 freeze panes và auto-filter. Chi tiết đầy đủ: [`references/manual-xlsx-format.md`](references/manual-xlsx-format.md).

@@ -1,7 +1,7 @@
 # Sinh test tự động theo tầng (Pha 5)
 
 > *Nếu có Task/Agent tool: chạy pha này trong subagent con, chỉ nhận summary + artifact (xem "Ủy thác
-> cho subagent" trong SKILL.md). Không có tool → làm inline.*
+> cho subagent" trong command `qa-spec-cycle.md`). Không có tool → làm inline.*
 
 ## Nội dung
 
@@ -23,7 +23,7 @@ Trước khi viết bất kỳ test nào, đọc:
    động cho dòng đó — chỉ ghi rõ trong comment/tracking là "manual-only, xem xlsx".
 2. **`.agents/qa-context.md`** — bảng "Công cụ test" cho biết *framework, thư mục, lệnh* cụ thể của từng
    tầng (unit/integration/e2e/api) của project này, cộng "Đủ-để-chạy" (selector strategy, seed, auth
-   E2E). **Mọi lệnh/đường dẫn/framework cụ thể lấy từ đây — không hardcode trong skill.**
+   E2E). **Mọi lệnh/đường dẫn/framework cụ thể lấy từ đây — không hardcode trong command.**
 3. Kết quả **scan** ở Pha 2: helper/fixture/page-object/factory đã có trong repo cho vùng tính năng liên
    quan hoặc lân cận.
 

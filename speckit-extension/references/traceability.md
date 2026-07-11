@@ -4,7 +4,7 @@
 
 1. [Ma trận truy vết (trục = requirement, sống trong xlsx)](#1-ma-trận-truy-vết-trục--requirement-sống-trong-xlsx)
 2. [State ledger `qa-run.md` — chỉ để resume](#2-state-ledger-qa-runmd--chỉ-để-resume)
-3. [Quy tắc resume — bắt buộc khi skill được gọi lại](#3-quy-tắc-resume--bắt-buộc-khi-skill-được-gọi-lại)
+3. [Quy tắc resume — bắt buộc khi command được gọi lại](#3-quy-tắc-resume--bắt-buộc-khi-command-được-gọi-lại)
 
 Có **hai artefact khác mục đích, không được lẫn vào nhau**:
 
@@ -47,7 +47,7 @@ Mô hình dữ liệu, trục chính là **FR/AC**, không phải test case. She
 **Quy tắc lấp gap ở Pha 11:** với mỗi `GAP` (không phải `MANUAL`) → đây là thiếu sót cần bổ sung (quay lại
 Pha 5 author thêm test), không phải chấp nhận và bỏ qua.
 
-**Cập nhật cột `Auto status` (nguồn là cột 12 "Kết quả tự động" ở sheet Testcases) ở Pha 8/11**: skill
+**Cập nhật cột `Auto status` (nguồn là cột 12 "Kết quả tự động" ở sheet Testcases) ở Pha 8/11**: command
 regenerate lại CSV/JSON input với cột 12 điền kết quả chạy thật, rồi chạy lại
 `scripts/csv_to_xlsx.py` trỏ vào cùng `<thư mục spec>/testcases-manual.xlsx`. Script merge theo `ID` nên
 dữ liệu tester đã điền tay ở cột 13–16 (sheet Testcases) **không bị mất** khi re-run — xem chi tiết ở
@@ -122,7 +122,7 @@ Trạng thái hợp lệ: `pending` \| `in-progress` \| `blocked` \| `done`.
   hiểu bối cảnh khi quay lại) — không thay thế ma trận truy vết trong xlsx. Không copy nội dung hai bảng
   này sang xlsx và ngược lại.
 
-## 3. Quy tắc resume — bắt buộc khi skill được gọi lại
+## 3. Quy tắc resume — bắt buộc khi command được gọi lại
 
 Khi `qa-spec-cycle` được invoke lại cho cùng một feature (spec/thư mục đã có `qa-run.md` từ trước):
 

@@ -1,13 +1,13 @@
 # Dựng môi trường — engine chống-defer (Pha 7 — Readiness)
 
-Pha này trả lời một câu duy nhất: **test có chạy được thật trên môi trường thật không?** Skill **không
+Pha này trả lời một câu duy nhất: **test có chạy được thật trên môi trường thật không?** Command **không
 hardcode** lệnh dựng của bất kỳ stack nào — nó tự khám phá cách dựng, tự thực thi, và **không bao giờ**
 bỏ qua bước này bằng cách tuyên bố "không có môi trường" hay đánh dấu test skip để né việc dựng env.
-Đây là engine hiện thực hoá nguyên tắc 6 (no-defer) của skill: **một pha không tính là "xong" khi còn
+Đây là engine hiện thực hoá nguyên tắc 6 (no-defer) của command: **một pha không tính là "xong" khi còn
 test chưa chạy thật.**
 
 > *Nếu có Task/Agent tool: chạy pha này trong subagent con, chỉ nhận summary + artifact (xem "Ủy thác
-> cho subagent" trong SKILL.md). Không có tool → làm inline.*
+> cho subagent" trong command `qa-spec-cycle.md`). Không có tool → làm inline.*
 
 ## Nội dung
 
@@ -182,8 +182,8 @@ Mọi thứ khác (thiếu migrate command nhưng có thể suy ra từ `*.cspro
 
 ## Ví dụ (đã điền trong qa-context)
 
-Ví dụ cụ thể sau minh hoạ cách áp dụng cho **repo này** (ABP + Angular) — chỉ để tham khảo cách điền,
-**không phải giá trị mặc định** của skill cho project khác. **Lưu ý:** trước khi chạy bước 2
+Ví dụ cụ thể sau minh hoạ cách áp dụng cho **một repo ABP + Angular** — chỉ để tham khảo cách điền,
+**không phải giá trị mặc định** của command cho project khác. **Lưu ý:** trước khi chạy bước 2
 (migrate/seed) trong thực tế, phải áp dụng gate §3 — connection string của `DbMigrator` phải trỏ tới DB
 `*_test` riêng (qua biến môi trường/`appsettings`), không phải connection string dev mặc định trong
 `appsettings.json`.

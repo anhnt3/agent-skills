@@ -17,6 +17,9 @@ Extension = thêm command/template/script/hook mới qua `extension.yml`. Comman
       build không báo lỗi. Sau cài, assert dir có mặt và đủ số file.
 - [ ] `hooks.before_*` / `hooks.after_*` trỏ tới command **tồn tại** (của chính extension này
       hoặc extension khác đã khai phụ thuộc).
+- [ ] **Tên hook event thuộc bộ hợp lệ** `before_/after_ × {constitution,specify,clarify,plan,
+      tasks,implement,checklist,analyze,taskstoissues}` — validator upstream KHÔNG whitelist tên
+      event: gõ sai chính tả (vd `after_speciy`) pass validation và chết âm thầm, không bao giờ chạy.
 - [ ] `requires.speckit_version` hợp lý (vd cần AskUserQuestion → bump min version).
 - [ ] `version` bump trước khi tag; tag release phải **khớp** version manifest (workflow fail
       nếu lệch).

@@ -1,3 +1,8 @@
+---
+description: Plan khảo sát codebase + đọc ràng buộc kế thừa từ spec.md.
+strategy: wrap
+---
+
 Trước khi chạy quy trình plan core bên dưới:
 
 ## Khảo sát codebase (đọc, không đoán)

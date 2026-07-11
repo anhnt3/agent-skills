@@ -47,7 +47,7 @@ specify preset add --dev ./speckit-dft-preset
 
 **Tạo hiến chương (project mới):** chạy `/speckit.constitution`. Không cần copy file thủ công.
 
-> Preset **không thể** ship hiến chương qua `type: template`: `specify init` gieo `.specify/memory/constitution.md` từ template core **trước** khi preset được cài, và đọc bằng đường dẫn trực tiếp nên bỏ qua `PresetResolver`. Override command `speckit.constitution` là cách duy nhất ghi được vào file sống. Chi tiết + bằng chứng: [`docs/research/constitution-quality.md`](../docs/research/constitution-quality.md) §6.
+> Preset **không thể** ship hiến chương qua `type: template`: `specify init` gieo `.specify/memory/constitution.md` từ template core **trước** khi preset được cài, và đọc bằng đường dẫn trực tiếp nên bỏ qua `PresetResolver`. Override command `speckit.constitution` là cách duy nhất ghi được vào file sống. Chi tiết + bằng chứng: [`docs/research/constitution-quality.md`](https://github.com/anhnt3/agent-skills/blob/main/docs/research/constitution-quality.md) §6.
 
 Kiểm tra:
 
@@ -69,30 +69,38 @@ Từ GitHub release (sau khi publish):
 specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-preset-v0.0.1/dft-preset-0.0.1.zip
 ```
 
-## Publish (GitHub release zip)
+## Publish (GitHub release zip — thủ công, chủ đích)
 
-Đóng gói + release giống `speckit-extension`:
-
-```bash
-./build-zip.sh                 # -> dist/dft-preset-<version>.zip (đọc version từ preset.yml)
-```
-
-Release tự động: push tag `dft-preset-v<version>` (khớp `preset.version` trong preset.yml) → workflow `.github/workflows/release-speckit-preset.yml` build zip + tạo GitHub Release kèm asset.
+Release **chỉ** bằng script thủ công (không dùng GitHub Actions):
 
 ```bash
-git tag dft-preset-v1.0.0
-git push origin dft-preset-v1.0.0
+# 1. Bump version trong preset.yml (tăng đơn điệu từ baseline 0.0.1) rồi commit.
+# 2. Chạy:
+./release.sh          # build zip -> tạo/cập nhật GitHub Release + upload asset + cập nhật URL trong README
 ```
 
-Cài từ asset qua `specify preset add --from <url>`. Lưu ý: `--from` chỉ nhận HTTPS (hoặc localhost) — không nhận đường dẫn file local.
+`release.sh` đọc version từ `preset.yml` (hoặc nhận version làm tham số), gọi `build-zip.sh` rồi dùng `gh` tạo release `dft-preset-v<version>`. Build zip riêng lẻ: `./build-zip.sh`.
+
+Cài từ asset qua `specify preset add --from <url>`. Lưu ý: `--from` chỉ nhận HTTPS (hoặc localhost) — không nhận đường dẫn file local, và **không** verify sha256 (trade-off đã chấp nhận của kênh phân phối này).
 
 ## Khi nào dùng / không dùng
 
 - **Dùng**: dự án cần một hiến chương thực sự cưỡng chế được; chức năng có mockup + mock-service cần chuyển sang backend thật.
 - **Không dùng**: spec nhanh không cần phỏng vấn.
 
+## Sau khi nâng cấp spec-kit CLI (bắt buộc đọc)
+
+Override của preset là **snapshot đã materialize** vào thư mục command của agent — spec-kit không resolve lại stack mỗi lần chạy. Nâng cấp `specify` hoặc chạy lại `specify init` có thể ghi đè các file đã compose bằng bản core mới → override lặng lẽ biến mất. Sau mỗi lần nâng cấp:
+
+```bash
+specify preset disable dft-preset && specify preset enable dft-preset   # ép reconcile lại
+specify preset resolve speckit.specify                                  # phải trỏ vào .specify/presets/dft-preset/
+```
+
+Đồng thời chạy `scripts/check-core-anchors.sh` (repo nguồn) để xác nhận các section core mà preset neo vào chưa bị upstream đổi tên.
+
 ## Yêu cầu
 
-- `speckit_version >= 0.6.0` (cần AskUserQuestion trên Claude Code).
+- `speckit_version >= 0.6.0` (cần AskUserQuestion trên Claude Code). Đã kiểm tương thích với spec-kit **0.12.11**.
 - Dự án đã `specify init`. Chưa có `.specify/memory/constitution.md` cũng không sao — chạy `/speckit.constitution` để tạo. Với `/speckit.specify`, thiếu hiến chương thì preset cảnh báo + bỏ GĐ4, các giai đoạn phỏng vấn vẫn chạy đủ.
 - Roadmap (tùy chọn, nguồn làm giàu): vị trí tùy dự án, command tự tìm, không rõ thì hỏi; không có cũng chạy đầy đủ các giai đoạn.
