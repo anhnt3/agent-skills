@@ -94,9 +94,11 @@ check "$(tpl_file plan-template)" "plan-template" \
   "Constitution Check" \
   "Complexity Tracking"
 
-# --- Neo của preset speckit.checklist (wrap) ---
-check "$(cmd_file checklist)" "checklist" \
-  "check-prerequisites"
+# --- Neo của preset spec-template + tasks-template (replace, tự chứa) ---
+# Không có wrap-anchor để kiểm (replace không dùng {CORE_TEMPLATE}); thay vào đó nhắc maintainer
+# diff bản replace với core sau mỗi lần nâng CLI vì core đổi template sẽ KHÔNG tự lan vào bản của preset.
+echo "NOTE    : spec-template & tasks-template là 'replace' tự chứa — sau khi nâng spec-kit hãy diff"
+echo "          templates/{spec,tasks}-template.md của preset với core để bắt thay đổi cấu trúc."
 
 # --- Cơ chế analyze/converge mà constitution override giải thích cho người dùng ---
 check "$(cmd_file analyze)" "analyze" \

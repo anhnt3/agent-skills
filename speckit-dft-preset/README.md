@@ -23,19 +23,18 @@ Các override bổ trợ nhau (5 override, gom theo mục đích):
 - **Phỏng vấn theo trục nghiệp vụ** (GĐ2 trên màn hình → GĐ3 nghiệp vụ nền) qua **AskUserQuestion**, gom 1–4 câu độc lập mỗi lượt. Quyết định **trọng yếu** (dữ liệu/quyền/luồng) hỏi từng câu; quyết định **thứ yếu** (sort mặc định, empty-state, wording) model đề xuất kèm căn cứ rồi duyệt gộp cuối giai đoạn. `(Recommended)` chỉ được đánh khi có căn cứ từ khảo sát. Hiến chương KHÔNG phải khung hỏi — là vòng kiểm GĐ4.
 - **Sổ theo dõi vét cạn persist ra file** `.specify/interviews/<slug>.md` trong lúc phỏng vấn (chống mất trạng thái khi phiên dài), kết thúc chuyển thành `specs/<feature>/interview-notes.md`. Ràng buộc kỹ thuật từ GĐ4 ghi vào section `Ràng buộc kỹ thuật kế thừa` trong `spec.md` — kênh bàn giao cho `/speckit.plan`.
 - Đánh dấu nguồn mỗi kết luận: `[từ khảo sát]` / `[suy luận]` / `[cần bạn quyết]`.
-- **Chỉ ghi spec sau khi bạn xác nhận** đạt hiểu chung. `spec.md` dùng **spec-template mặc định** của spec-kit — toàn bộ scaffolding core (tạo `specs/<n>-<name>/spec.md`, quality checklist, hooks) kéo vào qua `{CORE_TEMPLATE}`.
+- **Chỉ ghi spec sau khi bạn xác nhận** đạt hiểu chung. `spec.md` dùng **spec-template do preset replace** (giữ nguyên các section core + thêm mục `## Đặc tả màn hình`); kết quả GĐ2 rót vào đó, mỗi màn một khối `### Màn`. Scaffolding core (tạo `specs/<n>-<name>/spec.md`, hooks) vẫn kéo vào qua `{CORE_TEMPLATE}`.
 
 **2. Command `speckit.plan`** (`strategy: wrap`) — điều khiển *cách plan*:
 - **Khảo sát codebase liên quan feature** (frontend + backend đang có) trước khi điền Technical Context / Structure Decision — plan dựa trên cái đang có, không chọn layout generic.
 - `plan.md` dùng **plan-template mặc định**; cổng Constitution Check của core phải pass trước Phase 0.
 
-**3. Command `speckit.checklist`** (`strategy: wrap`) + **template `ui-ux-checklist`** — *bộ checklist cố định + chấm*:
-- `/speckit.checklist ui-ux @spec.md` → 3 bước: **stamp** bộ IV cố định → **chấm** theo spec (tick `[x]` pass + nguồn, `⚠️ Gap`, `➖ N/A`, bảng Tổng) → **thảo luận vá** từng gap qua AskUserQuestion, cập nhật spec.md rồi tick pass.
-- Chỉ điền mục còn `[ ]` trống; **giữ nguyên tick + note người đã ghi** (không clobber).
-- Không kèm spec → chỉ stamp list trống. Args khác → chạy checklist sinh động của core.
-- Là spec-completeness gate cho UI/UX. Bộ này **độc lập** với hiến chương: nó vẫn chạy dù hiến chương có nguyên tắc UI/UX hay không, và không neo vào số thứ tự nguyên tắc nào (hiến chương do `/speckit.constitution` sinh ra là động, ≤7 nguyên tắc).
+**3. Template `spec-template` + `tasks-template`** (`strategy: replace`, tự chứa) — *đặc tả màn hình per-screen thay cho lệnh checklist*:
+- `spec-template` tổ chức theo **kỷ luật một-nhà** (chống trùng lặp — Wiegers / Business Rules Manifesto / ISO 29148): **`## Thực thể & Từ điển dữ liệu`** sở hữu hằng số field (độ dài, miền giá trị, giá trị hợp lệ); **`### Functional Requirements`** sở hữu hành vi + business rule (duy nhất, liên trường, phân quyền, vòng đời); **`## Đặc tả màn hình`** mỗi màn một khối `### Màn` **chỉ mô tả trình bày & ranh giới** (control nào, cột, lọc/sắp/tìm, kênh báo, 4 trạng thái, xác nhận phá hủy) và **TRỎ** tới FR/field — không chép lại hằng số hay luật; **Acceptance Scenarios** là ví dụ trỏ FR. Chỉ nêu **yêu cầu bằng lời**; không mã hóa message/testid, không chọn thư viện/kiểu cột DB — để plan/tasks lo. Mỗi mục con chỉ điền khi màn thực sự có; `K = 0` → ghi "Không có màn".
+- `tasks-template` giữ nguyên core + mục **"Phủ đặc tả màn hình"** nhắc lệnh tasks sinh đủ task cho từng `### Màn` (validation/trạng thái/cột/lọc/quyền/xác nhận phá hủy); cơ chế cụ thể (thư viện, resource string, data-testid) do task tự figure out theo stack.
+- Quy ước UI/UX **chung toàn chương trình** (vi-VN, định dạng ngày/tiền, a11y, responsive, kênh báo lỗi, UI kit) **KHÔNG** nằm ở đây — do chỉ dẫn chung của dự án (frontend agent / design system) cưỡng chế, tránh lặp mỗi spec. Đây là lý do lệnh `speckit.checklist` cũ (đưa UI/UX gate vào một lệnh riêng) đã được bỏ.
 
-> `speckit.specify` và `speckit.plan` dùng template mặc định của spec-kit, chỉ override *cách hỏi/cách plan*, không override cấu trúc output.
+> `speckit.specify` override *cách hỏi* + rót output vào `spec-template` (replace); `speckit.plan` override *cách plan*, vẫn dùng plan-template mặc định của core.
 
 ## Cài đặt
 
@@ -52,8 +51,8 @@ specify preset add --dev ./speckit-dft-preset
 Kiểm tra:
 
 ```bash
-specify preset info dft-preset            # xem 5 override (4 command + 1 template)
-specify preset resolve spec-template      # spec-template = core mặc định (preset không override)
+specify preset info dft-preset            # xem 5 override (3 command + 2 template)
+specify preset resolve spec-template      # spec-template = bản replace của preset (templates/spec-template.md)
 specify preset list
 ```
 

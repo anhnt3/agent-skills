@@ -3,8 +3,8 @@ schema_version: "1.0"
 preset:
   id: "dft-preset"
   name: "DFT Spec Kit Preset"
-  version: "0.0.2"
-  description: "Override speckit.constitution/specify/plan/checklist theo quy trình BA phỏng vấn tiếng Việt qua AskUserQuestion. Dùng template mặc định của spec-kit; chi tiết xem README."
+  version: "0.0.3"
+  description: "Override speckit.constitution/specify/plan theo quy trình BA phỏng vấn tiếng Việt qua AskUserQuestion; replace spec-template + tasks-template để thêm mục 'Đặc tả màn hình' per-screen. Chi tiết xem README."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/anhnt3/agent-skills"
   license: "MIT"
@@ -18,9 +18,16 @@ requires:
 provides:
   templates:
     - type: "template"
-      name: "ui-ux-checklist"
-      file: "templates/ui-ux-checklist.md"
-      description: "Bộ checklist cố định UI/UX — spec-completeness gate, độc lập với việc hiến chương có nguyên tắc UI/UX hay không"
+      name: "spec-template"
+      file: "templates/spec-template.md"
+      strategy: "replace"
+      description: "Replace spec-template theo kỷ luật một-nhà (chống trùng lặp, Wiegers/29148): 'Thực thể & Từ điển dữ liệu' sở hữu hằng số field, Functional Requirements sở hữu hành vi + business rule, mục per-screen '## Đặc tả màn hình' chỉ mô tả trình bày và TRỎ tới FR/field (không chép). Chỉ nêu yêu cầu bằng lời; cơ chế để plan/tasks lo. Là chỗ /speckit.specify rót kết quả phỏng vấn."
+
+    - type: "template"
+      name: "tasks-template"
+      file: "templates/tasks-template.md"
+      strategy: "replace"
+      description: "Replace tasks-template: giữ nguyên core (phases theo user story) + mục 'Phủ đặc tả màn hình' nhắc __SPECKIT_COMMAND_TASKS__ sinh đủ task cho từng '### Màn' trong spec (validation/trạng thái/cột/lọc/quyền/xác nhận phá hủy); cơ chế cụ thể do task tự figure out theo stack."
 
     - type: "command"
       name: "speckit.constitution"
@@ -29,15 +36,9 @@ provides:
       strategy: "wrap"
 
     - type: "command"
-      name: "speckit.checklist"
-      file: "commands/speckit.checklist.md"
-      description: "Wrap checklist: fast-path stamp bộ IV cố định + chấm theo spec (tick/gap/N-A có nguồn) + thảo luận vá gap; args khác chạy sinh động core"
-      strategy: "wrap"
-
-    - type: "command"
       name: "speckit.specify"
       file: "commands/speckit.specify.md"
-      description: "Wrap specify: khảo sát repo + nợ kỹ thuật, phỏng vấn theo trục nghiệp vụ (trên màn hình → nghiệp vụ nền) — gom 1–4 câu độc lập/lượt, quyết định trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp; sổ theo dõi vét cạn persist ra .specify/interviews/; đối chiếu constitution như vòng kiểm; ràng buộc kỹ thuật bàn giao cho plan qua section trong spec.md. Dùng spec-template mặc định."
+      description: "Wrap specify: khảo sát repo + nợ kỹ thuật, phỏng vấn theo trục nghiệp vụ (trên màn hình → nghiệp vụ nền) — gom 1–4 câu độc lập/lượt, quyết định trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp; sổ theo dõi vét cạn persist ra .specify/interviews/; đối chiếu constitution như vòng kiểm; ràng buộc kỹ thuật bàn giao cho plan qua section trong spec.md; rót kết quả GĐ2 vào mục '## Đặc tả màn hình' của spec-template (preset replace)."
       strategy: "wrap"
 
     - type: "command"
