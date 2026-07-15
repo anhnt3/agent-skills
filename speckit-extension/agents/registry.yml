@@ -1,0 +1,42 @@
+# Registry của bộ agent dùng chung DFT.
+#
+# NHÀ DUY NHẤT của tín hiệu dò stack. File agent (.md) KHÔNG chứa tín hiệu dò —
+# nó được copy NGUYÊN VĂN sang .claude/agents/, mà Claude Code chỉ hiểu
+# name/description/tools/model; nhét key lạ vào frontmatter là rủi ro.
+#
+# THÊM AGENT MỚI = 2 bước, thiếu bước nào cũng hỏng:
+#   1. Thả file agents/<name>.md (frontmatter có name + description).
+#   2. Thêm một mục vào `agents:` dưới đây kèm tín hiệu dò.
+# File .md có mà không có mục trong registry -> command init-agents sẽ BÁO LỖI,
+# không im lặng bỏ qua.
+#
+# Cách dò: mỗi agent khớp nếu BẤT KỲ signal nào trong `detect.any` khớp.
+#   - glob: có ít nhất 1 file khớp pattern (bỏ qua node_modules/bin/obj/dist).
+#   - grep: có ít nhất 1 file khớp `in` mà nội dung khớp regex `pattern`.
+# Cố ý dùng OR (any) chứ không AND: một dự án thật thường chỉ mang vài dấu hiệu.
+
+schema_version: "1.0"
+
+agents:
+  - name: backend-abp
+    file: backend-abp.md
+    stack: "ABP Framework (.NET)"
+    layer: backend
+    detect:
+      any:
+        - glob: "**/*.abpsln"
+        - glob: "**/*.abpmdl"
+        - grep:
+            in: "**/*.csproj"
+            pattern: "Volo\\.Abp"
+
+  - name: frontend-angular
+    file: frontend-angular.md
+    stack: "Angular"
+    layer: frontend
+    detect:
+      any:
+        - glob: "**/angular.json"
+        - grep:
+            in: "**/package.json"
+            pattern: "\"@angular/core\""
