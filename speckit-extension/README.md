@@ -12,6 +12,7 @@ bổ sung thêm command mới theo nhu cầu.
 | `speckit.dft-speckit.qa-spec-cycle` | **QA trọn vòng từ 1 file spec** — 13 pha: sinh testcase thủ công (xlsx 2 sheet), sinh test tự động theo pyramid, tự dựng môi trường và chạy, báo cáo, triage + fix có kiểm soát, ghi ma trận truy vết. Technology-agnostic (đặc thù stack đọc từ `.agents/qa-context.md`). Bao trùm luôn command `manual-xlsx` cũ ở Pha 4. |
 | `speckit.dft-speckit.road-map-from-codebase` | Lập/cập nhật roadmap build từ codebase — xếp thứ tự từng màn, ghi `docs/roadmap.md`. |
 | `speckit.dft-speckit.domain-design` | Thiết kế/cập nhật domain tổng thể cho một hoặc nhiều module trong roadmap (gom 1 doc), ghi `docs/domain/<module>.md`. |
+| `speckit.dft-speckit.init-agents` | Dò stack thật của project (tín hiệu glob/grep khai trong `agents/registry.yml`, có bằng chứng file), lọc đúng agent trong catalog DFT rồi cài vào `.claude/agents/` để `/speckit.agent-assign.assign` có agent mà gán vào task. Chỉ hỗ trợ integration `claude`. Hỏi trước khi ghi đè. |
 | _(sắp có)_ | Các command DFT khác sẽ được thêm vào đây. |
 
 ## Thêm command mới
@@ -29,7 +30,12 @@ speckit-extension/
 ├── commands/                  # mỗi file .md = 1 command
 │   ├── qa-spec-cycle.md       # QA trọn vòng 13 pha từ 1 spec
 │   ├── road-map-from-codebase.md
-│   └── domain-design.md
+│   ├── domain-design.md
+│   └── init-agents.md         # dò stack, cài agent DFT vào .claude/agents/
+├── agents/                    # catalog agent DFT (nguồn cho init-agents)
+│   ├── registry.yml           # tín hiệu dò stack (glob/grep) — nhà duy nhất
+│   ├── backend-abp.md         # agent ABP/.NET (kèm cổng Quy ước chung)
+│   └── frontend-angular.md    # agent Angular (kèm cổng Quy ước chung)
 ├── references/                # tài liệu chi tiết từng pha của qa-spec-cycle
 │   ├── qa-context-template.md
 │   ├── coverage-matrix.md

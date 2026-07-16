@@ -38,6 +38,9 @@ cp extension.yml "$dest/"
 cp -R commands "$dest/"
 [ -d templates ] && cp -R templates "$dest/"
 [ -d references ] && cp -R references "$dest/"
+# agents/ = nguồn agent definition cho command init-agents. Command đọc nó qua
+# đường dẫn .specify/extensions/dft-speckit/agents/ -> KHÔNG copy = command gãy.
+[ -d agents ] && cp -R agents "$dest/"
 mkdir -p "$dest/scripts"
 # Copy scripts nhưng loại venv/pycache/config.local
 find scripts -type f \
@@ -46,6 +49,13 @@ find scripts -type f \
   ! -path '*/__pycache__/*' \
   ! -name '*-config.local.yml' \
   -exec sh -c 'mkdir -p "$2/$(dirname "$1")"; cp "$1" "$2/$1"' _ {} "$dest" \;
+
+# Dọn rác nội bộ khỏi staging. cp -R ở trên KHÔNG lọc theo .gitignore, nên quét
+# cả những thứ git bỏ qua: AGENTS.md (deepinit), .omc/ (OMC ghi session state vào
+# mọi thư mục con), .DS_Store. Không dọn ở đây = rác lọt vào zip lẫn bản cài.
+find "$dest" -name 'AGENTS.md' -delete
+find "$dest" -type d -name '.omc' -prune -exec rm -rf {} +
+find "$dest" -name '.DS_Store' -delete
 
 ( cd "$stage" && zip -rq "$out" "$pkg" )
 echo "OK: $out"

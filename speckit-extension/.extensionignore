@@ -1,3 +1,11 @@
 scripts/.venv/
 **/__pycache__/
 *.pyc
+# OMC session state (ghi vào mọi thư mục con khi làm việc trong repo) — không ship.
+.omc/
+**/.omc/
+# Tài liệu deepinit nội bộ cho repo này, không phải cho project cài extension.
+AGENTS.md
+**/AGENTS.md
+.DS_Store
+**/.DS_Store
