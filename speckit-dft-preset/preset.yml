@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "dft-preset"
   name: "DFT Spec Kit Preset"
-  version: "0.0.3"
+  version: "0.0.4"
   description: "Override speckit.constitution/specify/plan theo quy trình BA phỏng vấn tiếng Việt qua AskUserQuestion; replace spec-template + tasks-template để thêm mục 'Đặc tả màn hình' per-screen. Chi tiết xem README."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/anhnt3/agent-skills"
