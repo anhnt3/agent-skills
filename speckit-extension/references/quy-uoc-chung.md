@@ -1,223 +1,250 @@
-# THE DFT STANDARD — Quy Ước Chung (Frontend · Backend · QA)
+# QUY ƯỚC CHUNG TOÀN HỆ THỐNG (QUCTHT V1.0)
 
-LUẬT áp cho MỌI project DFT. Chuỗi trong `" "` phải dùng **nguyên văn**, không diễn đạt lại. Nguồn: QUC.V1.
+LUẬT cho MỌI project DFT. Chuỗi trong `" "` dùng **nguyên văn**. Mục 1–20 = docx QUCTHT V1.0; mục 21 = bổ sung DFT.
 
 ## Mục lục
 
-1. Kiến trúc của sự nhất quán
-2. Ký hiệu quy trình (Flowchart)
-3. Ma trận kiểu dữ liệu lõi (Database)
-4. Ma trận kiểm chuẩn dữ liệu phức tạp (Email / SĐT / Mật khẩu)
-5. Giải phẫu Form nhập liệu
-6. Xử lý chuỗi & luồng sự kiện tương tác
-7. Giải phẫu màn hình danh sách (Data Grid)
-8. Logic tìm kiếm & lọc
-9. Ma trận phản hồi hệ thống (Toast / Popup / Inline)
-10. Hệ màu & quy chuẩn nút bấm
-11. Hành vi Combobox & Checkbox phân quyền
-12. Quy chuẩn tải file đính kèm
-13. Lưu đồ xử lý nhập dữ liệu (Import Flow)
-14. Developer Pre-Release Checklist
-15. Nhật ký hệ thống (Audit Log)
-16. Phân quyền lúc chạy (Runtime Authorization)
-17. Đồng bộ sau thao tác & trùng dữ liệu
-18. Toàn vẹn Export & chống CSV injection
-19. Vòng đời phiên & xác thực
+1. Kiểu dữ liệu chung
+2. Ràng buộc độ dài trường
+3. Từng loại trường nhập liệu
+4. Tệp tải lên
+5. Thuật ngữ chuẩn giao diện
+6. Font & độ phân giải
+7. Bảng dữ liệu (Data Grid)
+8. Form Tạo mới / Chỉnh sửa
+9. Dialog xác nhận xóa
+10. Phân loại thông báo (Inline / Toast)
+11. Thông báo lỗi Validation
+12. Định dạng ngày giờ
+13. Nhập / Xuất dữ liệu
+14. Loading / Breadcrumb / Debounce
+15. Quản lý dữ liệu & soft-delete
+16. Trạng thái & màu bản ghi
+17. Xử lý trùng dữ liệu
+18. Phiên đăng nhập, xác thực & rate limit
+19. Phân quyền ACL & phạm vi dữ liệu
+20. Lưu ý triển khai
+21. Bổ sung DFT (audit log, phân quyền runtime, đồng bộ sau thao tác)
 
 ---
 
-## 1. Kiến trúc của sự nhất quán
+## 1. Kiểu dữ liệu chung
 
-4 trụ cột: Dữ liệu lõi (Backend — kiểu/MaxLength/định dạng DB) · Tương tác & Validate (Debounce, Trim, kiểm chuẩn input) · Giao diện (Form/Grid/Nút + hệ màu) · Phản hồi (Toast/Popup/Inline). *(Nguyên tắc — không phải mục kiểm code.)*
-
-## 2. Ký hiệu quy trình (Flowchart)
-
-| Ký hiệu | Ý nghĩa |
-|---|---|
-| Hình bầu dục (Oval) | Khởi đầu / kết thúc quy trình |
-| Hình bình hành | Thông tin / dữ liệu đầu vào |
-| Hình chữ nhật | Thao tác / xử lý tự động |
-| Hình thang | Thao tác thủ công (tay) |
-| Hình kim cương | Quyết định (rẽ nhánh có điều kiện) |
-| Hình tài liệu | Hồ sơ / biên bản / báo cáo đầu ra |
-
-## 3. Ma trận kiểu dữ liệu lõi (Database)
-
-| Trường | Kiểu | Ràng buộc |
+| Loại | Kiểu | Ràng buộc |
 |---|---|---|
-| Tên / Tên hiển thị | `Varchar(255)` | Viết hoa chữ cái đầu; loại bỏ khoảng cách thừa |
-| Mã (Code/ID) | `Varchar(50)` | Không ký tự đặc biệt, không khoảng trắng, trừ `_` `-` |
-| Ghi chú / Mô tả | `Varchar(4000)` | Cho phép ký tự đặc biệt và xuống dòng |
-| Tiền (VND) | `Decimal(18,0)` | Không phần thập phân; dấu `.` ngăn cách hàng nghìn |
-| Số lượng (thập phân) / Tỉ lệ | `Decimal(18,2)` / `Decimal(5,2)` | Tối đa 2 chữ số sau dấu phẩy |
-| Mật khẩu | `Varchar(128)` max | Bắt buộc hash; **không lưu plaintext** |
+| Tiền (VND) | `decimal(18,0)` | Không thập phân; dấu `.` phân cách nghìn |
+| Số lượng nguyên | `int` | Không âm |
+| Số lượng thập phân | `decimal(18,2)` | ≤2 chữ số thập phân |
+| Tỷ lệ / % | `decimal(5,2)` | 0,00–100,00 |
+| STT | `int` | Không null |
+| **Khóa chính** | **UUID v4** | `8-4-4-4-12` hex; KHÔNG int auto-increment |
+| Tài chính / độ chính xác cao | `decimal` | KHÔNG `float`/`double` |
+| Thời điểm | `datetime` | UTC+7 |
 
-## 4. Ma trận kiểm chuẩn dữ liệu phức tạp
+## 2. Độ dài trường (nguồn DUY NHẤT)
 
-### 4.1. Email — `Varchar(320)`
-- Cấu trúc: Local-part (64) `@` Domain-part (255).
-- Convert **chữ thường** (lower-case).
-- Không ký tự đặc biệt, trừ `.` `_` `-`.
+| Trường | Tối đa | Ràng buộc |
+|---|---|---|
+| Mã (code/taxCode/productCode) | **50** | Không ký tự đặc biệt trừ `_` `-`; không khoảng trắng đầu/cuối |
+| Tên / Contact Name | **255** | Unicode tiếng Việt; tự viết hoa chữ cái đầu khi hiển thị |
+| Email | **255** | 1 dấu `@`, không khoảng trắng (§3) |
+| Số điện thoại | **12** | §3 |
+| Mật khẩu | **128** (hash) | Nhập ≥**8**; lưu hash, không plaintext |
+| URL / File path | **500** | Ưu tiên HTTPS |
+| Mô tả / Notes | **4000** | Cho phép ký tự đặc biệt + xuống dòng |
+| Tên thư mục / tài liệu | **255** | Không chứa `/ \ : * ? " \|` |
 
-### 4.2. Số điện thoại — `Varchar(44)`
-- **10 – 44 số**; chỉ số và dấu `+` ở đầu.
-- Tự loại khoảng trắng: `0123 456` → `0123456`.
+## 3. Từng loại trường nhập liệu
 
-### 4.3. Mật khẩu — **6 – 50 ký tự**
-- Web Admin: **Min 8, Max 50**.
-- Bắt buộc gồm: chữ hoa + chữ thường + số + ký tự đặc biệt.
-- UI: ẩn `****`, có icon con mắt bật/tắt.
+- **Textbox**: trim khi lưu; toàn khoảng trắng ở trường bắt buộc → chặn; chặn nhập vượt §2 tại ô.
+- **Email**: 1 `@`; trước `@` chữ/số/`. _ % + -`, không mở/kết bằng `.`, không `..`; sau `@` chữ/số/`.`/`-`, ≥1 `.`, tên miền ≥2 chữ; không khoảng trắng; check trùng không phân biệt hoa thường. Sai → `"Địa chỉ email không hợp lệ."`
+- **Số điện thoại**: chỉ `0–9` + `+` ở đầu; bỏ khoảng trắng; trống hợp lệ nếu không bắt buộc; `0xxxxxxxxx` (10 số, đầu `0`) hoặc `+84xxxxxxxxx` (12 ký tự). Sai → `"Số điện thoại không hợp lệ."`
+- **Date Picker**: `dd/MM/yyyy`; khoảng `dd/MM/yyyy - dd/MM/yyyy`; bắt đầu > kết thúc → `"Dữ liệu không hợp lệ."`; **chỉ chọn qua calendar, KHÔNG nhập tay**.
+- **Số**: chỉ số dương (âm → khai BRD); nghìn dấu `.`; thập phân dấu `,` ≤2 (`2,21`).
+- **Tiền VNĐ**: chỉ số; hiển thị `5.000.000 VNĐ`; không thập phân.
+- **Tỷ lệ %**: chỉ số; `90%` / `99,22%`; 0,00–100,00; vượt → `"Dữ liệu không hợp lệ."`
+- **Mật khẩu**: ≥8, bắt buộc hoa+thường+số+đặc biệt; ẩn `****` + nút bật/tắt. Sai → `"Mật khẩu tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt."`; không khớp → `"Mật khẩu xác nhận không khớp."`
+- **Mã tự sinh**: không cho sửa; placeholder `"Mã tự sinh"`.
+- **Dropdown single**: chọn 1 giá trị.
+- **Checkbox multi**: tick nhiều giá trị 1 nhóm.
+- **Checkbox phân quyền (cây)**: tick cha → tick toàn bộ con; tick Thêm/Sửa/Xóa → tự tick **Xem**; bỏ tick **Xem** → bỏ toàn bộ quyền còn lại.
 
-## 5. Giải phẫu Form nhập liệu
+## 4. Tệp tải lên
 
-- Trường bắt buộc: dấu `*` màu đỏ `#F22128` cạnh Label.
-- Inline error: chữ đỏ **ngay dưới ô nhập** (vd `"Đây là trường bắt buộc"`).
-- Nút phụ (Discard/Hủy): xám `#555D6B`.
-- Nút chính: **Disable mặc định**; chỉ Enable khi đủ trường bắt buộc + đúng định dạng.
-- Tiêu đề dialog thêm mới: `"Thêm mới [tên thực thể]"` (vd `"Thêm mới Người dùng"`).
+| Loại | Kiểu | Định dạng | Số | DL/tệp | Tổng |
+|---|---|---|---|---|---|
+| Ảnh đại diện/logo/chữ ký | SINGLE | `JPG, PNG, WEBP` | 1 | **2 MB** | 2 MB |
+| Nhập hàng loạt | SINGLE | `CSV, XLSX` | 1 | **10 MB, ≤5.000 dòng** | 10 MB |
+| Đính kèm chung | MULTI | `PDF, DOCX, XLSX, JPG, PNG` | 10 | **25 MB** | 50 MB |
 
-## 6. Xử lý chuỗi & luồng sự kiện
+- SINGLE thay tệp cũ; MULTI thêm vào danh sách. Không `.xls` (chỉ `.xlsx`). Client kiểm khi chọn; **server kiểm lại toàn bộ, không tin client**.
+- Trần cứng: 20 tệp/trường, 50 MB/tệp, 200 MB tổng.
+- Kỹ thuật: ảnh cắt vuông + thu 512px + xóa EXIF, không giữ gốc; kiểm định dạng theo magic-byte; đọc/ghi theo luồng; endpoint upload riêng; 60 lần/phút/user; tệp tạm xóa sau 24h; tệp của bản ghi xóa-mềm xóa hẳn sau 90 ngày.
+- Lỗi: `"Định dạng tệp không hợp lệ. Vui lòng chọn tệp [danh sách định dạng cho phép]."` · `"Dung lượng tệp vượt quá giới hạn cho phép ({limit}MB)."` · `"Tệp nhập vượt quá {maxRows} dòng. Vui lòng chia nhỏ tệp."` · `"Chỉ được tải lên tối đa {maxFiles} tệp."` · `"Tổng dung lượng các tệp vượt quá {maxTotalSize}MB."` · `"Tệp '{tên}' đã được chọn."` · gợi ý `"Hỗ trợ [định dạng]. Tối đa [giới hạn]MB."`
 
-### 6.1. Khoảng trắng
-- Trường bắt buộc nhập **toàn khoảng trắng** → chặn, báo `"Đây là trường bắt buộc"`.
-- Hợp lệ → **Trim** đầu/cuối rồi mới lưu.
+## 5. Thuật ngữ chuẩn (nhãn nút / tiêu đề / menu / thông báo / BRD)
 
-### 6.2. Debounce
-- Click liên tục (double-click) Save/Submit → chặn sinh nhiều event, chỉ xử lý **1 event** trong một khoảng thời gian.
+| Hành động | CHUẨN | CẤM |
+|---|---|---|
+| Tạo | `"Tạo mới"` | Thêm mới, Thêm, Add, New |
+| Sửa | `"Chỉnh sửa"` | Sửa, Cập nhật, Edit |
+| Xóa | `"Xóa"` | Loại bỏ, Delete |
+| Lưu | `"Lưu thay đổi"` | Lưu lại, Save |
+| Hủy | `"Hủy"` | Đóng, Thoát, Cancel |
+| Xuất | `"Xuất tài liệu"` | Xuất CSV/Excel/file, Export |
+| Nhập | `"Nhập dữ liệu"` | Import, Tải lên dữ liệu |
 
-## 7. Giải phẫu màn hình danh sách (Data Grid)
+## 6. Font & độ phân giải
+
+- Sans-serif. Title **24px**, nội dung/nhãn/menu **14px**, inline error **12px**.
+- Desktop `1920×1080`, Tablet `820×1180`, Mobile `430×932`.
+
+## 7. Bảng dữ liệu (Data Grid)
 
 | Yếu tố | Quy ước |
 |---|---|
-| Sticky Header | Hàng tiêu đề + bộ lọc **cố định (sticky)** khi cuộn |
-| Zebra Striping | Màu nền dòng **xen kẽ** |
-| Cột Tác vụ & STT | Căn **giữa** |
-| Cột Chữ | Căn **trái** |
-| Cột Số / Tiền | Căn **phải** |
-| Phân trang | `{10, 20, 50, 100}` bản ghi/trang |
-| Nút Xóa | Chỉ hiện khi có **≥1 checkbox tích**; màu đỏ |
+| Phân trang | **Server-side**; mặc định **10**; tùy chọn `{10, 20, 50, 100}` |
+| Tổng số | Luôn hiển thị tổng bản ghi khớp lọc |
+| Tìm kiếm | Contains, không phân biệt hoa thường, trim+gộp khoảng trắng; **debounce 300ms**; hỗ trợ Enter |
+| Kết quả trống | `"Không có dữ liệu!"` |
+| Sắp xếp | Cột sortable có mũi tên; mặc định `createdAt` giảm dần |
+| Context menu | Menu `⋮` mỗi dòng: **Xem · Chỉnh sửa · Xóa** |
+| Sticky | Hàng tiêu đề + bộ lọc cố định khi cuộn |
+| Tooltip | Chỉ hiện khi nội dung bị cắt `...` |
+| Căn lề | STT/Loại/Trạng thái/Thao tác → **giữa**; Số/Tiền → **phải**; header + còn lại → **trái** |
+| Xóa cuối trang | Xóa bản ghi cuối trang >1 → về trang trước; xóa hết → `"Không có dữ liệu!"` |
 
-## 8. Logic tìm kiếm & lọc
+**Toolbar** (trái→phải): `[Ô tìm kiếm] [Bộ lọc 1] [Bộ lọc 2] … [Xóa bộ lọc]   [+ Tạo mới]`. Ô tìm kiếm: icon kính lúp trái, placeholder `"Tìm kiếm..."`, debounce 300ms. Mỗi bộ lọc = 1 button Dropdown. `"Xóa bộ lọc"` ghost, chỉ hiện khi ≥1 filter active. Nút chính bên phải cùng.
 
-### 8.1. Text Search
-- **Không phân biệt hoa thường**: `"Nguyễn Văn A"` = `"nguyễn văn a"`.
-- **Bỏ qua khoảng trắng thừa**.
-- Tìm khi ấn **Enter** hoặc nút **Tìm kiếm** — **KHÔNG realtime ở Textbox**. Realtime chỉ cho **Dropdown search**.
+**Nút hành động chính** (`"Tạo mới"` / `"Xuất tài liệu"`): nền `--accent` + chữ `--accent-foreground` + icon. Hover `--accent-hover`; Focus ring `--accent`; Disabled `bg-slate-200 text-slate-600` (không `--accent`+opacity).
 
-### 8.2. Date Picker (Từ ngày – Đến ngày)
-- Không cho "Từ ngày" > "Đến ngày".
-- Nhập sai bằng phím → báo đỏ `"Dữ liệu không hợp lệ"`.
-- Chọn từ Calendar, hoặc nhập tay đúng `dd/MM/yyyy`.
+## 8. Form Tạo mới / Chỉnh sửa (trong Dialog)
 
-## 9. Ma trận phản hồi hệ thống
+- Trường bắt buộc: dấu `*` **đỏ**, ngay sau label cách 1 khoảng trắng, không trong ngoặc, không màu khác.
+- Tiêu đề: tạo `"Tạo [tên thực thể]"`, sửa `"Chỉnh sửa [tên thực thể]"`. Nút xác nhận: tạo `"Tạo mới"`, sửa `"Lưu thay đổi"`. Hủy `"Hủy"` — luôn enable.
+- Nút xác nhận **disable** khi: form chưa đổi / chưa đủ trường bắt buộc / không hợp lệ / đang xử lý. Chỉ enable khi toàn bộ hợp lệ. Submit → spinner + disable toàn form.
+- Validation realtime, lỗi đỏ dưới trường. Hủy khi đã nhập → hỏi xác nhận trước khi đóng.
 
-| Kênh | Vị trí | Dùng cho | Nội dung |
-|---|---|---|---|
-| **Toast** | Góc dưới phải | Kết quả thao tác (Thêm/Sửa/Xóa/Import) | `"Cập nhật thành công!"` · `"Xóa thành công x/y bản ghi"` |
-| **Popup Alert** | Giữa màn hình | Xác nhận nguy hiểm (Xóa) / cảnh báo ràng buộc | `"Bạn có chắc chắn muốn xóa?"` · `"Lỗi: Không được xóa do dữ liệu đang sử dụng"` |
-| **Inline Text** | Chữ đỏ dưới ô nhập | Lỗi validate / trùng dữ liệu | `"$Trường_thông_tin$ đã tồn tại"` (check khi rời ô nhập) |
+## 9. Dialog xác nhận xóa
 
-- Popup xóa: nút `"Cancel"` / `"Confirm"`; nền sau **làm mờ (blur)**.
-- Mỗi mutation (Tạo/Sửa/Xóa/Import/Chia sẻ) bắn **ĐÚNG 1 toast**, đủ **cả 2 nhánh** thành công + thất bại.
-- Chuỗi lấy **nguyên văn** (bảng trên hoặc spec). Chưa có → DỪNG, báo. Không tự chế.
-- Đúng KÊNH: validate trường → Inline; kết quả/lỗi hệ thống → Toast; xác nhận nguy hiểm → Popup.
-- Backend trả message **khớp nguyên văn** chuỗi frontend hiển thị.
+- Tiêu đề `"Xác nhận xóa [tên thực thể]"`.
+- Nội dung `"Bạn có chắc chắn muốn xóa '[tên bản ghi]' này không? Hành động này không thể hoàn tác."`
+- Nút `"Hủy"` (trái) · `"Xóa"` đỏ (phải). Nút Xóa disable ngay sau lần nhấn đầu.
+- Ràng buộc FK → `"Không được xóa do dữ liệu này đang được sử dụng."`
 
-## 10. Hệ màu & quy chuẩn nút bấm
+## 10. Phân loại thông báo
 
-- Kích thước: **W 120px × H 36px** (trừ nút icon/text dài). Font **14px Sans-serif**.
+Luật: validation trường → **Inline**; kết quả thao tác / lỗi hệ thống → **Toast**.
 
-| Loại | Dùng cho | Màu |
+- **Inline** (dưới trường): **12px**, chữ đỏ, không nền, **KHÔNG đổi màu viền** ô. (Trừ màn đăng nhập.)
+- **Toast** (góc dưới phải), 4 loại Success/Error/Warning/Info; tiếng Việt có dấu.
+
+| Hành động | Thành công | Thất bại |
 |---|---|---|
-| **Primary** | Thêm mới, Lưu, Tìm kiếm, Import | Nền xanh `#056887`, chữ trắng; **hover** vàng `#FFB821`, chữ đen |
-| **Danger** | Xóa | Nền đỏ `#F22128`, chữ trắng |
-| **Neutral** | Hủy / Discard / Đóng | Nền xám `#555D6B`, chữ trắng |
+| Tạo mới | `"Tạo mới thành công."` | `"Không thể tạo mới. Vui lòng thử lại."` |
+| Chỉnh sửa | `"Chỉnh sửa thành công."` | `"Không thể chỉnh sửa. Vui lòng thử lại."` |
+| Xóa | `"Xóa thành công."` | `"Không được xóa do dữ liệu này đang được sử dụng."` |
+| Tải lên tệp | `"Tải lên thành công."` | `"Tải lên thất bại. Vui lòng thử lại."` |
+| Tải xuống | `"Đang tải xuống..."` | `"Không thể tải xuống. Vui lòng thử lại."` |
+| Nhập dữ liệu | `"Nhập dữ liệu thành công."` | `"Nhập dữ liệu thất bại. Vui lòng kiểm tra lại file."` |
+| Lỗi mạng | — | `"Không thể kết nối máy chủ."` |
 
-## 11. Combobox & Checkbox phân quyền
+Kênh: trường trống / sai định dạng-độ dài / mật khẩu không khớp → Inline; Tạo/Sửa/Xóa/sao chép/tải xuống/xuất thành công → Toast Success; API/mạng/5xx/403/ràng buộc → Toast Error; ảnh hưởng phụ → Warning; trạng thái hệ thống → Info.
 
-### 11.1. Combobox (Dropdown)
-- Trường **không bắt buộc**: có icon `(x)` để xóa giá trị đã chọn.
-- Trường **bắt buộc**: **không** có icon `(x)`.
-- Dropdown có Search: realtime trong danh sách xổ; không kết quả → `"Không có dữ liệu"`.
+## 11. Thông báo lỗi Validation (nguyên văn, kết thúc bằng `.`)
 
-### 11.2. Tree Checkbox (phân quyền)
-- Tick **module cha** → tự tick **toàn bộ** quyền con.
-- Tick **Thêm/Sửa/Xóa** → tự tick **"Xem"**.
-- Bỏ tick **"Xem"** → tự bỏ **tất cả** quyền còn lại.
+| Loại | Thông báo |
+|---|---|
+| Trường bắt buộc trống / toàn khoảng trắng | `"Đây là trường bắt buộc."` |
+| Vượt độ dài tối đa | `"Vượt quá {max} ký tự."` |
+| Ngoài khoảng độ dài | `"Phải từ {min} đến {max} ký tự."` |
+| Email sai | `"Địa chỉ email không hợp lệ."` |
+| SĐT sai | `"Số điện thoại không hợp lệ."` |
+| Mật khẩu không đủ | `"Mật khẩu tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt."` |
+| Mật khẩu không khớp | `"Mật khẩu xác nhận không khớp."` |
+| Khoảng ngày / sai định dạng tổng quát | `"Dữ liệu không hợp lệ."` |
+| Định dạng tệp | `"Định dạng tệp không hợp lệ. Vui lòng chọn tệp [danh sách định dạng]."` |
+| Tệp vượt dung lượng | `"Dung lượng tệp vượt quá giới hạn cho phép ({limit}MB)."` |
+| Tệp vượt số dòng | `"Tệp nhập vượt quá {maxRows} dòng. Vui lòng chia nhỏ tệp."` |
+| Tệp nén bất thường | `"Tệp nhập không hợp lệ hoặc bị nén bất thường."` |
+| Vượt số lượng tệp | `"Chỉ được tải lên tối đa {maxFiles} tệp."` |
+| Vượt tổng dung lượng | `"Tổng dung lượng các tệp vượt quá {maxTotalSize}MB."` |
+| Tệp trùng (MULTI) | `"Tệp '{tên}' đã được chọn."` |
+| Trùng dữ liệu | `"[Tên thực thể] đã tồn tại, vui lòng kiểm tra lại."` |
 
-## 12. Quy chuẩn tải file đính kèm
+## 12. Định dạng ngày giờ (UTC+7)
 
-- Validate định dạng + dung lượng **trước** upload. Sai → loại file ngay, báo chữ đỏ dưới khung.
-- Luôn có nút `X` xóa file trước khi Lưu.
-
-| Loại | Giới hạn | Định dạng | Ghi chú |
-|---|---|---|---|
-| Hình ảnh | **5MB** | `.jpg, .jpeg, .png, .bmp` | Hover xem trước (preview) |
-| Tài liệu | **30MB – 50MB** | `.pdf, .docx, .xlsx, .zip…` | — |
-
-## 13. Lưu đồ xử lý nhập dữ liệu (Import Flow)
-
-- Step 1 — Template: nút `"Tải file mẫu"` chuẩn định dạng.
-- Step 2 — Upload: kéo thả / chọn file, **chặn tối đa 1000 bản ghi/lần**.
-- Step 3 — Server Validation: quét lỗi định dạng, bỏ trống trường bắt buộc, trùng DB.
-- Step 4 — Result Panel: Toast `"Nhập dữ liệu thành công"`; bảng tóm tắt Tổng số dòng · Thành công (xanh) · Thất bại (đỏ); View Detail tải file chi tiết lỗi (cột lý do ở cuối).
-
-## 14. Developer Pre-Release Checklist
-
-- [ ] Nút Submit/Lưu **Disable mặc định**, chỉ **Enable khi form hợp lệ**.
-- [ ] **Debounce** (chặn double-click) cho **mọi** nút Action.
-- [ ] Textbox **Trim khoảng trắng 2 đầu**.
-- [ ] Chặn nhập **toàn khoảng trắng** vào trường bắt buộc.
-- [ ] Mật khẩu **hash**, không lưu plaintext.
-- [ ] Popup xóa làm **mờ background (blur)**.
-- [ ] Validation DB (trùng Name/Code) trả **đúng thông báo lỗi dưới ô nhập**.
-- [ ] Mỗi mutation ghi **đúng 1 audit log** hành động/tài nguyên chuẩn (§15).
-- [ ] Tác vụ **thiếu quyền** bị **ẩn** (không chỉ disable) + chặn ở **server** (§16).
-- [ ] Sau Tạo/Sửa/Xóa/Di chuyển, list/cây **tự reload**, tên mới đồng bộ mọi màn (§17).
-- [ ] File Export **khớp bộ lọc/cột hiển thị** + **chống CSV injection** (§18).
-
-## 15. Nhật ký hệ thống (Audit Log)
-
-- Mỗi thao tác thay đổi trạng thái = **ĐÚNG 1 bản ghi audit**. Áp dụng: Tạo, Chỉnh sửa, Xóa, Chia sẻ/Bỏ chia sẻ, Kích hoạt/Vô hiệu hóa, Khôi phục phiên bản, Tải lên, Tải xuống, Xuất tài liệu, Đăng nhập/Đăng xuất, và Xem khi nghiệp vụ yêu cầu.
-- **Cấm double-log**: 1 hành động = 1 entry (đừng gọi API 2 lần / log 2 tầng).
-- Động từ chuẩn hóa:
-
-| Đúng | Không dùng | Phân biệt |
+| Ngữ cảnh | Định dạng | Ví dụ |
 |---|---|---|
-| `Chỉnh sửa` | "Cập nhật", "Sửa", "Edit" | Thống nhất §6 |
-| `Tải xuống` | "Xuất file" | ≠ Xuất tài liệu |
-| `Xuất tài liệu` | "Xuất Excel", "Tải xuống" | = sinh file mới từ dữ liệu |
-| `Xem trước` | "Xem", "Tải xuống" | Preview ≠ mở/tải |
-| `Xem` | "Xem trước" | Chỉ khi thực mở nội dung |
+| Chỉ ngày | `dd/MM/yyyy` | `10/04/2026` |
+| Ngày + giờ | `dd/MM/yyyy HH:mm:ss` | `10/04/2026 14:30:00` |
+| Chỉ giờ | `HH:mm:ss` | `14:30:00` |
+| Cột bảng (2 dòng) | D1 `HH:mm:ss` · D2 `dd/MM/yyyy` | — |
+| Khoảng ngày | `dd/MM/yyyy - dd/MM/yyyy` | — |
+| Tên file | `ddMMyyyy` | `15072026` |
 
-- `resourceType` **xác định**, không trống / không `"unknown"` (Tài liệu / Thư mục / Người dùng / Vai trò / Phòng ban / Thuật ngữ / Danh mục…) + định danh bản ghi.
-- Có bảng ánh xạ hành động ↔ chuỗi hiển thị ở backend; không hardcode rải rác.
+## 13. Nhập / Xuất dữ liệu
 
-## 16. Phân quyền lúc chạy (Runtime Authorization)
+**Nhập**: file mẫu → upload → validate → thông báo. Thành công `"Nhập dữ liệu thành công."`; thất bại `"Nhập dữ liệu thất bại. Vui lòng kiểm tra lại file."`. Giới hạn theo §4.
 
-- **Ẩn, không disable**: tác vụ user không có quyền (Xóa/Sửa/Tải xuống/Chia sẻ) → ẩn hẳn, không hiển thị mờ.
-- **Enforce server MỌI endpoint**: mỗi API tự kiểm quyền server-side, kể cả khi UI đã ẩn. (Ẩn UI = trải nghiệm; chặn server = bảo mật — cần cả hai.)
-- **Chia sẻ cascade**: share/bỏ share thư mục cha kế thừa xuống con; đổi quyền cha cập nhật con.
-- **Data-scope theo phòng ban**: trả dữ liệu giới hạn scope user, không trả rồi mới ẩn ở client.
-- Không để RAG/search/API phụ **lách** lớp phân quyền.
+**Xuất**: nút `"Xuất tài liệu"`. Mặc định `.xlsx` (mọi chức năng). Tên file `[Tên chức năng]_[ddMMyyyy]`. Nội dung = toàn bộ dữ liệu theo bộ lọc + cột đang hiển thị.
+- **≤100.000 dòng/lần** → vượt: `"Kết quả vượt quá 100.000 dòng. Vui lòng thu hẹp bộ lọc (khoảng thời gian, người dùng, hành động) rồi xuất lại."` Ghi file theo luồng.
+- **≤2 lượt xuất đồng thời/máy chủ** → lượt 3: `"Hệ thống đang xử lý yêu cầu xuất khác. Vui lòng thử lại sau ít phút."`
+- Giữ nguyên văn dữ liệu. Giá trị trông giống công thức (`+84912345678`, `-100`) → **KHÔNG thêm ký tự (như `'`)**; thay vào đó Excel ghi **văn bản thuần, chặn ô kiểu công thức**. CSV (chỉ khi ngoại lệ): UTF-8 có BOM. Test: xuất `=1+1`, `-100`, `+84912345678` → đúng nguyên văn.
+- CSV chỉ khi: (1) máy khác đọc tự động **và** (2) >100.000 dòng; khai BRD. Im lặng → `.xlsx`.
 
-## 17. Đồng bộ sau thao tác & trùng dữ liệu
+## 14. Loading / Breadcrumb / Debounce
 
-- **Reload sau mutation**: sau Tạo/Đổi tên/Di chuyển/Xóa, tự reload list/cây **và** mọi màn tham chiếu bản ghi (breadcrumb, tiêu đề). Không để tên cũ sót.
-- **Check trùng đúng scope**: uniqueness trong đúng phạm vi nghiệp vụ (cùng cấp thư mục / cùng danh mục / cùng phòng ban), không phải toàn hệ thống.
-- **Soft-delete ↔ uniqueness**: khi có bản đã xóa mềm cùng tên/mã, quy định **tường minh** cho tái dùng hay báo trùng. Không để mơ hồ.
+- **Loading**: bảng → skeleton rows; submit → spinner + disable toàn form; tải trang đầu → skeleton toàn trang; upload → progress từng item; tải xuống → toast `"Đang tải xuống..."`.
+- **Breadcrumb**: đường dẫn đầy đủ; click node → về cấp đó; URL phản ánh trạng thái, deep-link bookmark được.
+- **Debounce click**: chỉ xử lý **1 event**. Áp cho: Tạo mới, Lưu thay đổi, Xóa, Tìm kiếm, Xuất tài liệu.
 
-## 18. Toàn vẹn Export & chống CSV injection
+## 15. Quản lý dữ liệu & soft-delete
 
-- Export **khớp dữ liệu đang hiển thị**: đúng bộ lọc/sort/cột đang bật tại thời điểm bấm Xuất.
-- **Chống CSV injection**: ô bắt đầu bằng `=` `+` `-` `@` (và tab/CR) phải **escape** (prefix `'` hoặc bọc) trước khi ghi CSV/XLSX.
-- **BOM UTF-8** cho file tiếng Việt.
-- Tên file: `[Tên chức năng]_[ddMMyyyy]`.
+- Bản ghi DB dùng **soft-delete** (`deletedAt`), không xóa vật lý; đã xóa mềm → không hiển thị trong danh sách.
+- Khóa chính **UUID v4**; mọi bản ghi có `createdAt` + `updatedAt` tự động.
+- Tên hiển thị dùng trường riêng, không dùng khóa kỹ thuật.
 
-## 19. Vòng đời phiên & xác thực
+## 16. Trạng thái & màu bản ghi
 
-- **Auto-logout** khi tài khoản bị khóa hoặc **sau đổi mật khẩu** (buộc đăng xuất phiên hiện tại/khác).
-- **Xác nhận trước khi đăng xuất** nếu đang có thao tác dở.
-- **Side-effect chỉ chạy SAU xác nhận**: không đăng xuất/xóa/gửi trước khi bấm nút xác nhận.
-- **ESC / click nền không tự đóng** form đang nhập dở mà chưa hỏi.
-- **Chặn double-submit** (chống gọi API 2 lần), nhất là thao tác không idempotent.
+Hoạt động/Kích hoạt → **Xanh lá** · Vô hiệu hóa/Bị khóa → **Xám** · Lỗi/Thất bại → **Đỏ** · Đang xử lý/Chờ → **Vàng**.
+
+## 17. Xử lý trùng dữ liệu (check sau trim, không phân biệt hoa thường)
+
+| Trường hợp | Thông báo |
+|---|---|
+| Email người dùng trùng | `"Email đã được sử dụng."` |
+| Tên phòng ban trùng cùng cấp | `"Phòng ban đã tồn tại, vui lòng kiểm tra lại."` |
+| Tên thư mục trùng cùng cấp cha | `"Thư mục đã tồn tại, vui lòng kiểm tra lại."` |
+| Tên vai trò trùng | `"Vai trò đã tồn tại, vui lòng kiểm tra lại."` |
+| Tổng quát | `"[Tên thực thể] đã tồn tại, vui lòng kiểm tra lại."` |
+
+## 18. Phiên đăng nhập, xác thực & rate limit
+
+- **OIDC + PKCE**; phiên silent refresh tự động.
+- Phiên hết hạn / tài khoản bị khóa → về trang đăng nhập.
+- **Đổi mật khẩu → chấm dứt NGAY toàn bộ phiên mọi thiết bị.**
+- Chống brute-force do IdP.
+- Khôi phục mật khẩu ≤5 lần/giờ/email → vượt: HTTP **429**. Endpoint nhạy cảm khác khai ngưỡng BRD.
+
+## 19. Phân quyền ACL & phạm vi dữ liệu
+
+- **ACL**: **OWNER** (xem/sửa/xóa/phân quyền/chia sẻ) · **EDITOR** (xem, sửa nội dung, tải lên/xuống) · **VIEWER** (chỉ xem + tải xuống).
+- **Phạm vi dữ liệu**: **Cá nhân** (bản ghi mình tạo) · **Phòng ban** · **Phòng ban và cấp dưới** · **Toàn hệ thống**.
+- Đơn vị tổ chức: dùng DUY NHẤT **"Phòng ban"** (không "Đơn vị"/"Bộ phận"/"Admin tổng").
+
+## 20. Lưu ý triển khai
+
+- UI **tiếng Việt có dấu, không ngoại lệ**; múi giờ **UTC+7**.
+- Mọi service chạy **Docker container**. Trình duyệt Chrome/Edge/Firefox **120+**.
+- Pagination params: `page, limit, search, sortBy, sortOrder`.
+- Error format: `{ message, statusCode }`; lỗi xác thực `{ error: { code, message, timestamp } }`.
+- Mọi giá trị giới hạn khai **hằng số tập trung**, không hardcode.
+
+## 21. Bổ sung DFT (docx chưa phủ)
+
+- **Audit log**: mỗi mutation (Tạo/Chỉnh sửa/Xóa/Chia sẻ/Kích hoạt/Vô hiệu hóa/Khôi phục/Tải lên/Tải xuống/Xuất tài liệu/Đăng nhập/Đăng xuất) = **ĐÚNG 1 entry**; **cấm double-log**; động từ chuẩn §5 (`Chỉnh sửa`≠"Cập nhật", `Tải xuống`≠`Xuất tài liệu`, `Xem trước`≠`Xem`); `resourceType` xác định (không `"unknown"`) + định danh bản ghi.
+- **Phân quyền runtime**: tác vụ thiếu quyền (§19) → **ẩn hẳn, không disable mờ**; **enforce server MỌI endpoint**, không tin client; không để RAG/search lách.
+- **Đồng bộ sau mutation**: Tạo/Sửa/Xóa/Di chuyển → reload list/cây + mọi màn tham chiếu (breadcrumb/tiêu đề); không để tên cũ sót.
+- **Soft-delete ↔ uniqueness**: bản đã xóa mềm cùng tên/mã → quy định **tường minh** cho tái dùng hay báo trùng.
+- **Chống mất dữ liệu**: ESC/click nền **không tự đóng** form đang nhập dở; **chặn double-submit** thao tác không idempotent.

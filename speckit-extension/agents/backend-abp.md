@@ -38,7 +38,7 @@ Subagent chạy MỘT lượt cho MỘT task từ `tasks.md`. **KHÔNG tương t
 Nguồn LUẬT: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (chuẩn DFT mọi project).
 
 - Doc quy ước khác trong repo (`docs/QUY_UOC_CHUNG_*`) → **KHÔNG dùng**; báo XUNG ĐỘT trong báo cáo.
-- **QUC thắng repo**: giá trị QUC chốt tường minh (hex / chuỗi / độ dài / hành vi) mà repo làm khác → dùng giá trị **QUC** trong code mình viết (vd `#F22128` cho nút Xóa, không dùng token dự án). Buộc phải đổi file dùng chung ngoài phạm vi task → **báo BLOCKER** trong báo cáo (vd *"`--noc-error`=#E53935 không tuân QUC #F22128 — cần đổi"*); không tự sửa, không lặng lẽ theo repo. Đây KHÔNG phải case DỪNG.
+- **QUC thắng repo**: giá trị QUC chốt tường minh (chuỗi / nhãn / độ dài / hành vi) mà repo làm khác → dùng giá trị **QUC** trong code mình viết (vd chuỗi lỗi/trùng nguyên văn §11/§17, độ dài trường §2, nhãn `"Tạo mới"` cấm "Thêm mới" §5). Buộc phải đổi file dùng chung ngoài phạm vi task (vd util chung trả chuỗi khác QUC) → **báo BLOCKER** trong báo cáo; không tự sửa, không lặng lẽ theo repo. Đây KHÔNG phải case DỪNG. *(Màu sắc: QUC dùng token `--accent` chứ không hex — dùng token design-system dự án là hợp lệ, không còn xung đột.)*
 - "Bám mẫu" áp cho **cấu trúc / tên / tổ chức file** — KHÔNG cho **giá trị** QUC đã chốt.
 
 **B1.** Đọc QUC **trước** khi viết code. Không đọc được (file thiếu / extension chưa cài) → **DỪNG, báo**. Không bịa quy ước.
@@ -50,19 +50,19 @@ Nguồn LUẬT: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (c
 ```text
 | Mục (số + tên trong QUC) | Trích NGUYÊN VĂN từ QUC          | file:line trong code    | Đạt |
 |--------------------------|-----------------------------------|-------------------------|-----|
-| 3 Kiểu dữ liệu — Tên     | "Varchar(255) … Viết hoa chữ đầu" | Course.cs:18            | ✔   |
-| 3 Kiểu — Tiền (VND)      | "Decimal(18,0) … không thập phân" | CourseConfiguration:27  | ✔   |
-| 9 Inline — trùng lặp     | "$Trường_thông_tin$ đã tồn tại"   | CourseAppService.cs:63  | ✔   |
+| 2 Độ dài — Tên          | "255 … Unicode tiếng Việt"        | Course.cs:18            | ✔   |
+| 1 Kiểu — Tiền (VND)      | "decimal(18,0) … không thập phân" | CourseConfiguration:27  | ✔   |
+| 17 Trùng — tổng quát    | "[Tên thực thể] đã tồn tại, vui lòng kiểm tra lại." | CourseAppService.cs:63 | ✔ |
 ```
 
 Mỗi dòng ĐẠT bắt buộc đủ 2 thứ: (1) **trích NGUYÊN VĂN** từ QUC (khớp ký tự; diễn đạt lại hoặc thiếu trích = chưa đọc file = KHÔNG ĐẠT); (2) **`file:line` thật** trong code. Không có bảng = coi như chưa làm.
 
 **B2.1. Cụm bug backend BẮT BUỘC kiểm (rút từ bug thật):**
 
-1. **Audit log (§15)**: mỗi mutation-method ghi **đúng 1** entry; động từ chuẩn (`Chỉnh sửa`≠"Cập nhật", `Tải xuống`≠`Xuất tài liệu`, `Xem trước`≠`Xem`); `resourceType` xác định (không `"unknown"`); cấm double-log. Mutation không log = KHÔNG ĐẠT.
-2. **Phân quyền server (§16)**: mọi endpoint kiểm quyền server-side; trả đúng scope phòng ban; không để RAG/search lách.
-3. **Trùng + soft-delete (§17)**: check trùng đúng scope; xử lý bản soft-deleted cùng tên/mã tường minh.
-4. **Message (§9)**: chuỗi trả về khớp **nguyên văn** chuỗi FE. Không tự chế.
+1. **Audit log (§21)**: mỗi mutation-method ghi **đúng 1** entry; động từ chuẩn (`Chỉnh sửa`≠"Cập nhật", `Tải xuống`≠`Xuất tài liệu`, `Xem trước`≠`Xem`); `resourceType` xác định (không `"unknown"`); cấm double-log. Mutation không log = KHÔNG ĐẠT.
+2. **Phân quyền server (§19+§21)**: mọi endpoint kiểm quyền server-side; trả đúng phạm vi dữ liệu (Cá nhân/Phòng ban/…); không để RAG/search lách.
+3. **Trùng + soft-delete (§15+§17)**: soft-delete `deletedAt`; check trùng sau trim, không phân biệt hoa thường, đúng scope; xử lý bản soft-deleted cùng tên/mã tường minh.
+4. **Message (§10+§11)**: chuỗi lỗi/toast trả về khớp **nguyên văn** chuỗi FE hiển thị. Không tự chế.
 
 **B4. Cổng:**
 

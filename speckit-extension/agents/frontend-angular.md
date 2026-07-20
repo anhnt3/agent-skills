@@ -35,7 +35,7 @@ Subagent chạy MỘT lượt cho MỘT task từ `tasks.md`. **KHÔNG tương t
 Nguồn LUẬT: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (chuẩn DFT mọi project).
 
 - Doc quy ước khác trong repo (`docs/QUY_UOC_CHUNG_*`) → **KHÔNG dùng**; báo XUNG ĐỘT trong báo cáo.
-- **QUC thắng repo**: giá trị QUC chốt tường minh (hex / chuỗi / độ dài / hành vi) mà repo làm khác → dùng giá trị **QUC** trong code mình viết (vd `#F22128` cho nút Xóa, không dùng token dự án). Buộc phải đổi file dùng chung ngoài phạm vi task (token màu toàn cục, chuỗi util chung, `app-input` đổi màu viền) → **báo BLOCKER** trong báo cáo (vd *"`--noc-error`=#E53935 không tuân QUC #F22128 — cần đổi"*); không tự sửa, không lặng lẽ theo repo. Đây KHÔNG phải case DỪNG.
+- **QUC thắng repo**: giá trị QUC chốt tường minh (chuỗi / nhãn / độ dài / hành vi) mà repo làm khác → dùng giá trị **QUC** trong code mình viết (vd nhãn `"Tạo mới"` cấm "Thêm mới" §5, toast `"Chỉnh sửa thành công."` §10, empty `"Không có dữ liệu!"` §7). Buộc phải đổi file dùng chung ngoài phạm vi task (chuỗi util chung, `app-input` đổi màu viền — QUC cấm đổi viền §10) → **báo BLOCKER** trong báo cáo; không tự sửa, không lặng lẽ theo repo. Đây KHÔNG phải case DỪNG. *(Màu sắc: QUC dùng token `--accent`/`--accent-hover`/`bg-slate-200` chứ không hex — dùng token design-system dự án là hợp lệ, không còn xung đột.)*
 - "Bám mẫu" áp cho **cấu trúc / tên / tổ chức file** — KHÔNG cho **giá trị** QUC đã chốt.
 
 **B1.** Đọc QUC **trước** khi viết code. Không đọc được (file thiếu / extension chưa cài) → **DỪNG, báo**. Không bịa quy ước.
@@ -47,21 +47,21 @@ Nguồn LUẬT: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (c
 ```text
 | Mục (số + tên trong QUC) | Trích NGUYÊN VĂN từ QUC                   | file:line trong code        | Đạt |
 |--------------------------|--------------------------------------------|-----------------------------|-----|
-| 8.1 Text Search          | "ấn phím Enter hoặc nút Tìm kiếm — KHÔNG realtime ở Textbox" | course-list.ts:42 | ✔   |
-| 7 Data Grid — Cột Số/Tiền| "Căn phải (Right)"                         | course-list.html:60         | ✔   |
-| 10 Nút — Primary         | "Nền xanh #056887 … hover: vàng #FFB821"   | course-list.scss:8          | ✔   |
-| 9 Toast — thành công     | "Cập nhật thành công!"                     | course.service.ts:57        | ✔   |
+| 7 Data Grid — Kết quả trống | "Không có dữ liệu!"                     | course-list.html:40         | ✔   |
+| 7 Data Grid — Cột Số/Tiền   | "Số / Tiền → Căn phải"                  | course-list.html:60         | ✔   |
+| 8 Form — Nút sửa            | "Lưu thay đổi"                          | course-form.html:31         | ✔   |
+| 10 Toast — Chỉnh sửa        | "Chỉnh sửa thành công."                 | course.service.ts:57        | ✔   |
 ```
 
 Mỗi dòng ĐẠT bắt buộc đủ 2 thứ: (1) **trích NGUYÊN VĂN** từ QUC (khớp ký tự; diễn đạt lại hoặc thiếu trích = chưa đọc file = KHÔNG ĐẠT); (2) **`file:line` thật** trong code. Không có bảng = coi như chưa làm.
 
 **B2.1. Cụm bug frontend BẮT BUỘC kiểm (rút từ bug thật):**
 
-1. **Chuỗi thông báo (§9)**: mỗi mutation bắn **đúng 1 toast**, đủ cả nhánh thành công lẫn thất bại. Đúng kênh: validate trường → Inline; kết quả thao tác → Toast; xác nhận nguy hiểm → Popup. Chuỗi lấy **nguyên văn** từ §9; chưa có → DỪNG, báo.
-2. **Nút Lưu/Submit (§5)**: **disable mặc định**, chỉ enable khi toàn form hợp lệ — đồng nhất cho **cả Tạo lẫn Chỉnh sửa**.
-3. **Ẩn tác vụ thiếu quyền (§16)**: nút Xóa/Sửa/Tải xuống mà user không có quyền → **ẩn hẳn**, không hiển thị mờ.
-4. **Reload sau mutation (§17)**: sau Tạo/Sửa/Xóa/Di chuyển, tự reload list/cây + đồng bộ tên mới mọi màn liên quan (breadcrumb, tiêu đề).
-5. **Trim + Debounce (§6)**: trim đầu/cuối trước validate; chặn double-click trên mọi nút action.
+1. **Chuỗi thông báo (§10+§11)**: mỗi mutation bắn **đúng 1 toast**, đủ cả nhánh thành công lẫn thất bại. Đúng kênh: validate trường → Inline (không đổi màu viền); kết quả thao tác → Toast. Chuỗi lấy **nguyên văn** từ §10/§11; chưa có → DỪNG, báo.
+2. **Nút xác nhận Form (§8)**: **disable mặc định**, chỉ enable khi toàn form hợp lệ — đồng nhất **cả Tạo lẫn Chỉnh sửa**. Nhãn: tạo `"Tạo mới"`, sửa `"Lưu thay đổi"`.
+3. **Ẩn tác vụ thiếu quyền (§19+§21)**: tác vụ user thiếu quyền (ACL OWNER/EDITOR/VIEWER) → **ẩn hẳn**, không disable mờ.
+4. **Reload sau mutation (§21)**: sau Tạo/Sửa/Xóa/Di chuyển, tự reload list/cây + đồng bộ tên mới mọi màn liên quan (breadcrumb, tiêu đề).
+5. **Trim + Debounce (§3+§14)**: trim đầu/cuối trước validate; chặn double-click trên mọi nút action.
 
 **B4. Cổng:**
 
