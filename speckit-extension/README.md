@@ -93,7 +93,7 @@ Sau khi release xong, cài bằng:
 
 ```bash
 specify extension add dft-speckit --force --from \
-  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v0.0.4/dft-speckit-0.0.4.zip
+  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v0.0.5/dft-speckit-0.0.5.zip
 ```
 
 ### Build zip riêng lẻ (không release)
