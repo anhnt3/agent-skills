@@ -47,6 +47,7 @@ find scripts -type f \
   ! -path 'scripts/.venv/*' \
   ! -name '*.pyc' \
   ! -path '*/__pycache__/*' \
+  ! -path 'scripts/tests/*' \
   ! -name '*-config.local.yml' \
   -exec sh -c 'mkdir -p "$2/$(dirname "$1")"; cp "$1" "$2/$1"' _ {} "$dest" \;
 

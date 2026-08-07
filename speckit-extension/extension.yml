@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "dft-speckit"
   name: "DFT Spec Kit Extension"
-  version: "0.0.5"
+  version: "0.1.0"
   description: "Bộ command dùng chung của DFT cho Spec Kit — tập hợp các command hỗ trợ quy trình spec-driven development của công ty. Sẽ mở rộng dần nhiều command."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/anhnt3/agent-skills"
@@ -32,6 +32,10 @@ provides:
     - name: "speckit.dft-speckit.init-agents"
       file: "commands/init-agents.md"
       description: "Dò stack thật của project (theo tín hiệu khai trong agents/registry.yml — glob/grep, có bằng chứng file), lọc đúng agent phù hợp trong catalog DFT rồi cài vào .claude/agents/ để /speckit.agent-assign.assign có agent mà gán vào task. Không đổ cả catalog (agent sai stack làm nhiễu bước tự-khớp). Chỉ hỗ trợ integration claude — agent-assign hardcode đường quét .claude/agents/. Hỏi trước khi ghi đè, không clobber file sửa tay."
+
+    - name: "speckit.dft-speckit.brd-import"
+      file: "commands/brd-import.md"
+      description: "Bẻ một file BRD .docx lớn thành cây markdown nhỏ phản chiếu navigation pane của Word — mỗi mục ở cấp đã chọn là một file, kèm brd.manifest.yml, media/ và reference.docx. Dò cấu trúc 6 bậc (Heading style, style tự chế có outlineLvl, mục lục, đánh số gõ tay, cỡ chữ, LLM phán đoán); LLM chỉ quyết ranh giới, script chép nguyên văn. Kiểm chứng bằng ghép ngược byte-for-byte — lệch 1 byte là không ghi gì. Chạy lại khi đã có docs/brd/ thì xuất ra docs/brd.new/ kèm bảng khác biệt, không đè lên bản BA đã sửa."
 
   templates:
     - name: "roadmap-template"

@@ -13,6 +13,7 @@ bổ sung thêm command mới theo nhu cầu.
 | `speckit.dft-speckit.road-map-from-codebase` | Lập/cập nhật roadmap build từ codebase — xếp thứ tự từng màn, ghi `docs/roadmap.md`. |
 | `speckit.dft-speckit.domain-design` | Thiết kế/cập nhật domain tổng thể cho một hoặc nhiều module trong roadmap (gom 1 doc), ghi `docs/domain/<module>.md`. |
 | `speckit.dft-speckit.init-agents` | Dò stack thật của project (tín hiệu glob/grep khai trong `agents/registry.yml`, có bằng chứng file), lọc đúng agent trong catalog DFT rồi cài vào `.claude/agents/` để `/speckit.agent-assign.assign` có agent mà gán vào task. Chỉ hỗ trợ integration `claude`. Hỏi trước khi ghi đè. |
+| `speckit.dft-speckit.brd-import` | Bẻ một file BRD `.docx` lớn thành cây markdown nhỏ phản chiếu navigation pane của Word — mỗi mục ở cấp đã chọn là một file, kèm `brd.manifest.yml`, `media/` và `reference.docx`. Dò cấu trúc 6 bậc (Heading style → style tự chế có `outlineLvl` → mục lục → đánh số gõ tay → cỡ chữ → LLM phán đoán); LLM chỉ quyết ranh giới, script chép nguyên văn. Kiểm chứng bằng ghép ngược byte-for-byte. Chạy lại khi đã có `docs/brd/` thì xuất ra `docs/brd.new/` kèm bảng khác biệt, không đè lên bản BA đã sửa tay. Ví dụ: `/speckit.dft-speckit.brd-import refs/BRD-khach-hang.docx` |
 | _(sắp có)_ | Các command DFT khác sẽ được thêm vào đây. |
 
 ## Thêm command mới
@@ -31,7 +32,8 @@ speckit-extension/
 │   ├── qa-spec-cycle.md       # QA trọn vòng 13 pha từ 1 spec
 │   ├── road-map-from-codebase.md
 │   ├── domain-design.md
-│   └── init-agents.md         # dò stack, cài agent DFT vào .claude/agents/
+│   ├── init-agents.md         # dò stack, cài agent DFT vào .claude/agents/
+│   └── brd-import.md          # bẻ BRD .docx lớn thành cây markdown docs/brd/
 ├── agents/                    # catalog agent DFT (nguồn cho init-agents)
 │   ├── registry.yml           # tín hiệu dò stack (glob/grep) — nhà duy nhất
 │   ├── backend-abp.md         # agent ABP/.NET (kèm cổng Quy ước chung)
@@ -47,7 +49,10 @@ speckit-extension/
 │   ├── failure-classification.md
 │   └── traceability.md
 ├── scripts/                   # script hỗ trợ dùng chung cho các command
-│   └── csv_to_xlsx.py         # CSV/JSON -> XLSX 2 sheet (tự dựng venv + openpyxl lần đầu)
+│   ├── csv_to_xlsx.py         # CSV/JSON -> XLSX 2 sheet (tự dựng venv + openpyxl lần đầu)
+│   ├── brd_import.py          # CLI probe|split cho brd-import
+│   ├── promote_headings.lua   # Lua filter cho pandoc (bậc dò 2-4)
+│   └── brd/                   # engine brd-import (naming/outline/convert/docx_probe/splitter/verify)
 ├── templates/                 # khung output cố định (resolve qua `specify preset resolve <tên>`)
 │   ├── roadmap-template.md    # khung docs/roadmap.md cho road-map-from-codebase
 │   └── domain-template.md     # khung docs/domain/<module>.md cho domain-design
