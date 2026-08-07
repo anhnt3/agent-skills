@@ -461,6 +461,26 @@ def test_check_coverage_nguon_na_thi_im_lang(brd):
     assert not any("RM-001" in w for w in warns)
 
 
+def test_check_coverage_nguon_na_co_backtick_thi_im_lang(brd):
+    """`` `N/A` `` (backtick, đúng quy ước ô nhập của template) vẫn được xem là N/A hợp lệ."""
+    text = ROADMAP_PHU.replace("- **Nguồn**: docs/brd/01-nhom-a/\n", "- **Nguồn**: `N/A`\n")
+    _, warns = _cover(brd, text, [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert not any("RM-001" in w for w in warns)
+
+
+def test_check_coverage_excluded_node_id_khong_phai_chuoi_thi_loi_khong_crash(brd):
+    """`node_id` là số/list thay vì chuỗi -> lỗi tiếng Việt, không AttributeError."""
+    errs, _ = _cover(brd, ROADMAP_PHU, [{"node_id": 123, "title": "x", "reason": "ok"}])
+    assert any("node_id" in e and "123" in e for e in errs)
+
+
+def test_check_coverage_excluded_reason_khong_phai_chuoi_thi_loi_khong_crash(brd):
+    """`reason` là list thay vì chuỗi -> lỗi tiếng Việt, không AttributeError."""
+    errs, _ = _cover(brd, ROADMAP_PHU,
+                     [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": ["x"]}])
+    assert any("reason" in e for e in errs)
+
+
 def test_check_coverage_hai_node_inline_chung_dir_deu_duoc_phu(brd):
     """Hai node inline cùng chia sẻ một `dir:` — một item trỏ vào dir đó phải phủ cả hai."""
     manifest = (brd / "brd.manifest.yml").read_text(encoding="utf-8")

@@ -399,7 +399,13 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
         if rel is None:
             # Giá trị hợp lệ và cố ý không trỏ vào BRD (đường dẫn code, N/A) thì
             # im lặng — mẫu roadmap-template cho phép field này nhận cả hai dạng.
-            if raw.strip().lower() != "n/a":
+            # Chuẩn hoá giống norm_source (bỏ backtick, mở link markdown) trước khi
+            # so "n/a" — nếu không, `N/A` viết có backtick/dạng link sẽ bị báo oan.
+            v = raw.strip().strip("`").strip()
+            m = LINK_RE.match(v)
+            if m:
+                v = m.group(1).strip()
+            if v.strip().lower() != "n/a":
                 warns.append(f"{rid}: **Nguồn** = {raw} — không trỏ vào cây BRD, "
                              f"không truy vết được (nếu cố ý thì bỏ qua cảnh báo này).")
             continue
@@ -429,14 +435,22 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
             errs.append(f"decisions.json có phần tử loại node sai định dạng: {e!r} — "
                         f"phải là object dạng {{\"node_id\": ..., \"title\": ..., \"reason\": ...}}.")
             continue
-        nid = (e.get("node_id") or "").strip()
+        raw_nid = e.get("node_id")
+        if raw_nid is not None and not isinstance(raw_nid, str):
+            errs.append(f"decisions.json có \"node_id\" sai kiểu (phải là chuỗi): {raw_nid!r}.")
+            continue
+        raw_reason = e.get("reason")
+        if raw_reason is not None and not isinstance(raw_reason, str):
+            errs.append(f"decisions.json có \"reason\" sai kiểu (phải là chuỗi): {raw_reason!r}.")
+            continue
+        nid = (raw_nid or "").strip()
         if not nid:
             errs.append("decisions.json có phần tử loại node thiếu \"node_id\".")
             continue
         if nid not in by_id:
             errs.append(f"decisions.json loại node {nid} không có trong manifest.")
             continue
-        if not (e.get("reason") or "").strip():
+        if not (raw_reason or "").strip():
             errs.append(f"decisions.json loại node {nid} nhưng bỏ trống lý do.")
             continue
         ex_ids.add(nid)
