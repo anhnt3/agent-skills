@@ -178,8 +178,63 @@ def signals_of(text):
     }
 
 
+def tree_diff(brd_dir, nodes):
+    """(file .md có trên đĩa mà manifest không khai, node khai mà file đã mất).
+
+    BA sửa tay `docs/brd/` sau khi import là chuyện thường — hai danh sách này là
+    cảnh báo, không chặn, nhưng lệnh phải báo ra.
+    """
+    brd_dir = Path(brd_dir)
+    known = {n["path"] for n in nodes if n["path"]}
+    on_disk = {str(p.relative_to(brd_dir)).replace("\\", "/")
+               for p in brd_dir.rglob("*.md")}
+    missing = sorted(p for p in known if not (brd_dir / p).is_file())
+    extra = sorted(on_disk - known)
+    return extra, missing
+
+
+def build_outline(brd_dir, head):
+    brd_dir = Path(brd_dir)
+    nodes = parse_manifest(brd_dir / "brd.manifest.yml")
+    crumbs = breadcrumbs(nodes)
+    extra, missing = tree_diff(brd_dir, nodes)
+
+    out_nodes = []
+    for n in nodes:
+        item = {
+            "id": n["id"], "order": n["order"], "depth": n["depth"],
+            "kind": n["kind"], "title": n["title"], "breadcrumb": crumbs[n["id"]],
+            "path": n["path"], "dir": n["dir"], "inline": n["inline"],
+            "parent": n["parent"], "chars": n["chars"],
+            "headings": [], "head": [], "signals": None,
+        }
+        f = brd_dir / n["path"] if n["path"] else None
+        if f is not None and f.is_file():
+            body = strip_frontmatter(f.read_text(encoding="utf-8"))
+            item["headings"] = headings_of(body)
+            item["head"] = head_lines(body, head)
+            item["signals"] = signals_of(body)
+        out_nodes.append(item)
+
+    return {
+        "brd_dir": str(brd_dir).replace("\\", "/"),
+        "node_count": len(out_nodes),
+        "files_without_node": extra,
+        "nodes_without_file": missing,
+        "nodes": out_nodes,
+    }
+
+
 def cmd_outline(args):
-    raise NotImplementedError
+    brd_dir = Path(args.brd_dir)
+    if not brd_dir.is_dir():
+        _die(f"Không thấy thư mục BRD: {brd_dir}")
+    result = build_outline(brd_dir, args.head)
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result, ensure_ascii=False, indent=2),
+                   encoding="utf-8", newline="\n")
+    print(json.dumps(result, ensure_ascii=False))
 
 
 def main():

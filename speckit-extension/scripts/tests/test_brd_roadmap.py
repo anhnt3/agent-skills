@@ -7,6 +7,7 @@ import pytest
 
 from brd_roadmap import breadcrumbs, node_loc, parse_manifest
 from brd_roadmap import head_lines, headings_of, signals_of, strip_frontmatter
+from brd_roadmap import build_outline, tree_diff
 
 SCRIPT = Path(__file__).resolve().parents[1] / "brd_roadmap.py"
 
@@ -170,3 +171,58 @@ def test_signals_of_file_khong_co_gi(brd):
     assert sig["tables"] == 0
     assert sig["images"] == 0
     assert sig["field_table"] is False
+
+
+def test_tree_diff_bao_file_thua_va_node_mat(brd):
+    nodes = parse_manifest(brd / "brd.manifest.yml")
+    (brd / "01-nhom-a" / "03-ba-them-tay.md").write_text("# BA thêm tay\n", encoding="utf-8")
+    (brd / "01-nhom-a" / "02-thuat-ngu.md").unlink()
+    extra, missing = tree_diff(brd, nodes)
+    assert extra == ["01-nhom-a/03-ba-them-tay.md"]
+    assert missing == ["01-nhom-a/02-thuat-ngu.md"]
+
+
+def test_tree_diff_cay_nguyen_ven_thi_rong(brd):
+    nodes = parse_manifest(brd / "brd.manifest.yml")
+    assert tree_diff(brd, nodes) == ([], [])
+
+
+def test_build_outline_moi_node_co_du_khoa(brd):
+    out = build_outline(brd, head=15)
+    assert out["node_count"] == 4
+    man = next(n for n in out["nodes"] if n["id"] == "BRD-0002")
+    assert man["breadcrumb"] == ['Nhóm A, phần "chính"']
+    assert man["path"] == "01-nhom-a/01-man-danh-sach.md"
+    assert {"level": 2, "text": "Bộ lọc"} in man["headings"]
+    assert man["head"]
+    assert man["signals"]["images"] == 1
+
+
+def test_build_outline_node_inline_khong_doc_file(brd):
+    out = build_outline(brd, head=15)
+    grp = next(n for n in out["nodes"] if n["id"] == "BRD-0001")
+    assert grp["inline"] is True
+    assert grp["dir"] == "01-nhom-a/"
+    assert grp["headings"] == []
+    assert grp["signals"] is None
+
+
+def test_cli_outline_ghi_file_va_in_stdout(brd, tmp_path):
+    dest = tmp_path / "out" / "outline.json"
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "outline", str(brd), "--out", str(dest)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert dest.is_file()
+    assert json.loads(proc.stdout)["node_count"] == 4
+
+
+def test_cli_outline_thu_muc_khong_co_manifest_thi_chet(tmp_path):
+    (tmp_path / "trong").mkdir()
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "outline", str(tmp_path / "trong")],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 2
+    assert "brd.manifest.yml" in proc.stderr
