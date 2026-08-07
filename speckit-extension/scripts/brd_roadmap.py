@@ -252,7 +252,14 @@ def cmd_outline(args):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2),
                    encoding="utf-8", newline="\n")
-    print(json.dumps(result, ensure_ascii=False))
+    if getattr(args, "quiet", False):
+        n_nodes = result.get("node_count", len(result.get("nodes", [])))
+        n_extra = len(result.get("files_without_node", []))
+        n_missing = len(result.get("nodes_without_file", []))
+        print(f"Đã trích {n_nodes} node, ghi vào {out} "
+              f"(files_without_node: {n_extra}, nodes_without_file: {n_missing}).")
+    else:
+        print(json.dumps(result, ensure_ascii=False))
 
 
 ROW_RE = re.compile(r"^\|\s*(RM-\d{3})\s*\|(.*)$")
@@ -606,6 +613,9 @@ def main():
     o.add_argument("brd_dir")
     o.add_argument("--out", default=".specify/tmp/roadmap-brd/outline.json")
     o.add_argument("--head", type=int, default=15)
+    o.add_argument("--quiet", action="store_true",
+                   help="Chỉ in một dòng tóm tắt ra stdout thay vì toàn bộ outline JSON "
+                        "(file --out vẫn ghi đầy đủ như bình thường)")
     o.set_defaults(func=cmd_outline)
 
     v = sub.add_parser("verify", help="Chấm docs/roadmap.md so với cây BRD")

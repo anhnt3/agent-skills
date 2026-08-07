@@ -221,6 +221,45 @@ def test_cli_outline_ghi_file_va_in_stdout(brd, tmp_path):
     assert json.loads(proc.stdout)["node_count"] == 4
 
 
+def test_cli_outline_mac_dinh_khong_quiet_in_du_json(brd, tmp_path):
+    """Mặc định (không có --quiet) hành vi KHÔNG đổi: stdout vẫn là JSON đầy đủ."""
+    dest = tmp_path / "out" / "outline.json"
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "outline", str(brd), "--out", str(dest)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 0, proc.stderr
+    stdout_json = json.loads(proc.stdout)
+    assert stdout_json["node_count"] == 4
+    assert "nodes" in stdout_json and len(stdout_json["nodes"]) == 4
+
+
+def test_cli_outline_quiet_in_tom_tat_khong_phai_json_day_du(brd, tmp_path):
+    """Có --quiet: stdout chỉ là dòng tóm tắt ngắn, KHÔNG parse được thành outline JSON
+    đầy đủ, nhưng --out vẫn ghi đầy đủ JSON như bình thường."""
+    dest = tmp_path / "out" / "outline.json"
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "outline", str(brd), "--out", str(dest), "--quiet"],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert dest.is_file()
+    full = json.loads(dest.read_text(encoding="utf-8"))
+    assert full["node_count"] == 4
+    assert len(full["nodes"]) == 4
+
+    stdout = proc.stdout.strip()
+    assert stdout, "stdout không được rỗng"
+    try:
+        parsed = json.loads(stdout)
+        is_full_outline = isinstance(parsed, dict) and "nodes" in parsed
+    except json.JSONDecodeError:
+        is_full_outline = False
+    assert not is_full_outline, "stdout ở chế độ --quiet không được là outline JSON đầy đủ"
+    assert "4" in stdout
+    assert str(dest) in stdout or dest.name in stdout
+
+
 def test_cli_outline_thu_muc_khong_co_manifest_thi_chet(tmp_path):
     (tmp_path / "trong").mkdir()
     proc = subprocess.run(

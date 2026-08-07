@@ -34,18 +34,23 @@ Không hỏi "có muốn ghi đè không" — không ghi đè là quyết địn
 
 ```bash
 python .specify/extensions/dft-speckit/scripts/brd_roadmap.py outline "<thư-mục-brd>" \
-  --out .specify/tmp/roadmap-brd/outline.json
+  --out .specify/tmp/roadmap-brd/outline.json --quiet
 ```
 
-Lệnh này **vừa ghi `outline.json` vừa in nguyên outline (toàn bộ `headings`, `head`, `signals`
-từng node) ra stdout** — phần in ra stdout là **bản trùng lặp**, KHÔNG được đọc; đọc từ file
-`outline.json` mới đúng, đọc thẳng stdout sẽ vỡ context ngay bước đầu.
+**Luôn dùng `--quiet`.** Không có cờ này, lệnh in nguyên outline (toàn bộ `headings`, `head`,
+`signals` từng node) ra stdout — trùng lặp với file `--out` và có thể vỡ context trên BRD lớn.
+Với `--quiet`, `outline.json` vẫn được ghi đầy đủ như bình thường, còn stdout chỉ là **một dòng
+tóm tắt tiếng Việt**: số node, đường dẫn file đã ghi, và số lượng `files_without_node` /
+`nodes_without_file`.
 
 Mã thoát khác 0 → **DỪNG**, in nguyên thông điệp lỗi. Không tự chữa, không thử lệnh khác.
 
-Đọc `outline.json`. Báo: số node, và **liệt kê đầy đủ** `files_without_node` (file BA thêm tay,
-manifest chưa biết) + `nodes_without_file` (file đã bị xoá). Hai danh sách này không chặn nhưng
-**không được im lặng bỏ qua** — chúng đổi cách hiểu cây.
+Đọc dòng tóm tắt trên stdout trước: nếu hai số `files_without_node` / `nodes_without_file`
+khác 0, mở `outline.json` để lấy danh sách chi tiết. Báo cho người dùng: số node, và **liệt kê
+đầy đủ** `files_without_node` (file BA thêm tay, manifest chưa biết) + `nodes_without_file`
+(file đã bị xoá) khi hai danh sách đó không rỗng. Hai danh sách này không chặn nhưng **không
+được im lặng bỏ qua** — chúng đổi cách hiểu cây. Đừng đọc lại toàn bộ `outline.json` nếu dòng
+tóm tắt đã cho biết cả hai danh sách đều rỗng.
 
 ### 2. Quét codebase — CHỈ để suy phụ thuộc
 
