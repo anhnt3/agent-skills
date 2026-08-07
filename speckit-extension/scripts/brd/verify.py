@@ -15,6 +15,26 @@ class VerifyError(Exception):
     pass
 
 
+def _headings_inside_table(text):
+    """Số dòng heading nằm giữa `<table>` và `</table>` của chính nó.
+
+    CHỈ để cảnh báo. Không đụng vào việc phân tích heading hay số đếm heading:
+    `iter_code_aware` cố ý không biết tới khối HTML (xem docstring của nó), nên
+    một dòng `#` lọt vào trong bảng sẽ bị coi là heading thật — làm lệch
+    `depth_map`/`recommend_depth`, hoặc tệ hơn là cắt đôi một `<table>` sang hai
+    file khiến cả hai dựng ra HTML hỏng. Hàm này phát hiện để báo cho người dùng.
+    """
+    depth, hits = 0, 0
+    for line in text.split("\n"):
+        low = line.lower()
+        if depth > 0 and HEADING_RE.match(line):
+            hits += 1
+        depth += low.count("<table")
+        depth -= low.count("</table>")
+        depth = max(depth, 0)
+    return hits
+
+
 def _denormalize(lines, root_depth, depth_to_level):
     out = []
     for _, line, in_code in iter_code_aware(lines):
@@ -84,6 +104,13 @@ def secondary_checks(nodes, dest, media_dir, shallow_heading_count):
             referenced.add(name)
             if not (media_dir / name).is_file():
                 warnings.append(f'Ảnh không tồn tại: media/{name} (tham chiếu ở {node["path"]})')
+        n_bad = _headings_inside_table(text)
+        if n_bad:
+            warnings.append(
+                f'{n_bad} dòng heading nằm bên trong khối <table> ở {node["path"]} — '
+                "chúng bị tính là heading thật, có thể làm lệch cấp cắt đề xuất và cắt "
+                "đôi bảng sang hai file (bảng sẽ dựng hỏng). Hãy kiểm lại chỗ này."
+            )
         size = sum(len(line) + 1 for line in text.split("\n"))
         if size > 60_000:
             warnings.append(f'File lớn {size:,} ký tự: {node["path"]} — cân nhắc cắt sâu hơn')

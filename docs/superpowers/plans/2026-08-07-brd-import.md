@@ -14,7 +14,7 @@ Spec: [docs/superpowers/specs/2026-08-07-brd-import-design.md](../specs/2026-08-
 
 - **Ngôn ngữ**: mọi nội dung hướng người dùng (command `.md`, README, thông báo lỗi của script) viết **tiếng Việt**. Tên hàm/biến/khoá JSON tiếng Anh.
 - **Runtime không phụ thuộc**: `scripts/brd_import.py` và `scripts/brd/*.py` chỉ dùng thư viện chuẩn Python. Không venv, không PyYAML — manifest được ghi bằng emitter YAML tự viết, và **không bao giờ cần đọc lại bằng parser**.
-- **pandoc**: luôn dùng `-t markdown` (flavor riêng của pandoc, sinh grid table). **Cấm `-t gfm`** — nó sinh 270 bảng HTML thô và làm mất bảng khi ghép ngược ra docx.
+- **pandoc**: luôn dùng `-t markdown` (flavor riêng của pandoc, sinh grid table). **Cấm `-t gfm`** — nó sinh 270 bảng HTML thô và làm mất bảng khi ghép ngược ra docx. → ĐẢO NGƯỢC 2026-08-07, xem ghi chú cuối file
 - **Hợp đồng lõi**: LLM chỉ quyết ranh giới; **script là thứ duy nhất ghi nội dung file markdown**. Không có bước nào cho model viết lại nội dung tài liệu.
 - **Ghi ra đĩa**: luôn ghi vào thư mục tạm rồi `os.replace`/`shutil.move` vào đích. Không có trạng thái nửa vời.
 - **Kiểm thử**: `python -m pytest speckit-extension/scripts/tests -q` từ gốc repo. Test đụng BRD thật phải `pytest.skip` khi thiếu file — thư mục `refs/` **không** được commit.
@@ -422,7 +422,7 @@ def test_run_pandoc_sinh_md_va_tach_anh(real_brd, tmp_path):
     md_path = run_pandoc(real_brd, tmp_path)
     assert md_path == tmp_path / "brd.md"
     text = md_path.read_text(encoding="utf-8")
-    assert "<table>" not in text, "phải dùng -t markdown (grid table), không phải gfm"
+    assert "<table>" not in text, "phải dùng -t markdown (grid table), không phải gfm"  # → ĐẢO NGƯỢC 2026-08-07, xem ghi chú cuối file
     assert text.count("](./media/media/") == 387
     assert len(list((tmp_path / "media" / "media").iterdir())) == 386
 

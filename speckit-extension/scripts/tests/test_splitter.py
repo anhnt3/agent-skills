@@ -92,10 +92,11 @@ FOLDER_MD = "\n".join(
         "thân A1",           # 5
         "# Nhóm B",          # 6   folder KHÔNG con -> phải gộp thành file
         "thân B",            # 7
-        "# Nhóm C",          # 8   folder, có con
-        "thân C",            # 9
-        "### Màn C1",        # 10
-        "thân C1",           # 11
+        '<img src="./media/media/imageB.png" style="width:2in" />',  # 8
+        "# Nhóm C",          # 9   folder, có con
+        "thân C",            # 10
+        "### Màn C1",        # 11
+        "thân C1",           # 12
     ]
 )
 

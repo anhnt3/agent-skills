@@ -138,6 +138,68 @@ def test_secondary_checks_thay_anh_dang_html(tmp_path):
     assert any("image1.png" in w and "không tồn tại" in w for w in warnings)
 
 
+def test_check_roundtrip_nem_khi_nguon_da_co_san_duong_dan_media_tuong_doi(tmp_path):
+    """Cạnh sắc ở node gốc: tiền tố rỗng nên nghịch đảo bắt trượt -> PHẢI nổ to.
+
+    Khoá tính chất "fail loud" này lại để một lần tái cấu trúc sau không âm thầm
+    biến nó thành làm hỏng nội dung.
+    """
+    md = "\n".join([
+        'trang bìa <img src="media/x.png" />',
+        "# Nhóm A",
+        "thân A",
+        "### Màn 1",
+        "thân màn 1",
+    ])
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 2, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    crumbs = _breadcrumbs(nodes)
+    with pytest.raises(VerifyError):
+        check_roundtrip(nodes, tmp_path, dmap, crumbs, md)
+
+
+def test_secondary_checks_bao_heading_nam_trong_khoi_table(tmp_path):
+    md = "\n".join([
+        "# Nhóm A",
+        "<table>",
+        "<tr><td>",
+        "##### lẽ ra không phải heading",
+        "</td></tr>",
+        "</table>",
+        "### Màn 1",
+        "thân",
+    ])
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 2, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    (tmp_path / "media").mkdir()
+    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media",
+                                shallow_heading_count=len(hs))
+    assert any("<table>" in w for w in warnings)
+
+
+def test_secondary_checks_im_lang_khi_table_khong_chua_heading(tmp_path):
+    md = "\n".join([
+        "# Nhóm A",
+        "<table>",
+        "<tr><td>ô bình thường</td></tr>",
+        "</table>",
+        "### Màn 1",
+        "thân",
+    ])
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 2, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    (tmp_path / "media").mkdir()
+    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media",
+                                shallow_heading_count=len(hs))
+    assert not any("<table>" in w for w in warnings)
+
+
 def _parse_frontmatter(text):
     """Bộ đọc frontmatter tí hon (không thêm phụ thuộc YAML)."""
     assert text.startswith("---\n")

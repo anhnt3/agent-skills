@@ -38,7 +38,7 @@ Kích thước nếu cắt ở từng cấp (ký tự, bản `-t markdown`):
 
 ## Bằng chứng khả thi (đã chạy thật, không suy đoán)
 
-1. **`-t gfm` không dùng được**: sinh **270 bảng HTML thô**; pandoc chuyển md→docx sẽ vứt
+1. **`-t gfm` không dùng được** (→ ĐẢO NGƯỢC 2026-08-07, xem ghi chú cuối file): sinh **270 bảng HTML thô**; pandoc chuyển md→docx sẽ vứt
    khối HTML thô ⇒ mất 270/298 bảng khi ghép ngược.
 2. **`-t markdown` (flavor riêng của pandoc) dùng được**: sinh **grid table**,
    **0 bảng HTML thô**.

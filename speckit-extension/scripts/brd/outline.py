@@ -14,12 +14,26 @@ def iter_code_aware(lines):
     (parse_headings, splitter._normalize_headings, verify._denormalize) PHẢI
     dùng chung hàm này để không bao giờ lệch nhau.
 
-    CỐ Ý không nhận diện khối HTML thô (`<table>` do `-t gfm` sinh). Lý do: ba nơi
-    trên dùng chung hàm này nên dù một dòng `#` có lọt vào trong `<table>` thì
-    chuẩn hoá và gỡ chuẩn hoá vẫn đối xứng -> ghép ngược vẫn khớp byte-for-byte;
-    rủi ro duy nhất là sinh thừa node, mà đo trên BRD thật thì KHÔNG có dòng nào
-    bắt đầu bằng `#` nằm trong `<table>`. Thêm luật đoán khối HTML lại là thêm một
-    bộ nhận diện mập mờ, có thể làm lệch số heading — rủi ro lớn hơn lợi ích.
+    CỐ Ý không nhận diện khối HTML thô (`<table>` do `-t gfm` sinh). Hệ quả nếu
+    một dòng `#` lọt vào trong `<table>` thì KHÔNG phải chỉ "thừa một node" —
+    ghép ngược vẫn khớp byte-for-byte, nhưng có hai hậu quả thật, rộng hơn nhiều:
+
+    1. Heading giả đi vào `parse_headings` -> `depth_map`. Nếu số dấu `#` của nó
+       là một cấp Word chưa từng có, MỌI độ sâu dưới nó bị đẩy đi một bậc, làm
+       lệch `level_stats` và `recommend_depth` — tức lệch cấp cắt đề xuất cho
+       người dùng. Ảnh hưởng toàn tài liệu, không phải một node.
+    2. Nếu nó rơi vào độ sâu <= cấp cắt, `plan_nodes` mở segment ngay tại đó và
+       **cắt đôi một `<table>` sang hai file**. Byte vẫn ghép ngược khớp, nhưng
+       cả hai file dựng ra HTML hỏng — đúng thứ mà việc chuyển sang gfm muốn
+       tránh, và làm hỏng luôn đường xuất markdown -> html -> docx sau này.
+
+    Vẫn chọn KHÔNG đoán khối HTML ở đây: ranh giới khối HTML trong markdown là
+    heuristic mập mờ (thẻ lồng nhau, dòng trắng, HTML nội dòng), đoán sai sẽ làm
+    lệch chính số heading — hỏng đúng cái đang muốn bảo vệ, và im lặng. Đánh đổi
+    đã chọn là **phát hiện thay vì né**: `verify.secondary_checks` quét riêng và
+    cảnh báo khi thấy dòng heading nằm giữa `<table>` và `</table>`, để người
+    dùng biết mà xử lý. Phần quét đó KHÔNG đụng vào việc phân tích heading hay
+    số đếm heading. Đo trên BRD thật: không có dòng `#` nào nằm trong `<table>`.
     """
     fence = None
     for i, line in enumerate(lines):
