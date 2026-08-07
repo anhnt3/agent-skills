@@ -194,7 +194,7 @@ def promotions_for(docx, outline=None):
     outline: [{'index','level'}] do LLM quyết (bậc 6) — chỉ số trỏ vào
     format_candidates(docx), KHÔNG phải chỉ số đoạn trong tài liệu.
     """
-    if outline:
+    if outline is not None:
         cands = format_candidates(docx)
         return [{"text": cands[o["index"]]["text"], "level": o["level"]}
                 for o in outline if 0 <= o["index"] < len(cands)]
@@ -210,8 +210,22 @@ def promotions_for(docx, outline=None):
     return [{"text": t, "level": lv} for t, lv in pairs]
 
 
-_BOLD_RE = re.compile(r"<w:b(?: [^>]*)?/>|<w:b(?: [^>]*)?>(?!<w:val=\"0\")")
+_BOLD_RE = re.compile(r"<w:b(?![A-Za-z])((?:\s[^>]*)?)/?>")
+_BOLD_VAL_RE = re.compile(r"w:val\s*=\s*\"([^\"]*)\"")
 _SZ_RE = re.compile(r"<w:sz w:val=\"(\d+)\"")
+
+
+def _is_bold(block):
+    """True nếu có phần tử w:b (KHÔNG phải w:bCs) chỉ định đậm.
+
+    Không w:val hoặc w:val thuộc {1,true,on} = đậm; w:val thuộc
+    {0,false,off} = tắt đậm tường minh, không tính.
+    """
+    for m in _BOLD_RE.finditer(block):
+        val = _BOLD_VAL_RE.search(m.group(1))
+        if val is None or val.group(1).strip().lower() not in ("0", "false", "off"):
+            return True
+    return False
 
 
 def _paragraphs_rich(docx):
@@ -223,7 +237,7 @@ def _paragraphs_rich(docx):
         out.append({
             "index": i,
             "text": "".join(_TEXT_RE.findall(block)).strip(),
-            "bold": bool(_BOLD_RE.search(block)),
+            "bold": _is_bold(block),
             "size": max(sizes) if sizes else None,
         })
     return out

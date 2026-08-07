@@ -6,7 +6,8 @@ import pytest
 
 from brd.convert import run_pandoc
 from brd.docx_probe import (
-    detect_tier, format_candidates, numbered_titles, promotions_for, toc_titles,
+    _paragraphs_rich, detect_tier, format_candidates, numbered_titles, promotions_for,
+    toc_titles,
 )
 from brd.outline import parse_headings
 
@@ -124,3 +125,29 @@ def test_probe_voi_outline_do_llm_quyet_thi_cat_duoc(tmp_path):
     assert data["needs_llm"] is False
     assert data["tier"] == 6
     assert sum(lv["count"] for lv in data["levels"]) == 5
+
+
+def test_is_bold_khong_nham_val_0_va_bcs():
+    paras = _paragraphs_rich(FIXTURES / "bold_off.docx")
+    assert paras[0]["text"] == "tat dam tuong minh"
+    assert paras[0]["bold"] is False
+    assert paras[1]["text"] == "chi co bCs"
+    assert paras[1]["bold"] is False
+
+
+def test_probe_voi_outline_rong_van_la_bac_6_khong_fallback(tmp_path):
+    import json
+    import subprocess
+    import sys
+    script = Path(__file__).resolve().parents[1] / "brd_import.py"
+    work = tmp_path / "w"
+    subprocess.run([sys.executable, str(script), "probe", str(FIXTURES / "bold.docx"),
+                    "--work", str(work)], capture_output=True, text=True)
+    outline = work / "outline.json"
+    outline.write_text("[]", encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(script), "probe", str(FIXTURES / "bold.docx"),
+         "--work", str(work), "--outline", str(outline)],
+        capture_output=True, text=True, encoding="utf-8")
+    assert proc.returncode == 2
+    assert "heading" in proc.stderr.lower()

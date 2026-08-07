@@ -56,7 +56,7 @@ def cmd_probe(args):
     if args.outline:
         outline = json.loads(Path(args.outline).read_text(encoding="utf-8"))
 
-    if tier["needs_llm"] and not outline:
+    if tier["needs_llm"] and outline is None:
         result = {
             "tier": 0, "note": tier["note"], "needs_llm": True,
             "recommend_depth": None, "levels": [], "warnings": [],
@@ -76,7 +76,7 @@ def cmd_probe(args):
         lua = Path(__file__).resolve().parent / "promote_headings.lua"
         md_path = run_pandoc(docx, work, lua_filter=lua,
                              metadata={"promotions": promos})
-    effective_tier = 6 if outline else tier["tier"]
+    effective_tier = 6 if outline is not None else tier["tier"]
     md = md_path.read_text(encoding="utf-8")
     headings = parse_headings(md)
     if not headings:
@@ -86,7 +86,8 @@ def cmd_probe(args):
 
     result = {
         "tier": effective_tier,
-        "note": tier["note"] if not outline else "Ranh giới do LLM quyết từ ứng viên bậc 5",
+        "note": tier["note"] if outline is None
+                else "Ranh giới do LLM quyết từ ứng viên định dạng (in đậm/cỡ chữ)",
         "needs_llm": False,
         "recommend_depth": recommend_depth(stats), "levels": stats,
         "warnings": [], "candidates": [],
