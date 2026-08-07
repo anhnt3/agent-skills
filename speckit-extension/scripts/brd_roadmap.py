@@ -329,6 +329,105 @@ def check_placeholders(text):
     return errs
 
 
+LINK_RE = re.compile(r"^\[[^\]]*\]\((.+?)\)$")
+BIG_NODE_CHARS = 40_000
+
+
+def slugify_anchor(text):
+    """Slug kiểu GFM: thường hoá, bỏ ký tự không phải chữ/số, khoảng trắng -> gạch."""
+    s = text.strip().lower()
+    s = "".join(ch for ch in s if ch.isalnum() or ch in " -_")
+    return re.sub(r"\s+", "-", s.strip())
+
+
+def norm_source(raw, brd_rel):
+    """Giá trị `**Nguồn**` -> (đường dẫn tương đối brd_dir, anchor).
+
+    Trả (None, None) khi giá trị không trỏ vào cây BRD (đường dẫn code, `N/A`).
+    """
+    v = (raw or "").strip().strip("`").strip()
+    m = LINK_RE.match(v)
+    if m:
+        v = m.group(1).strip()
+    v = v.replace("\\", "/")
+    anchor = None
+    if "#" in v:
+        v, anchor = v.split("#", 1)
+        anchor = anchor.strip() or None
+    v = v.strip()
+    prefix = brd_rel.replace("\\", "/").rstrip("/") + "/"
+    if v.startswith(prefix):
+        return v[len(prefix):], anchor
+    if v.endswith(".md") or v.endswith("/"):
+        return v, anchor
+    return None, None
+
+
+def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
+    """Mọi node BRD phải hoặc được một item trỏ tới, hoặc nằm trong `excluded` kèm lý do."""
+    brd_dir = Path(brd_dir)
+    errs, warns = [], []
+
+    by_loc, by_id = {}, {}
+    for n in nodes:
+        by_id[n["id"]] = n
+        if n["kind"] != "root":
+            by_loc[node_loc(n).rstrip("/")] = n["id"]
+
+    covered = {}
+    for rid in parsed["row_order"]:
+        raw = parsed["details"].get(rid, {}).get("Nguồn")
+        if not raw:
+            warns.append(f"{rid} không có trường **Nguồn** — không truy vết được về BRD.")
+            continue
+        rel, anchor = norm_source(raw, brd_rel)
+        if rel is None:
+            continue
+        key = rel.rstrip("/")
+        if key not in by_loc:
+            errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — không có node BRD nào ở vị trí đó.")
+            continue
+        nid = by_loc[key]
+        covered.setdefault(nid, []).append(rid)
+        if anchor:
+            f = brd_dir / rel
+            if not f.is_file():
+                errs.append(f"{rid}: **Nguồn** có anchor nhưng {rel} không phải file.")
+                continue
+            hs = headings_of(strip_frontmatter(f.read_text(encoding="utf-8")))
+            found = any(h["text"].strip().lower() == anchor.lower()
+                        or slugify_anchor(h["text"]) == slugify_anchor(anchor)
+                        for h in hs)
+            if not found:
+                errs.append(f"{rid}: anchor #{anchor} không khớp heading nào trong {rel}.")
+
+    ex_ids = set()
+    for e in excluded:
+        nid = (e or {}).get("node_id", "")
+        if nid not in by_id:
+            errs.append(f"decisions.json loại node {nid} không có trong manifest.")
+            continue
+        if not (e.get("reason") or "").strip():
+            errs.append(f"decisions.json loại node {nid} nhưng bỏ trống lý do.")
+            continue
+        ex_ids.add(nid)
+        if nid in covered:
+            warns.append(f"{nid} vừa bị loại trong decisions.json vừa được "
+                         f"{', '.join(covered[nid])} trỏ tới — mâu thuẫn.")
+
+    for n in nodes:
+        if n["kind"] == "root" or n["id"] in covered or n["id"] in ex_ids:
+            continue
+        errs.append(f"Node {n['id']} \"{n['title']}\" ({node_loc(n)}) chưa có item roadmap "
+                    f"nào trỏ tới và cũng không nằm trong decisions.json.")
+
+    for nid, rids in covered.items():
+        if len(rids) == 1 and by_id[nid]["chars"] > BIG_NODE_CHARS:
+            warns.append(f"Node {nid} có {by_id[nid]['chars']} ký tự nhưng chỉ map vào "
+                         f"{rids[0]} — nhiều khả năng phải tách.")
+    return errs, warns
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Trích outline cây BRD và gác cổng docs/roadmap.md."

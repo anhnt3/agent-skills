@@ -9,6 +9,7 @@ from brd_roadmap import breadcrumbs, node_loc, parse_manifest
 from brd_roadmap import head_lines, headings_of, signals_of, strip_frontmatter
 from brd_roadmap import build_outline, tree_diff
 from brd_roadmap import check_ids, check_placeholders, parse_roadmap
+from brd_roadmap import check_coverage, norm_source, slugify_anchor
 
 SCRIPT = Path(__file__).resolve().parents[1] / "brd_roadmap.py"
 
@@ -324,3 +325,109 @@ def test_check_placeholders_dung_so_dong_that_sau_khoi_code():
     errs = check_placeholders(text)
     target_line = text.split("\n").index("[DATE]") + 1
     assert any(e.startswith(f"Dòng {target_line}:") for e in errs)
+
+
+def _cover(brd, roadmap_text, excluded=()):
+    nodes = parse_manifest(brd / "brd.manifest.yml")
+    return check_coverage(parse_roadmap(roadmap_text), nodes, brd,
+                          "docs/brd", list(excluded))
+
+
+ROADMAP_PHU = """## Bảng tổng (thứ tự build)
+
+| ID | Màn | Module | Wave | Phụ thuộc | Trạng thái |
+|--------|-----|--------|------|-----------|------------|
+| RM-001 | Nhóm A | nhom-a | 0 | N/A | chưa |
+| RM-002 | Màn danh sách | hop-dong | 1 | RM-001 | chưa |
+
+## Chi tiết
+
+### RM-001 — Nhóm A (nhom-a, Wave 0)
+
+- **Nguồn**: docs/brd/01-nhom-a/
+
+### RM-002 — Màn danh sách (hop-dong, Wave 1)
+
+- **Nguồn**: docs/brd/01-nhom-a/01-man-danh-sach.md
+"""
+
+
+def test_slugify_anchor_giu_dau_tieng_viet():
+    assert slugify_anchor("Bộ lọc") == "bộ-lọc"
+    assert slugify_anchor("Quy tắc & điều kiện") == "quy-tắc-điều-kiện"
+
+
+def test_norm_source_cat_tien_to_thu_muc_brd_va_anchor():
+    assert norm_source("docs/brd/01-a/02-b.md#Bộ lọc", "docs/brd") == ("01-a/02-b.md", "Bộ lọc")
+    assert norm_source("01-a/02-b.md", "docs/brd") == ("01-a/02-b.md", None)
+    assert norm_source("`docs/brd/01-a/`", "docs/brd") == ("01-a/", None)
+    assert norm_source("[xem](docs/brd/01-a/02-b.md)", "docs/brd") == ("01-a/02-b.md", None)
+
+
+def test_norm_source_ngoai_cay_brd_thi_tra_none():
+    assert norm_source("src/app/login.ts", "docs/brd") == (None, None)
+    assert norm_source("N/A", "docs/brd") == (None, None)
+
+
+def test_check_coverage_thieu_node_thi_loi(brd):
+    errs, _ = _cover(brd, ROADMAP_PHU)
+    assert any("BRD-0003" in e and "Thuật ngữ" in e for e in errs)
+    assert not any("BRD-0002" in e for e in errs)
+    assert not any("BRD-0000" in e for e in errs)      # node gốc không tính phủ
+
+
+def test_check_coverage_node_bi_loai_co_ly_do_thi_qua(brd):
+    errs, _ = _cover(brd, ROADMAP_PHU,
+                     [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "từ điển, không phải màn"}])
+    assert errs == []
+
+
+def test_check_coverage_ly_do_rong_thi_loi(brd):
+    errs, _ = _cover(brd, ROADMAP_PHU,
+                     [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "   "}])
+    assert any("BRD-0003" in e and "lý do" in e for e in errs)
+
+
+def test_check_coverage_node_id_loai_khong_co_that_thi_loi(brd):
+    errs, _ = _cover(brd, ROADMAP_PHU,
+                     [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"},
+                      {"node_id": "BRD-9999", "title": "Ma", "reason": "ok"}])
+    assert any("BRD-9999" in e for e in errs)
+
+
+def test_check_coverage_nguon_tro_file_khong_ton_tai(brd):
+    text = ROADMAP_PHU.replace("01-man-danh-sach.md", "99-khong-co.md")
+    errs, _ = _cover(brd, text)
+    assert any("99-khong-co.md" in e for e in errs)
+
+
+def test_check_coverage_anchor_khop_text_hoac_slug(brd):
+    ok_text = ROADMAP_PHU.replace("01-man-danh-sach.md\n", "01-man-danh-sach.md#Bộ lọc\n")
+    errs, _ = _cover(brd, ok_text,
+                     [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert errs == []
+    slug_text = ROADMAP_PHU.replace("01-man-danh-sach.md\n", "01-man-danh-sach.md#bộ-lọc\n")
+    errs, _ = _cover(brd, slug_text,
+                     [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert errs == []
+
+
+def test_check_coverage_anchor_khong_co_thi_loi(brd):
+    text = ROADMAP_PHU.replace("01-man-danh-sach.md\n", "01-man-danh-sach.md#Không có mục này\n")
+    errs, _ = _cover(brd, text)
+    assert any("Không có mục này" in e for e in errs)
+
+
+def test_check_coverage_item_khong_co_nguon_thi_canh_bao(brd):
+    text = ROADMAP_PHU.replace("- **Nguồn**: docs/brd/01-nhom-a/\n", "")
+    _, warns = _cover(brd, text, [{"node_id": "BRD-0001", "title": "Nhóm A", "reason": "ok"},
+                                  {"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert any("RM-001" in w and "Nguồn" in w for w in warns)
+
+
+def test_check_coverage_node_lon_map_mot_item_thi_canh_bao(brd):
+    manifest = (brd / "brd.manifest.yml").read_text(encoding="utf-8")
+    (brd / "brd.manifest.yml").write_text(manifest.replace("chars: 320", "chars: 50000"),
+                                          encoding="utf-8")
+    _, warns = _cover(brd, ROADMAP_PHU, [{"node_id": "BRD-0003", "title": "T", "reason": "ok"}])
+    assert any("BRD-0002" in w and "tách" in w for w in warns)
