@@ -51,14 +51,19 @@ def iter_code_aware(lines):
 
 
 def parse_headings(md):
-    """[{line, level, title}] theo thứ tự xuất hiện. Bỏ qua nội dung trong khối code."""
+    """[{line, level, title, raw}] theo thứ tự xuất hiện. Bỏ qua nội dung trong khối code.
+
+    `raw` là phần đuôi NGUYÊN VĂN sau dấu `#` (còn nguyên khoảng trắng đầu/cuối), đủ
+    để dựng lại y hệt dòng heading gốc: `"#" * level + raw`.
+    """
     out = []
     for i, line, in_code in iter_code_aware(md.split("\n")):
         if in_code:
             continue
         m = HEADING_RE.match(line)
         if m:
-            out.append({"line": i, "level": len(m.group(1)), "title": m.group(2).strip()})
+            out.append({"line": i, "level": len(m.group(1)),
+                        "title": m.group(2).strip(), "raw": m.group(2)})
     return out
 
 

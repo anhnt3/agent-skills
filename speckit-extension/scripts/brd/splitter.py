@@ -35,7 +35,7 @@ def plan_nodes(headings, dmap, cut_depth, total_lines):
     if first_line > 0:
         nodes.append({
             "id": "BRD-0000", "order": 0, "depth": 0, "word_level": 0, "kind": "root",
-            "title": "(phần đầu tài liệu)", "path": "_index.md", "dir": "",
+            "title": "(phần đầu tài liệu)", "raw": None, "path": "_index.md", "dir": "",
             "parent": None, "start": 0, "end": first_line,
         })
 
@@ -54,7 +54,7 @@ def plan_nodes(headings, dmap, cut_depth, total_lines):
         kind = "leaf" if depth == cut_depth else "folder"
         node = {
             "id": f"BRD-{order:04d}", "order": order, "depth": depth,
-            "word_level": h["level"], "kind": kind, "title": h["title"],
+            "word_level": h["level"], "kind": kind, "title": h["title"], "raw": h["raw"],
             "dir": f"{base}{name}/" if kind == "folder" else base,
             "path": f"{base}{name}/_index.md" if kind == "folder" else f"{base}{name}.md",
             "parent": parent["id"] if parent else None,
@@ -79,6 +79,36 @@ def plan_nodes(headings, dmap, cut_depth, total_lines):
     for i, node in enumerate(nodes):
         node["end"] = nodes[i + 1]["start"] if i + 1 < len(nodes) else total_lines
     return nodes
+
+
+def inline_lines(node):
+    """Các dòng của segment DỰNG LẠI từ dữ liệu node, không đọc file nào.
+
+    Chỉ gồm đúng dòng heading nguyên văn (`"#" * word_level + raw`) và `blanks`
+    dòng trắng cuối segment — đúng hình dạng mà `mark_inline` đã chứng minh.
+    """
+    return ["#" * node["word_level"] + node["raw"]] + [""] * node["blanks"]
+
+
+def mark_inline(nodes, md_lines):
+    """Đánh dấu node folder mà segment dựng lại được NGUYÊN VĂN -> khỏi ghi `_index.md`.
+
+    Nguyên tắc: chỉ bỏ đi thứ chứng minh được là tái tạo lại y hệt. Ứng viên tái
+    tạo (`inline_lines`) được so sánh byte-for-byte với segment thật; lệch một ký
+    tự — kể cả một dòng trắng thừa/thiếu ở cuối — thì node vẫn ghi file như cũ.
+    Không lưu nội dung tài liệu vào manifest, không nới lỏng kiểm ghép ngược.
+    """
+    for node in nodes:
+        node["inline"] = False
+        node["blanks"] = 0
+        if node["kind"] != "folder" or not node["raw"]:
+            continue
+        seg = md_lines[node["start"]:node["end"]]
+        node["blanks"] = len(seg) - 1
+        if seg == inline_lines(node):
+            node["inline"] = True
+        else:
+            node["blanks"] = 0
 
 
 def frontmatter_of(node, breadcrumb):
@@ -157,7 +187,12 @@ def _q(s):
 def write_tree(nodes, md_lines, dmap, dest, meta):
     dest = Path(dest)
     crumbs = _breadcrumbs(nodes)
+    mark_inline(nodes, md_lines)   # gắn cờ `inline`/`blanks` lên chính các node đang dùng
     for node in nodes:
+        if node["inline"]:
+            # Không ghi `_index.md` rỗng nội dung, nhưng thư mục vẫn phải có (chứa con).
+            (dest / node["dir"]).mkdir(parents=True, exist_ok=True)
+            continue
         target = dest / node["path"]
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(render_file(node, md_lines, dmap, crumbs[node["id"]]),
@@ -177,10 +212,14 @@ def write_tree(nodes, md_lines, dmap, dest, meta):
         "nodes:",
     ]
     for n in nodes:
+        # Node `inline` không có file: thay `path` bằng `inline: true` + `dir` để người
+        # đọc manifest vẫn ánh xạ được tiêu đề -> thư mục.
+        where = (f'inline: true, dir: {_q(n["dir"])}' if n.get("inline")
+                 else f'path: {_q(n["path"])}')
         lines.append(
             f'  - {{ id: {n["id"]}, order: {n["order"]}, depth: {n["depth"]}, '
             f'word_level: {n["word_level"]}, kind: {n["kind"]}, '
-            f'title: {_q(n["title"])}, path: {_q(n["path"])}, '
+            f'title: {_q(n["title"])}, {where}, '
             f'parent: {n["parent"] or "null"}, '
             f'chars: {sum(len(x) + 1 for x in md_lines[n["start"]:n["end"]])} }}'
         )

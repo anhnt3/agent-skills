@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 from .outline import HEADING_RE, iter_code_aware
-from .splitter import frontmatter_of, unrewrite_media
+from .splitter import frontmatter_of, inline_lines, unrewrite_media
 
 # Bắt cả hai dạng tham chiếu ảnh: `](../media/x.png)` và `<img src="../media/x.png"`.
 # Thiếu dạng HTML thì kiểm ảnh mồ côi / ảnh thiếu sẽ im lặng ngừng hoạt động.
@@ -55,6 +55,11 @@ def reassemble(nodes, dest, dmap, breadcrumbs):
     depth_to_level = {d: lv for lv, d in dmap.items()}
     chunks = []
     for node in nodes:
+        if node.get("inline"):
+            # Không có file: dựng lại segment từ dữ liệu node, đã ở cấp Word gốc nên
+            # không phải hoàn tác phép biến đổi nào.
+            chunks.append("\n".join(inline_lines(node)))
+            continue
         text = (dest / node["path"]).read_text(encoding="utf-8")
         # 1. gỡ frontmatter — dựng lại đúng chuỗi đã ghi rồi cắt tiền tố
         fm = frontmatter_of(node, breadcrumbs[node["id"]])
@@ -99,6 +104,8 @@ def secondary_checks(nodes, dest, media_dir, shallow_heading_count):
     warnings = []
     referenced = set()
     for node in nodes:
+        if node.get("inline"):
+            continue        # không có file để kiểm; nội dung chỉ là dòng heading
         text = (dest / node["path"]).read_text(encoding="utf-8")
         for name in _IMG_RE.findall(text):
             referenced.add(name)
@@ -126,7 +133,8 @@ def secondary_checks(nodes, dest, media_dir, shallow_heading_count):
         )
     titles = {}
     for node in nodes:
-        titles.setdefault(node["title"], []).append(node["path"])
+        titles.setdefault(node["title"], []).append(
+            node["dir"] if node.get("inline") else node["path"])
     for title, paths in titles.items():
         if len(paths) > 1:
             warnings.append(f'Trùng tiêu đề "{title}" ở {len(paths)} chỗ: {", ".join(paths)}')

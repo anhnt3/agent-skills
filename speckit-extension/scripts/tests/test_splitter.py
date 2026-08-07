@@ -195,3 +195,85 @@ def test_write_tree_ghi_du_file_va_manifest(tmp_path):
     manifest = (tmp_path / "brd.manifest.yml").read_text(encoding="utf-8")
     assert "cut_depth: 3" in manifest
     assert "depth_map: {1: 1, 2: 3, 3: 6, 4: 8}" in manifest
+
+
+# --- Bỏ ghi `_index.md` không có nội dung riêng ------------------------------
+
+INLINE_MD = "\n".join(
+    [
+        "trang bìa",     # 0   node gốc: có nội dung thật -> phải giữ file
+        "",              # 1
+        "# Nhóm A",      # 2   folder chỉ có mỗi dòng heading -> bỏ file
+        "",              # 3
+        "### Màn A1",    # 4
+        "thân A1",       # 5
+        "# Nhóm C",      # 6   folder có nội dung thật -> giữ file
+        "thân C",        # 7
+        "",              # 8
+        "### Màn C1",    # 9
+        "thân C1",       # 10
+        "# Nhóm E",      # 11  dòng "  " KHÔNG phải dòng trắng -> tái tạo trượt
+        "",              # 12
+        "  ",            # 13
+        "",              # 14
+        "### Màn E1",    # 15
+        "thân E1",       # 16
+    ]
+)
+
+
+def _write_inline(tmp_path):
+    hs = parse_headings(INLINE_MD)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 2, len(INLINE_MD.split("\n")))
+    write_tree(nodes, INLINE_MD.split("\n"), dmap, tmp_path,
+               {"source_file": "x.docx", "sha256": "abc", "imported_at": "2026-08-07",
+                "pandoc": "3.9", "cut_depth": 2, "tier": 1, "tier_note": "test"})
+    return dmap, nodes
+
+
+def _node(nodes, title):
+    return next(n for n in nodes if n["title"] == title)
+
+
+def test_folder_chi_co_dong_heading_khong_ghi_index_va_van_ghep_nguoc(tmp_path):
+    from brd.splitter import _breadcrumbs
+    from brd.verify import reassemble
+
+    dmap, nodes = _write_inline(tmp_path)
+    a = _node(nodes, "Nhóm A")
+    assert a["inline"] is True
+    assert not (tmp_path / "01-nhom-a" / "_index.md").exists()
+    assert (tmp_path / "01-nhom-a").is_dir()          # thư mục vẫn phải có (chứa con)
+    assert (tmp_path / "01-nhom-a" / "01-man-a1.md").is_file()
+    assert reassemble(nodes, tmp_path, dmap, _breadcrumbs(nodes)) == INLINE_MD
+    manifest = (tmp_path / "brd.manifest.yml").read_text(encoding="utf-8")
+    assert 'title: "Nhóm A", inline: true, dir: "01-nhom-a/"' in manifest
+
+
+def test_folder_co_noi_dung_that_van_giu_index(tmp_path):
+    _, nodes = _write_inline(tmp_path)
+    c = _node(nodes, "Nhóm C")
+    assert c["inline"] is False
+    assert (tmp_path / "02-nhom-c" / "_index.md").is_file()
+    manifest = (tmp_path / "brd.manifest.yml").read_text(encoding="utf-8")
+    assert 'path: "02-nhom-c/_index.md"' in manifest
+
+
+def test_node_goc_luon_giu_file_index(tmp_path):
+    _, nodes = _write_inline(tmp_path)
+    assert nodes[0]["kind"] == "root"
+    assert nodes[0]["inline"] is False
+    assert (tmp_path / "_index.md").is_file()
+    assert "trang bìa" in (tmp_path / "_index.md").read_text(encoding="utf-8")
+
+
+def test_segment_khong_tai_tao_duoc_chinh_xac_thi_ghi_file_nhu_cu(tmp_path):
+    from brd.splitter import _breadcrumbs
+    from brd.verify import reassemble
+
+    dmap, nodes = _write_inline(tmp_path)
+    e = _node(nodes, "Nhóm E")
+    assert e["inline"] is False       # dòng "  " làm ứng viên tái tạo lệch
+    assert (tmp_path / "03-nhom-e" / "_index.md").is_file()
+    assert reassemble(nodes, tmp_path, dmap, _breadcrumbs(nodes)) == INLINE_MD
