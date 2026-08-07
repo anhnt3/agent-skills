@@ -8,6 +8,7 @@ import pytest
 from brd_roadmap import breadcrumbs, node_loc, parse_manifest
 from brd_roadmap import head_lines, headings_of, signals_of, strip_frontmatter
 from brd_roadmap import build_outline, tree_diff
+from brd_roadmap import check_ids, check_placeholders, parse_roadmap
 
 SCRIPT = Path(__file__).resolve().parents[1] / "brd_roadmap.py"
 
@@ -226,3 +227,82 @@ def test_cli_outline_thu_muc_khong_co_manifest_thi_chet(tmp_path):
     )
     assert proc.returncode == 2
     assert "brd.manifest.yml" in proc.stderr
+
+
+ROADMAP_OK = """# Roadmap Build — Dự án X
+
+**Mục tiêu**: thứ tự build/hoàn thiện từng màn/chức năng.
+**Cập nhật**: 2026-08-07
+**Trạng thái item**: `chưa` (mặc định) / `đang` / `xong`.
+
+## Bảng tổng (thứ tự build)
+
+| ID | Màn | Module | Wave | Phụ thuộc | Trạng thái |
+|--------|-----|--------|------|-----------|------------|
+| RM-001 | Đăng nhập | auth | 0 | N/A | chưa |
+| RM-002 | Màn danh sách | hop-dong | 1 | RM-001 | chưa |
+
+## Chi tiết
+
+### RM-001 — Đăng nhập (auth, Wave 0)
+
+- **Mô tả**: đăng nhập hệ thống
+- **Nguồn**: docs/brd/01-nhom-a/01-man-danh-sach.md#Quy tắc
+- **Thực thể/CRUD**: User
+- **Phụ thuộc**: N/A
+- **Trạng thái**: chưa
+- **Nợ phát sinh**:
+  - (trống)
+
+### RM-002 — Màn danh sách (hop-dong, Wave 1)
+
+- **Mô tả**: danh sách hợp đồng
+- **Nguồn**: docs/brd/01-nhom-a/01-man-danh-sach.md
+- **Thực thể/CRUD**: HopDong
+- **Phụ thuộc**: RM-001
+- **Trạng thái**: chưa
+- **Nợ phát sinh**:
+  - (trống)
+"""
+
+
+def test_parse_roadmap_doc_bang_tong_va_chi_tiet():
+    p = parse_roadmap(ROADMAP_OK)
+    assert p["row_order"] == ["RM-001", "RM-002"]
+    assert p["rows"]["RM-002"]["module"] == "hop-dong"
+    assert p["rows"]["RM-002"]["wave"] == "1"
+    assert p["rows"]["RM-002"]["deps_raw"] == "RM-001"
+    assert p["details"]["RM-002"]["Nguồn"] == "docs/brd/01-nhom-a/01-man-danh-sach.md"
+
+
+def test_check_ids_khop_hai_chieu_thi_khong_loi():
+    assert check_ids(parse_roadmap(ROADMAP_OK)) == []
+
+
+def test_check_ids_bat_id_trung():
+    text = ROADMAP_OK.replace("| RM-002 | Màn danh sách", "| RM-001 | Màn danh sách")
+    errs = check_ids(parse_roadmap(text))
+    assert any("trùng" in e for e in errs)
+
+
+def test_check_ids_bat_item_thieu_khoi_chi_tiet():
+    text = ROADMAP_OK.replace("### RM-002 — Màn danh sách (hop-dong, Wave 1)",
+                              "### RM-009 — Màn danh sách (hop-dong, Wave 1)")
+    errs = check_ids(parse_roadmap(text))
+    assert any("RM-002" in e and "khối chi tiết" in e for e in errs)
+    assert any("RM-009" in e and "bảng tổng" in e for e in errs)
+
+
+def test_check_placeholders_sach_thi_khong_loi():
+    assert check_placeholders(ROADMAP_OK) == []
+
+
+def test_check_placeholders_bat_date_va_ngoac_vuong():
+    text = ROADMAP_OK.replace("2026-08-07", "[DATE]").replace("auth | 0", "[module] | 0")
+    errs = check_placeholders(text)
+    assert any("[DATE]" in e for e in errs)
+    assert any("[module]" in e for e in errs)
+
+
+def test_check_placeholders_khong_bat_link_markdown():
+    assert check_placeholders("xem [tài liệu](docs/a.md)\n") == []

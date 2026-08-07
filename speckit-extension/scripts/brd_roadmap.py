@@ -237,6 +237,77 @@ def cmd_outline(args):
     print(json.dumps(result, ensure_ascii=False))
 
 
+ROW_RE = re.compile(r"^\|\s*(RM-\d{3})\s*\|(.*)$")
+DETAIL_RE = re.compile(r"^###\s+(RM-\d{3})\b")
+FIELD_RE = re.compile(r"^\s*-\s*\*\*(.+?)\*\*\s*:\s*(.*)$")
+# Placeholder = span trong ngoặc vuông KHÔNG phải link markdown (`](`) và không
+# phải checkbox. Nội dung đã điền thật gần như không bao giờ còn ngoặc vuông trần.
+BRACKET_RE = re.compile(r"\[[^\]\n]{1,120}\](?!\()")
+
+
+def parse_roadmap(text):
+    rows, row_order, details, detail_order = {}, [], {}, []
+    cur = None
+    for line in text.split("\n"):
+        m = ROW_RE.match(line)
+        if m:
+            rid = m.group(1)
+            cells = [c.strip() for c in m.group(2).split("|")]
+            cells += [""] * (5 - len(cells))
+            rows.setdefault(rid, {
+                "man": cells[0], "module": cells[1], "wave": cells[2],
+                "deps_raw": cells[3], "trang_thai": cells[4],
+            })
+            row_order.append(rid)
+            continue
+        d = DETAIL_RE.match(line)
+        if d:
+            cur = d.group(1)
+            details.setdefault(cur, {})
+            detail_order.append(cur)
+            continue
+        if cur:
+            f = FIELD_RE.match(line)
+            if f:
+                details[cur].setdefault(f.group(1).strip(), f.group(2).strip())
+    return {"rows": rows, "row_order": row_order,
+            "details": details, "detail_order": detail_order}
+
+
+def _dups(seq):
+    seen, dup = set(), []
+    for x in seq:
+        if x in seen and x not in dup:
+            dup.append(x)
+        seen.add(x)
+    return dup
+
+
+def check_ids(parsed):
+    errs = []
+    for rid in _dups(parsed["row_order"]):
+        errs.append(f"ID {rid} trùng trong bảng tổng.")
+    for rid in _dups(parsed["detail_order"]):
+        errs.append(f"ID {rid} trùng ở khối chi tiết.")
+    for rid in parsed["row_order"]:
+        if rid not in parsed["details"]:
+            errs.append(f"{rid} có trong bảng tổng nhưng thiếu khối chi tiết.")
+    for rid in parsed["detail_order"]:
+        if rid not in parsed["rows"]:
+            errs.append(f"{rid} có khối chi tiết nhưng thiếu dòng trong bảng tổng.")
+    return sorted(set(errs))
+
+
+def check_placeholders(text):
+    errs = []
+    for i, line in enumerate(_iter_outside_code(text), start=1):
+        if line.lstrip().startswith("<!--"):
+            continue
+        for hit in BRACKET_RE.findall(line):
+            errs.append(f"Dòng {i}: còn placeholder chưa điền {hit}")
+    return errs
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Trích outline cây BRD và gác cổng docs/roadmap.md."
