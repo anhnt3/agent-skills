@@ -89,9 +89,10 @@ docs/brd/ + brd.manifest.yml ──outline──► .specify/tmp/roadmap-brd/out
 
 Stdlib thuần, không thêm dependency. `brd.manifest.yml` do chính `splitter.py`
 ghi theo định dạng flow cố định một dòng mỗi node
-(`  - { id: …, order: …, title: "…", path: "…", parent: …, chars: … }`, chuỗi
-escape bằng `_q`: `\` → `\\`, `"` → `\"`). Parser nhắm đúng định dạng đó là tất
-định — không cần PyYAML.
+(`  - { id: BRD-0003, order: 3, depth: 3, word_level: 6, kind: leaf, title: "…", path: "…", parent: BRD-0002, chars: 123 }`).
+`id`/`parent`/`kind`/số là token trần, chuỗi thì escape bằng `_q`: `\` → `\\`,
+`"` → `\"`. Node không có file riêng ghi `inline: true, dir: "…"` thay cho `path`.
+Parser nhắm đúng định dạng đó là tất định — không cần PyYAML.
 
 ### 5.1. `outline <brd-dir> [--out <json>] [--head N]`
 
@@ -118,7 +119,12 @@ chuyện thường:
 
 Hai danh sách này là **warning**, không chặn, nhưng lệnh phải báo ra.
 
-### 5.2. `verify <roadmap.md> --brd <dir> --decisions <json>`
+### 5.2. `verify <roadmap.md> --brd <dir> [--brd-rel <prefix>] [--decisions <json>]`
+
+`--brd-rel` (mặc định `docs/brd`) là **tiền tố đường dẫn mà roadmap dùng** trong
+trường `**Nguồn**` — tách khỏi `--brd` vì `--brd` có thể là đường dẫn tuyệt đối
+trong khi roadmap luôn ghi đường dẫn tương đối từ gốc repo. `--decisions` thiếu
+file → coi như chưa loại node nào, kèm một warning.
 
 Gom hết lỗi rồi in một lần (không dừng ở lỗi đầu), in báo cáo JSON
 `{ok, errors[], warnings[]}` ra stdout, exit 1 nếu `errors` không rỗng.
@@ -154,7 +160,7 @@ Cố ý tối giản:
 {
   "brd_dir": "docs/brd",
   "excluded": [
-    {"node_id": 3, "title": "Thuật ngữ và từ viết tắt", "reason": "từ điển thuật ngữ, không phải màn"}
+    {"node_id": "BRD-0003", "title": "Thuật ngữ và từ viết tắt", "reason": "từ điển thuật ngữ, không phải màn"}
   ]
 }
 ```
