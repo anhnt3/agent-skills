@@ -613,3 +613,67 @@ def test_cli_verify_thieu_decisions_van_chay_va_canh_bao(brd, tmp_path):
     assert proc.returncode == 1
     rep = json.loads(proc.stdout)
     assert any("decisions" in w for w in rep["warnings"])
+
+
+def test_check_deps_tu_tro_thi_bao_chu_trinh():
+    """Một item phụ thuộc chính nó là chu trình độ dài 1 — không được lọt qua sạch."""
+    errs = _deps("| RM-001 | A | m | 0 | RM-001 | chưa |\n"
+                 "| RM-002 | B | m | 1 | N/A | chưa |\n")
+    assert any("chu trình" in e and "RM-001" in e for e in errs)
+
+
+def test_check_deps_id_dai_hon_khong_bi_nham_thanh_id_ngan_hon():
+    """`RM-0012` không được đọc nhầm thành `RM-001` — phải báo là ID không tồn tại."""
+    errs = _deps("| RM-001 | A | m | 0 | N/A | chưa |\n"
+                 "| RM-002 | B | m | 1 | RM-0012 | chưa |\n")
+    assert any("RM-0012" in e and "không có item nào mang ID đó" in e for e in errs)
+
+
+def test_check_deps_chuoi_phu_thuoc_dai_khong_tran_ngan_xep():
+    """Chu trình phụ thuộc dài (300 item) phải qua được bằng DFS lặp, không đệ quy."""
+    n = 300
+    head = DEPS_HEAD
+    rows = []
+    detail = []
+    for i in range(1, n + 1):
+        rid = f"RM-{i:03d}"
+        dep = f"RM-{i - 1:03d}" if i > 1 else "N/A"
+        rows.append(f"| {rid} | X | m | 0 | {dep} | chưa |\n")
+        detail.append(f"\n### {rid} — X (m, Wave 0)\n\n- **Nguồn**: docs/brd/01-nhom-a/\n")
+    text = head + "".join(rows) + "\n## Chi tiết\n" + "".join(detail)
+    errs = check_deps(parse_roadmap(text))
+    assert errs == []
+
+
+def test_cli_verify_decisions_json_la_mang_thi_exit_2_stderr_mot_dong(brd, tmp_path):
+    """`decisions.json` cấp cao nhất là mảng JSON (sai định dạng) -> exit 2, không phải exit 1."""
+    rm = tmp_path / "roadmap.md"
+    rm.write_text(ROADMAP_PHU, encoding="utf-8")
+    dec = tmp_path / "decisions.json"
+    dec.write_text(json.dumps(["BRD-0003"], ensure_ascii=False), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "verify", str(rm), "--brd", str(brd),
+         "--brd-rel", "docs/brd", "--decisions", str(dec)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 2
+    assert proc.stdout == ""
+    lines = [l for l in proc.stderr.splitlines() if l.strip()]
+    assert len(lines) == 1
+
+
+def test_cli_verify_roadmap_khong_phai_utf8_thi_exit_2(brd, tmp_path):
+    """Roadmap không phải UTF-8 -> lỗi vận hành, exit 2 với một dòng stderr, không exit 1."""
+    rm = tmp_path / "roadmap.md"
+    rm.write_bytes("## Bảng tổng\n".encode("utf-16"))
+    dec = tmp_path / "decisions.json"
+    dec.write_text(json.dumps({"excluded": []}, ensure_ascii=False), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "verify", str(rm), "--brd", str(brd),
+         "--brd-rel", "docs/brd", "--decisions", str(dec)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 2
+    assert proc.stdout == ""
+    lines = [l for l in proc.stderr.splitlines() if l.strip()]
+    assert len(lines) == 1

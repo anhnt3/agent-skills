@@ -421,7 +421,11 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
             if not f.is_file():
                 errs.append(f"{rid}: **Nguồn** có anchor nhưng {rel} không phải file.")
                 continue
-            hs = headings_of(strip_frontmatter(f.read_text(encoding="utf-8")))
+            try:
+                raw_body = f.read_text(encoding="utf-8")
+            except UnicodeDecodeError as e:
+                _die(f"{f} không phải UTF-8, không đọc được ({e}).")
+            hs = headings_of(strip_frontmatter(raw_body))
             anchor_slug = _norm_hyphens(slugify_anchor(anchor))
             found = any(h["text"].strip().lower() == anchor.lower()
                         or _norm_hyphens(slugify_anchor(h["text"])) == anchor_slug
@@ -471,10 +475,15 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
     return errs, warns
 
 
-RM_RE = re.compile(r"RM-\d{3}")
+# `\d+` (không phải `\d{3}` cố định) + `(?<!\d)`/`(?!\d)`: nuốt trọn cả chuỗi
+# số, không dừng ở 3 chữ số đầu — để `RM-0012` khớp thành đúng token "RM-0012"
+# (rồi bị `check_deps` báo là ID không tồn tại, vì `parsed["rows"]` chỉ có ID
+# đúng 3 chữ số) thay vì bị cắt nhầm thành `RM-001` của một item khác có thật.
+RM_RE = re.compile(r"(?<!\d)RM-\d+(?!\d)")
 
 
 def check_deps(parsed):
+    """Gác cổng cột Phụ thuộc/Wave: ID không tồn tại, chu trình (kể cả tự trỏ), wave nghịch."""
     errs = []
     waves, deps = {}, {}
     for rid, row in parsed["rows"].items():
@@ -483,7 +492,9 @@ def check_deps(parsed):
             waves[rid] = int(raw)
         except ValueError:
             errs.append(f"{rid}: Wave \"{raw}\" không phải số.")
-        deps[rid] = [d for d in RM_RE.findall(row["deps_raw"] or "") if d != rid]
+        # Không lọc bỏ tự trỏ (d == rid): một item phụ thuộc chính nó là chu
+        # trình độ dài 1, phải để DFS bên dưới bắt được, không được im lặng bỏ qua.
+        deps[rid] = RM_RE.findall(row["deps_raw"] or "")
 
     for rid, ds in deps.items():
         for d in ds:
@@ -493,28 +504,40 @@ def check_deps(parsed):
                 errs.append(f"{rid} ở Wave {waves[rid]} nhưng phụ thuộc {d} ở Wave "
                             f"{waves[d]} — không build được theo thứ tự này.")
 
-    # Chu trình: DFS màu trắng/xám/đen, báo đúng một lần mỗi cạnh quay lui.
-    color = {}
+    # Chu trình: DFS lặp (không đệ quy — chuỗi phụ thuộc dài không được làm tràn
+    # ngăn xếp gọi hàm) màu trắng/xám/đen, báo đúng một lần mỗi cạnh quay lui.
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color = {rid: WHITE for rid in parsed["row_order"]}
 
-    def walk(node, stack):
-        color[node] = 1
-        for nxt in deps.get(node, []):
+    for root in parsed["row_order"]:
+        if color[root] != WHITE:
+            continue
+        # Mỗi khung: (node, đường-đi-tới-node, chỉ-số-cạnh-kế-tiếp-cần-xét).
+        stack = [[root, [root], 0]]
+        color[root] = GRAY
+        while stack:
+            frame = stack[-1]
+            node, path, i = frame
+            children = deps.get(node, [])
+            if i >= len(children):
+                color[node] = BLACK
+                stack.pop()
+                continue
+            frame[2] += 1
+            nxt = children[i]
             if nxt not in parsed["rows"]:
                 continue
-            if color.get(nxt) == 1:
-                cycle = stack[stack.index(nxt):] + [nxt] if nxt in stack else [node, nxt]
+            if color.get(nxt) == GRAY:
+                cycle = path[path.index(nxt):] + [nxt]
                 errs.append("Phụ thuộc có chu trình: " + " -> ".join(cycle))
-            elif color.get(nxt, 0) == 0:
-                walk(nxt, stack + [nxt])
-        color[node] = 2
-
-    for rid in parsed["row_order"]:
-        if color.get(rid, 0) == 0:
-            walk(rid, [rid])
+            elif color.get(nxt, WHITE) == WHITE:
+                color[nxt] = GRAY
+                stack.append([nxt, path + [nxt], 0])
     return sorted(set(errs))
 
 
 def cmd_verify(args):
+    """Lệnh con `verify`: đọc roadmap + cây BRD, in báo cáo JSON, exit 1 nếu có lỗi nội dung."""
     roadmap = Path(args.roadmap)
     if not roadmap.is_file():
         _die(f"Không thấy file roadmap: {roadmap}")
@@ -522,7 +545,10 @@ def cmd_verify(args):
     if not brd_dir.is_dir():
         _die(f"Không thấy thư mục BRD: {brd_dir}")
 
-    text = roadmap.read_text(encoding="utf-8")
+    try:
+        text = roadmap.read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        _die(f"{roadmap} không phải UTF-8, không đọc được ({e}).")
     parsed = parse_roadmap(text)
     nodes = parse_manifest(brd_dir / "brd.manifest.yml")
 
@@ -530,9 +556,17 @@ def cmd_verify(args):
     dec = Path(args.decisions)
     if dec.is_file():
         try:
-            excluded = json.loads(dec.read_text(encoding="utf-8")).get("excluded", [])
+            dec_text = dec.read_text(encoding="utf-8")
+        except UnicodeDecodeError as e:
+            _die(f"{dec} không phải UTF-8, không đọc được ({e}).")
+        try:
+            dec_data = json.loads(dec_text)
         except json.JSONDecodeError as e:
             _die(f"{dec} hỏng, không đọc được JSON ({e}).")
+        if not isinstance(dec_data, dict):
+            _die(f"{dec} sai định dạng: cấp cao nhất phải là object "
+                 f"(vd {{\"excluded\": [...]}}), không phải {type(dec_data).__name__}.")
+        excluded = dec_data.get("excluded", [])
     else:
         warns.append(f"Không thấy {dec} — coi như chưa loại node nào (decisions rỗng).")
 
