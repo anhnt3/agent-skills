@@ -69,8 +69,12 @@ def parse_manifest(path):
     path = Path(path)
     if not path.is_file():
         _die(f"Không thấy {path} — thư mục này không phải cây BRD do brd-import sinh ra.")
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        _die(f"{path} không phải UTF-8, không đọc được ({e}).")
     nodes = []
-    for line in path.read_text(encoding="utf-8").split("\n"):
+    for line in raw.split("\n"):
         m = NODE_RE.match(line)
         if not m:
             continue
@@ -220,7 +224,11 @@ def build_outline(brd_dir, head):
         }
         f = brd_dir / n["path"] if n["path"] else None
         if f is not None and f.is_file():
-            body = strip_frontmatter(f.read_text(encoding="utf-8"))
+            try:
+                raw_body = f.read_text(encoding="utf-8")
+            except UnicodeDecodeError as e:
+                _die(f"{f} không phải UTF-8, không đọc được ({e}).")
+            body = strip_frontmatter(raw_body)
             item["headings"] = headings_of(body)
             item["head"] = head_lines(body, head)
             item["signals"] = signals_of(body)

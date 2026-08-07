@@ -630,19 +630,47 @@ def test_check_deps_id_dai_hon_khong_bi_nham_thanh_id_ngan_hon():
 
 
 def test_check_deps_chuoi_phu_thuoc_dai_khong_tran_ngan_xep():
-    """Chu trình phụ thuộc dài (300 item) phải qua được bằng DFS lặp, không đệ quy."""
-    n = 300
-    head = DEPS_HEAD
-    rows = []
-    detail = []
+    """Chuỗi phụ thuộc dài phải qua bằng DFS lặp, không đệ quy — không được raise RecursionError.
+
+    `ROW_RE` (parse dòng bảng tổng) chỉ chấp nhận ID đúng 3 chữ số (`RM-\\d{3}`),
+    nên dựng qua văn bản roadmap thật tối đa được ~1000 dòng — không chắc vượt
+    giới hạn đệ quy mặc định của CPython (1000, đã có sẵn margin từ các stack
+    frame khác của pytest/subprocess). Ở đây dựng thẳng cấu trúc `parsed` (bỏ
+    qua `parse_roadmap`/`ROW_RE`, vốn không phải thứ `check_deps` phụ thuộc —
+    hàm chỉ cần dict có khóa "rows"/"row_order") với ID 4 chữ số để có chuỗi
+    2000 mắt xích, đủ sâu để bản đệ quy cũ (mỗi bước một lời gọi hàm `walk`)
+    chắc chắn tràn ngăn xếp; DFS lặp của bản sửa thì không.
+    """
+    n = 2000
+    rows, row_order = {}, []
     for i in range(1, n + 1):
-        rid = f"RM-{i:03d}"
-        dep = f"RM-{i - 1:03d}" if i > 1 else "N/A"
-        rows.append(f"| {rid} | X | m | 0 | {dep} | chưa |\n")
-        detail.append(f"\n### {rid} — X (m, Wave 0)\n\n- **Nguồn**: docs/brd/01-nhom-a/\n")
-    text = head + "".join(rows) + "\n## Chi tiết\n" + "".join(detail)
-    errs = check_deps(parse_roadmap(text))
+        rid = f"RM-{i:04d}"
+        dep = f"RM-{i - 1:04d}" if i > 1 else "N/A"
+        rows[rid] = {"man": "X", "module": "m", "wave": "0", "deps_raw": dep,
+                     "trang_thai": "chưa"}
+        row_order.append(rid)
+    parsed = {"rows": rows, "row_order": row_order, "details": {}, "detail_order": []}
+    errs = check_deps(parsed)
     assert errs == []
+
+
+def test_check_deps_chu_trinh_chi_thay_duoc_tu_root_sau():
+    """Chu trình nằm ngoài hẳn nhánh của root đầu tiên vẫn phải bị bắt khi vòng ngoài
+    khởi động DFS ở root sau — RM-001 cô lập, chu trình thật ở RM-002 <-> RM-003."""
+    errs = _deps("| RM-001 | A | m | 0 | N/A | chưa |\n"
+                 "| RM-002 | B | m | 0 | RM-003 | chưa |\n"
+                 "| RM-003 | C | m | 0 | RM-002 | chưa |\n")
+    assert any("chu trình" in e and "RM-002" in e and "RM-003" in e for e in errs)
+
+
+def test_check_deps_hinh_thoi_khong_bi_bao_chu_trinh_gia():
+    """Đồ thị hình thoi (A phụ thuộc B và C, cả hai cùng phụ thuộc D) — D bị hai
+    đường khác nhau chạm tới nhưng không phải chu trình, không được báo giả."""
+    errs = _deps("| RM-001 | A | m | 2 | RM-002,RM-003 | chưa |\n"
+                 "| RM-002 | B | m | 1 | RM-004 | chưa |\n"
+                 "| RM-003 | C | m | 1 | RM-004 | chưa |\n"
+                 "| RM-004 | D | m | 0 | N/A | chưa |\n")
+    assert not any("chu trình" in e for e in errs)
 
 
 def test_cli_verify_decisions_json_la_mang_thi_exit_2_stderr_mot_dong(brd, tmp_path):
@@ -670,6 +698,31 @@ def test_cli_verify_roadmap_khong_phai_utf8_thi_exit_2(brd, tmp_path):
     dec.write_text(json.dumps({"excluded": []}, ensure_ascii=False), encoding="utf-8")
     proc = subprocess.run(
         [sys.executable, str(SCRIPT), "verify", str(rm), "--brd", str(brd),
+         "--brd-rel", "docs/brd", "--decisions", str(dec)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 2
+    assert proc.stdout == ""
+    lines = [l for l in proc.stderr.splitlines() if l.strip()]
+    assert len(lines) == 1
+
+
+def test_cli_verify_manifest_khong_phai_utf8_thi_exit_2(tmp_path):
+    """`brd.manifest.yml` không phải UTF-8 -> lỗi vận hành, exit 2, không exit 1 stdout rỗng.
+
+    `parse_manifest` được gọi từ `cmd_verify` (và `cmd_outline`) — đọc file này
+    phải qua cùng hàng rào `_die` như roadmap/decisions.json, không được để
+    `UnicodeDecodeError` lọt ra ngoài không kiểm soát.
+    """
+    brd_dir = tmp_path / "brd"
+    brd_dir.mkdir()
+    (brd_dir / "brd.manifest.yml").write_bytes("nodes:\n".encode("utf-16"))
+    rm = tmp_path / "roadmap.md"
+    rm.write_text(ROADMAP_PHU, encoding="utf-8")
+    dec = tmp_path / "decisions.json"
+    dec.write_text(json.dumps({"excluded": []}, ensure_ascii=False), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "verify", str(rm), "--brd", str(brd_dir),
          "--brd-rel", "docs/brd", "--decisions", str(dec)],
         capture_output=True, text=True, encoding="utf-8",
     )
