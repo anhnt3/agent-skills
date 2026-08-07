@@ -98,19 +98,54 @@ def _paragraphs(docx):
     return out
 
 
-def _toc_text(block):
-    """Text của một dòng mục lục, bỏ phần số trang sau dấu tab cuối cùng.
+_HYPERLINK_RE = re.compile(r"<w:hyperlink\b[^>]*>(.*?)</w:hyperlink>", re.S)
+_FIELD_BOUNDARY_RE = re.compile(r"<w:tab\b[^>]*/>|<w:fldChar\b|<w:instrText\b")
+_LEADING_ENUM_RE = re.compile(
+    r"^\s*(?:[IVXLCDM]+|[ivxlcdm]+|\d+(?:\.\d+)*|[A-Za-zĐđ])[.\)]\s+"
+)
 
-    Word đặt số trang sau <w:tab/>; ký tự tab KHÔNG nằm trong <w:t> nên nếu
-    gộp thẳng mọi <w:t> sẽ ra "Tiêu đề12" — dính số trang vào tiêu đề.
+
+def _toc_text(block):
+    """Text hiển thị của một dòng mục lục, bỏ mã trường PAGEREF/số trang.
+
+    Mỗi mục mục lục thật nằm trong một <w:hyperlink> (liên kết tới bookmark
+    heading) — đoạn chứa mục lục có thể còn giữ nguyên field code TOC gốc
+    (<w:fldChar begin>, <w:instrText> TOC ...</w:instrText>, ...) đứng TRƯỚC
+    <w:hyperlink> đầu tiên, nên phải tìm text bên trong <w:hyperlink> chứ
+    không phải quét cả đoạn.
+
+    Trong <w:hyperlink> đó, cấu trúc là: <tiêu đề hiển thị><tab dẫn chấm>
+    <fldChar begin><instrText PAGEREF...><fldChar separate><số trang>
+    <fldChar end>. Tab dẫn thực tế là <w:tab .../> có thuộc tính (kiểu
+    "right"/"dot"), KHÔNG phải <w:tab/> trần — nên cắt tại điểm gặp BẤT KỲ
+    trong ba mốc <w:tab .../>, <w:fldChar>, <w:instrText> (mốc nào tới
+    trước), rồi mới gộp <w:t> ở phần trước mốc đó.
+
+    TOC field còn bake sẵn số thứ tự đề mục ("I.", "1.") thành text — trong
+    khi tiêu đề gốc trong thân tài liệu KHÔNG chứa số này (số đến từ
+    numbering tự động, không phải nội dung heading). Bỏ tiền tố đánh số đó
+    để tiêu đề khớp với heading gốc.
     """
-    head = block.rsplit("<w:tab/>", 1)[0] if "<w:tab/>" in block else block
+    hyperlink = _HYPERLINK_RE.search(block)
+    content = hyperlink.group(1) if hyperlink else block
+    boundary = _FIELD_BOUNDARY_RE.search(content)
+    head = content[:boundary.start()] if boundary else content
     text = "".join(_TEXT_RE.findall(head)).strip()
+    text = _LEADING_ENUM_RE.sub("", text)
     return re.sub(r"\s*\.{2,}\s*\d*$", "", text).strip()
 
 
 def toc_titles(docx):
-    """[(tiêu đề, cấp)] moi từ đoạn mang style TOC1..9 / 'toc 1'..'toc 9'."""
+    """[(tiêu đề, cấp)] moi từ đoạn mang style TOC1..9 / 'toc 1'..'toc 9'.
+
+    Chỉ nhận đoạn có <w:hyperlink> bên trong: Word tự sinh mỗi mục mục lục
+    thật (khi cập nhật trường TOC) thành một liên kết nội bộ tới bookmark
+    heading. Một đoạn mang style TOC* nhưng KHÔNG có hyperlink — ví dụ dòng
+    tiêu đề "Mục lục"/"Table of Contents" mà người soạn tự gõ và gán cùng
+    style cho đồng bộ định dạng — không phải một mục lục thật do trường TOC
+    sinh ra, nên bị loại. Quy tắc dựa trên cấu trúc XML, không phụ thuộc
+    ngôn ngữ hiển thị.
+    """
     xml = _read(docx, "word/document.xml")
     out = []
     for m in _PARA_RE.finditer(xml):
@@ -120,6 +155,8 @@ def toc_titles(docx):
             continue
         lvl = _TOC_STYLE_RE.match(style.group(1))
         if not lvl:
+            continue
+        if "<w:hyperlink" not in block:
             continue
         text = _toc_text(block)
         if text:

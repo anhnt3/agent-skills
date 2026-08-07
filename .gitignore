@@ -3,3 +3,4 @@
 speckit-dft-mstem-preset/dist/
 AGENTS.md
 **/AGENTS.md
+speckit-extension/scripts/tests/fixtures/*.docx

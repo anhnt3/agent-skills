@@ -19,7 +19,12 @@ def build_fixtures():
 
 def test_toc_titles_moi_duoc_muc_luc_cua_brd_that(real_brd):
     titles = toc_titles(real_brd)
-    assert len(titles) == 44          # 3 x TOC1 + 6 x TOC3 + 35 x TOC4
+    # 2 x TOC1 + 6 x TOC3 + 35 x TOC4 = 43 mục THẬT do trường TOC sinh ra
+    # (đối chiếu với heading_style_levels: Heading1=2, Heading3=6, Heading4=35
+    # trên chính BRD này). Đoạn TOC1 thứ 3 là dòng tiêu đề "Mục lục" người
+    # soạn tự gõ và gán cùng style TOC1 để đồng bộ định dạng — không nằm
+    # trong <w:hyperlink> nên không phải một mục lục thật, bị loại đúng ý.
+    assert len(titles) == 43
     assert titles[0][1] == 1
     # không dính số trang vào đuôi tiêu đề
     assert titles[0][0].startswith("Nhóm chức năng dịch vụ hệ thống")
