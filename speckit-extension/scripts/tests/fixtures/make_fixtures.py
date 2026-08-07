@@ -36,6 +36,27 @@ không có tiêu đề nào cả
 đoạn thứ ba cũng vậy
 """
 
+BOLD = """**Chương một**
+
+thân chương một
+
+**Chương hai**
+
+thân chương hai
+
+**Chương ba**
+
+thân chương ba
+
+**Chương bốn**
+
+thân chương bốn
+
+**Chương năm**
+
+thân chương năm
+"""
+
 
 def build(name, text):
     src = HERE / (name + ".md")
@@ -47,4 +68,5 @@ def build(name, text):
 if __name__ == "__main__":
     build("numbered", NUMBERED)
     build("plain", PLAIN)
+    build("bold", BOLD)
     print("OK", file=sys.stderr)

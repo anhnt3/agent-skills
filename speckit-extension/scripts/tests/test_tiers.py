@@ -5,7 +5,9 @@ from pathlib import Path
 import pytest
 
 from brd.convert import run_pandoc
-from brd.docx_probe import detect_tier, numbered_titles, promotions_for, toc_titles
+from brd.docx_probe import (
+    detect_tier, format_candidates, numbered_titles, promotions_for, toc_titles,
+)
 from brd.outline import parse_headings
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -70,3 +72,55 @@ def test_lua_filter_khong_de_lai_vo_div_custom_style(tmp_path):
                     ).read_text(encoding="utf-8")
     assert "custom-style" not in md
     assert ":::" not in md
+
+
+def test_format_candidates_bat_doan_in_dam_ngan():
+    cands = format_candidates(FIXTURES / "bold.docx")
+    assert [c["text"] for c in cands] == [
+        "Chương một", "Chương hai", "Chương ba", "Chương bốn", "Chương năm",
+    ]
+    assert all(c["bold"] for c in cands)
+
+
+def test_detect_tier_docx_toan_doan_thuong_thi_can_llm():
+    res = detect_tier(FIXTURES / "plain.docx")
+    assert res["tier"] == 0
+    assert res["needs_llm"] is True
+
+
+def test_probe_tra_ve_candidates_khi_can_llm(tmp_path):
+    import json
+    import subprocess
+    import sys
+    script = Path(__file__).resolve().parents[1] / "brd_import.py"
+    proc = subprocess.run(
+        [sys.executable, str(script), "probe", str(FIXTURES / "bold.docx"),
+         "--work", str(tmp_path / "w")],
+        capture_output=True, text=True, encoding="utf-8")
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    assert data["needs_llm"] is True
+    assert len(data["candidates"]) == 5
+
+
+def test_probe_voi_outline_do_llm_quyet_thi_cat_duoc(tmp_path):
+    import json
+    import subprocess
+    import sys
+    script = Path(__file__).resolve().parents[1] / "brd_import.py"
+    work = tmp_path / "w"
+    subprocess.run([sys.executable, str(script), "probe", str(FIXTURES / "bold.docx"),
+                    "--work", str(work)], capture_output=True, text=True)
+    outline = work / "outline.json"
+    outline.write_text(json.dumps(
+        [{"index": i, "level": 1 if i % 2 == 0 else 2} for i in range(5)]),
+        encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(script), "probe", str(FIXTURES / "bold.docx"),
+         "--work", str(work), "--outline", str(outline)],
+        capture_output=True, text=True, encoding="utf-8")
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(proc.stdout)
+    assert data["needs_llm"] is False
+    assert data["tier"] == 6
+    assert sum(lv["count"] for lv in data["levels"]) == 5

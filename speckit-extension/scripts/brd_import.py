@@ -49,16 +49,34 @@ def cmd_probe(args):
     work.mkdir(parents=True, exist_ok=True)
 
     tier = detect_tier(docx)
-    if tier["needs_llm"]:
-        _die("Chưa dò được cấu trúc bằng bậc 1-4. Bậc 5-6 chưa cài đặt.")
 
-    if tier["tier"] == 1:
+    from brd.docx_probe import promotions_for
+
+    outline = None
+    if args.outline:
+        outline = json.loads(Path(args.outline).read_text(encoding="utf-8"))
+
+    if tier["needs_llm"] and not outline:
+        result = {
+            "tier": 0, "note": tier["note"], "needs_llm": True,
+            "recommend_depth": None, "levels": [], "warnings": [],
+            "candidates": tier.get("candidates", []),
+            "source": {"file": docx.name, "sha256": _sha256(docx),
+                       "pandoc": check_pandoc(), "path": str(docx.resolve())},
+        }
+        (work / "probe.json").write_text(json.dumps(result, ensure_ascii=False, indent=2),
+                                         encoding="utf-8")
+        print(json.dumps(result, ensure_ascii=False))
+        return
+
+    promos = promotions_for(docx, outline=outline)
+    if tier["tier"] == 1 and not promos:
         md_path = run_pandoc(docx, work)
     else:
-        from brd.docx_probe import promotions_for
         lua = Path(__file__).resolve().parent / "promote_headings.lua"
         md_path = run_pandoc(docx, work, lua_filter=lua,
-                             metadata={"promotions": promotions_for(docx)})
+                             metadata={"promotions": promos})
+    effective_tier = 6 if outline else tier["tier"]
     md = md_path.read_text(encoding="utf-8")
     headings = parse_headings(md)
     if not headings:
@@ -67,7 +85,9 @@ def cmd_probe(args):
     stats = level_stats(headings, md.split("\n"), dmap)
 
     result = {
-        "tier": tier["tier"], "note": tier["note"], "needs_llm": False,
+        "tier": effective_tier,
+        "note": tier["note"] if not outline else "Ranh giới do LLM quyết từ ứng viên bậc 5",
+        "needs_llm": False,
         "recommend_depth": recommend_depth(stats), "levels": stats,
         "warnings": [], "candidates": [],
         "source": {"file": docx.name, "sha256": _sha256(docx),
@@ -164,6 +184,8 @@ def main():
     p = sub.add_parser("probe", help="Dò cấu trúc và thống kê cấp")
     p.add_argument("docx")
     p.add_argument("--work", required=True)
+    p.add_argument("--outline", default=None,
+                   help="JSON [{index, level}] do LLM quyết khi bậc 1-5 mù")
     p.set_defaults(func=cmd_probe)
 
     s = sub.add_parser("split", help="Cắt cây và kiểm chứng")

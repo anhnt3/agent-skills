@@ -73,10 +73,16 @@ def detect_tier(docx):
     if len({lv for _, lv in numbered}) >= 2 and len(numbered) >= 5:
         return {"tier": 4, "note": f"Suy từ đánh số gõ tay, {len(numbered)} mục",
                 "style_levels": {}, "heading_count": len(numbered), "needs_llm": False}
+    sized = size_tier(docx)
+    if sized:
+        return {"tier": 5, "note": f"Suy từ cỡ chữ giảm dần, {len(sized)} mục",
+                "style_levels": {}, "heading_count": len(sized), "needs_llm": False}
     return {
         "tier": 0,
-        "note": "Không thấy Heading style, style tự chế có outlineLvl, mục lục, hay đánh số liên tục",
+        "note": "Bậc 1-5 đều mù: không Heading style, không style tự chế có outlineLvl, "
+                "không mục lục, không đánh số liên tục, không phân tầng cỡ chữ",
         "style_levels": {}, "heading_count": 0, "needs_llm": True,
+        "candidates": format_candidates(docx),
     }
 
 
@@ -182,13 +188,69 @@ def numbered_titles(docx):
     return out
 
 
-def promotions_for(docx):
-    """[{'text','level'}] nạp cho Lua filter, theo bậc mà detect_tier chọn."""
+def promotions_for(docx, outline=None):
+    """[{'text','level'}] nạp cho Lua filter.
+
+    outline: [{'index','level'}] do LLM quyết (bậc 6) — chỉ số trỏ vào
+    format_candidates(docx), KHÔNG phải chỉ số đoạn trong tài liệu.
+    """
+    if outline:
+        cands = format_candidates(docx)
+        return [{"text": cands[o["index"]]["text"], "level": o["level"]}
+                for o in outline if 0 <= o["index"] < len(cands)]
     res = detect_tier(docx)
     if res["tier"] == 3:
         pairs = toc_titles(docx)
     elif res["tier"] == 4:
         pairs = numbered_titles(docx)
+    elif res["tier"] == 5:
+        pairs = size_tier(docx)
     else:
         return []
     return [{"text": t, "level": lv} for t, lv in pairs]
+
+
+_BOLD_RE = re.compile(r"<w:b(?: [^>]*)?/>|<w:b(?: [^>]*)?>(?!<w:val=\"0\")")
+_SZ_RE = re.compile(r"<w:sz w:val=\"(\d+)\"")
+
+
+def _paragraphs_rich(docx):
+    xml = _read(docx, "word/document.xml")
+    out = []
+    for i, m in enumerate(_PARA_RE.finditer(xml)):
+        block = m.group(0)
+        sizes = [int(s) for s in _SZ_RE.findall(block)]
+        out.append({
+            "index": i,
+            "text": "".join(_TEXT_RE.findall(block)).strip(),
+            "bold": bool(_BOLD_RE.search(block)),
+            "size": max(sizes) if sizes else None,
+        })
+    return out
+
+
+def format_candidates(docx):
+    """Đoạn ngắn, in đậm hoặc cỡ chữ lớn hơn cỡ phổ biến nhất, không kết thúc bằng '.'."""
+    paras = _paragraphs_rich(docx)
+    sizes = collections.Counter(p["size"] for p in paras if p["size"])
+    body_size = sizes.most_common(1)[0][0] if sizes else None
+    out = []
+    for p in paras:
+        text = p["text"]
+        if not text or len(text) >= 120 or text.endswith("."):
+            continue
+        bigger = body_size is not None and p["size"] is not None and p["size"] > body_size
+        if p["bold"] or bigger:
+            out.append({"index": p["index"], "text": text,
+                        "bold": p["bold"], "size": p["size"]})
+    return out
+
+
+def size_tier(docx):
+    """Bậc 5: cấp suy từ cỡ chữ giảm dần trong các ứng viên."""
+    cands = [c for c in format_candidates(docx) if c["size"]]
+    distinct = sorted({c["size"] for c in cands}, reverse=True)
+    if len(distinct) < 2 or len(cands) < 5:
+        return []
+    rank = {s: i + 1 for i, s in enumerate(distinct)}
+    return [(c["text"], rank[c["size"]]) for c in cands]
