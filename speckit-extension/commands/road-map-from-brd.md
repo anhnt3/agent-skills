@@ -37,6 +37,10 @@ python .specify/extensions/dft-speckit/scripts/brd_roadmap.py outline "<thư-m�
   --out .specify/tmp/roadmap-brd/outline.json
 ```
 
+Lệnh này **vừa ghi `outline.json` vừa in nguyên outline (toàn bộ `headings`, `head`, `signals`
+từng node) ra stdout** — phần in ra stdout là **bản trùng lặp**, KHÔNG được đọc; đọc từ file
+`outline.json` mới đúng, đọc thẳng stdout sẽ vỡ context ngay bước đầu.
+
 Mã thoát khác 0 → **DỪNG**, in nguyên thông điệp lỗi. Không tự chữa, không thử lệnh khác.
 
 Đọc `outline.json`. Báo: số node, và **liệt kê đầy đủ** `files_without_node` (file BA thêm tay,
@@ -122,8 +126,20 @@ trong option. **Thứ tự là quyết định của người dùng** — chờ 
 - **Trường `Nguồn`** của mỗi item: đường dẫn tương đối từ gốc repo tới file BRD nguồn
   (`docs/brd/03-quan-ly/05-danh-sach.md`), thêm `#<tiêu đề mục>` khi nhiều item cùng trỏ về một
   file. Node không có file riêng (`inline`) thì trỏ vào thư mục của nó (`docs/brd/03-quan-ly/`).
+  **Cẩn thận**: `verify` chấm phủ theo *vị trí* (file/thư mục), không theo từng node — một item
+  duy nhất trỏ `Nguồn` vào một thư mục sẽ khiến **TẤT CẢ** node `inline` nằm trong thư mục đó
+  được tính là đã phủ, kể cả những node chưa có item riêng. Gộp nhiều node inline vào chung một
+  `Nguồn` thư mục KHÔNG thay thế được việc cho mỗi màn thật một item của riêng nó — nếu một thư
+  mục có nhiều node `inline` là màn thật, mỗi node vẫn phải có item roadmap trỏ đích danh tới nó
+  (dùng `#<tiêu đề mục>` để phân biệt khi cần).
 - **KHÔNG để sót ngoặc vuông trần** ở bất cứ đâu — `verify` coi mọi `[...]` không phải link
   markdown là placeholder chưa điền và sẽ báo lỗi.
+- **Cột `Wave`** trong bảng tổng chỉ chứa **số nguyên trần**: `0`, `1`, `2`, … — KHÔNG ghi
+  `"Wave 0"` hay bất cứ chữ nào kèm số, dù mục 5 ở trên gọi bằng lời là "Wave 0". `verify` chấm
+  cột này như số, chữ sẽ làm gãy gate ngay.
+- **Cột `Phụ thuộc`**: mỗi ID liệt kê phải tồn tại trong bảng tổng; không có phụ thuộc thì ghi
+  `N/A`. Một item **không được** phụ thuộc vào item ở Wave **sau** nó (Wave của item phụ thuộc
+  phải ≤ Wave của chính nó) — `verify` báo lỗi "Wave nghịch" nếu sai.
 
 ### 7. Chấm bằng script — cổng cuối
 
@@ -133,9 +149,15 @@ python .specify/extensions/dft-speckit/scripts/brd_roadmap.py verify docs/roadma
   --decisions .specify/tmp/roadmap-brd/decisions.json
 ```
 
-- Exit 1 (`ok: false`) → **sửa `docs/roadmap.md` cho đúng rồi chạy lại**. **CẤM báo xong khi
-  chưa exit 0.** Cấm "chữa" bằng cách nhét node vào `decisions.json` với lý do bịa — loại một
-  node là quyết định phân loại, phải quay lại bước 4 hỏi người dùng.
+**CẤM báo xong khi mã thoát chưa là 0**, bất kể mã thoát cụ thể là gì.
+
+- Exit 1 (`ok: false`) → **sửa `docs/roadmap.md` cho đúng rồi chạy lại**. Cấm "chữa" bằng cách
+  nhét node vào `decisions.json` với lý do bịa — loại một node là quyết định phân loại, phải
+  quay lại bước 4 hỏi người dùng. Cũng cấm chữa bằng cách bọc khối chưa điền trong fence code
+  hay dòng `<!-- -->` để placeholder "biến mất" khỏi lượt quét — đó là qua mặt gate, không phải
+  sửa lỗi.
+- Sửa rồi chạy lại tối đa **vài lần** (khoảng 3); vẫn chưa exit 0 → **DỪNG**, báo cho người dùng
+  danh sách lỗi còn lại nguyên văn, KHÔNG tự loop tiếp hay tự chế cách khác để né gate.
 - Exit 2 → lỗi thao tác (sai đường dẫn, JSON hỏng). In nguyên thông điệp, DỪNG.
 - **Liệt kê đầy đủ `warnings`** cho người dùng, kể cả khi `ok: true`.
 
@@ -153,7 +175,10 @@ chấm lại, xoá được khi đã hài lòng với `docs/roadmap.md`.
 - **Loại node mà không ghi lý do vào `decisions.json`** → `verify` fail, và người dùng mất dấu
   vì sao một mục BRD biến mất.
 - **Ghi đè `docs/roadmap.md` có sẵn** → xoá `Trạng thái` và `Nợ phát sinh` người khác đã ghi.
-- **`verify` fail rồi vẫn báo xong**, hoặc nhét node vào `decisions.json` cho qua cổng → che lỗi.
+- **`verify` fail rồi vẫn báo xong**, hoặc nhét node vào `decisions.json` cho qua cổng, hoặc bọc
+  placeholder chưa điền trong fence code / dòng `<!-- -->` cho biến mất khỏi lượt quét → che lỗi.
+- **Gộp nhiều node `inline` vào chung một `Nguồn` thư mục rồi coi là đã phủ hết** → `verify`
+  chấm phủ theo vị trí nên gate vẫn xanh, nhưng những node đó chưa có item riêng của mình.
 - **Nuốt `warnings` cho gọn báo cáo** → người dùng mất thông tin cần để quyết.
 - **Đọc toàn văn mọi file BRD** → vỡ context rồi bỏ sót mục cuối. Đọc `outline.json` trước,
   chỉ `Read` thêm file nào thật sự chưa quyết được.
