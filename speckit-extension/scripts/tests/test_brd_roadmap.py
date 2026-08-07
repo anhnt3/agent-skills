@@ -10,6 +10,7 @@ from brd_roadmap import head_lines, headings_of, signals_of, strip_frontmatter
 from brd_roadmap import build_outline, tree_diff
 from brd_roadmap import check_ids, check_placeholders, parse_roadmap
 from brd_roadmap import check_coverage, norm_source, slugify_anchor
+from brd_roadmap import check_deps
 
 SCRIPT = Path(__file__).resolve().parents[1] / "brd_roadmap.py"
 
@@ -516,3 +517,99 @@ def test_check_coverage_excluded_thieu_node_id_thi_loi_ro_rang(brd):
     """`decisions.json` có object nhưng thiếu `node_id` -> lỗi rõ ràng, không để trống rỗng."""
     errs, _ = _cover(brd, ROADMAP_PHU, [{"title": "Thuật ngữ", "reason": "ok"}])
     assert any("node_id" in e and "loại node  không có trong manifest" not in e for e in errs)
+
+
+DEPS_HEAD = """## Bảng tổng (thứ tự build)
+
+| ID | Màn | Module | Wave | Phụ thuộc | Trạng thái |
+|--------|-----|--------|------|-----------|------------|
+"""
+
+DEPS_TAIL = """
+## Chi tiết
+
+### RM-001 — A (m, Wave 0)
+
+- **Nguồn**: docs/brd/01-nhom-a/
+
+### RM-002 — B (m, Wave 1)
+
+- **Nguồn**: docs/brd/01-nhom-a/01-man-danh-sach.md
+"""
+
+
+def _deps(rows):
+    return check_deps(parse_roadmap(DEPS_HEAD + rows + DEPS_TAIL))
+
+
+def test_check_deps_hop_le_thi_khong_loi():
+    assert _deps("| RM-001 | A | m | 0 | N/A | chưa |\n"
+                 "| RM-002 | B | m | 1 | RM-001 | chưa |\n") == []
+
+
+def test_check_deps_bat_id_khong_ton_tai():
+    errs = _deps("| RM-001 | A | m | 0 | RM-777 | chưa |\n"
+                 "| RM-002 | B | m | 1 | RM-001 | chưa |\n")
+    assert any("RM-777" in e for e in errs)
+
+
+def test_check_deps_bat_chu_trinh():
+    errs = _deps("| RM-001 | A | m | 0 | RM-002 | chưa |\n"
+                 "| RM-002 | B | m | 1 | RM-001 | chưa |\n")
+    assert any("chu trình" in e for e in errs)
+
+
+def test_check_deps_bat_wave_nghich():
+    errs = _deps("| RM-001 | A | m | 0 | RM-002 | chưa |\n"
+                 "| RM-002 | B | m | 1 | N/A | chưa |\n")
+    assert any("Wave" in e and "RM-001" in e for e in errs)
+
+
+def test_check_deps_bat_wave_khong_phai_so():
+    errs = _deps("| RM-001 | A | m | sau | N/A | chưa |\n"
+                 "| RM-002 | B | m | 1 | RM-001 | chưa |\n")
+    assert any("Wave" in e and "số" in e for e in errs)
+
+
+def _run_verify(brd, roadmap_text, tmp_path, excluded=()):
+    rm = tmp_path / "roadmap.md"
+    rm.write_text(roadmap_text, encoding="utf-8")
+    dec = tmp_path / "decisions.json"
+    dec.write_text(json.dumps({"brd_dir": "docs/brd", "excluded": list(excluded)},
+                              ensure_ascii=False), encoding="utf-8")
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), "verify", str(rm),
+         "--brd", str(brd), "--brd-rel", "docs/brd", "--decisions", str(dec)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+
+
+def test_cli_verify_happy_path_exit_0(brd, tmp_path):
+    proc = _run_verify(brd, ROADMAP_PHU, tmp_path,
+                       [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "từ điển"}])
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    rep = json.loads(proc.stdout)
+    assert rep["ok"] is True
+    assert rep["errors"] == []
+    assert rep["items"] == 2
+
+
+def test_cli_verify_thieu_phu_thi_exit_1(brd, tmp_path):
+    proc = _run_verify(brd, ROADMAP_PHU, tmp_path)
+    assert proc.returncode == 1
+    rep = json.loads(proc.stdout)
+    assert rep["ok"] is False
+    assert any("BRD-0003" in e for e in rep["errors"])
+
+
+def test_cli_verify_thieu_decisions_van_chay_va_canh_bao(brd, tmp_path):
+    rm = tmp_path / "roadmap.md"
+    rm.write_text(ROADMAP_PHU, encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "verify", str(rm), "--brd", str(brd),
+         "--brd-rel", "docs/brd", "--decisions", str(tmp_path / "khong-co.json")],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 1
+    rep = json.loads(proc.stdout)
+    assert any("decisions" in w for w in rep["warnings"])

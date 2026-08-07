@@ -471,6 +471,89 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
     return errs, warns
 
 
+RM_RE = re.compile(r"RM-\d{3}")
+
+
+def check_deps(parsed):
+    errs = []
+    waves, deps = {}, {}
+    for rid, row in parsed["rows"].items():
+        raw = (row["wave"] or "").strip()
+        try:
+            waves[rid] = int(raw)
+        except ValueError:
+            errs.append(f"{rid}: Wave \"{raw}\" không phải số.")
+        deps[rid] = [d for d in RM_RE.findall(row["deps_raw"] or "") if d != rid]
+
+    for rid, ds in deps.items():
+        for d in ds:
+            if d not in parsed["rows"]:
+                errs.append(f"{rid} phụ thuộc {d} nhưng không có item nào mang ID đó.")
+            elif rid in waves and d in waves and waves[rid] < waves[d]:
+                errs.append(f"{rid} ở Wave {waves[rid]} nhưng phụ thuộc {d} ở Wave "
+                            f"{waves[d]} — không build được theo thứ tự này.")
+
+    # Chu trình: DFS màu trắng/xám/đen, báo đúng một lần mỗi cạnh quay lui.
+    color = {}
+
+    def walk(node, stack):
+        color[node] = 1
+        for nxt in deps.get(node, []):
+            if nxt not in parsed["rows"]:
+                continue
+            if color.get(nxt) == 1:
+                cycle = stack[stack.index(nxt):] + [nxt] if nxt in stack else [node, nxt]
+                errs.append("Phụ thuộc có chu trình: " + " -> ".join(cycle))
+            elif color.get(nxt, 0) == 0:
+                walk(nxt, stack + [nxt])
+        color[node] = 2
+
+    for rid in parsed["row_order"]:
+        if color.get(rid, 0) == 0:
+            walk(rid, [rid])
+    return sorted(set(errs))
+
+
+def cmd_verify(args):
+    roadmap = Path(args.roadmap)
+    if not roadmap.is_file():
+        _die(f"Không thấy file roadmap: {roadmap}")
+    brd_dir = Path(args.brd)
+    if not brd_dir.is_dir():
+        _die(f"Không thấy thư mục BRD: {brd_dir}")
+
+    text = roadmap.read_text(encoding="utf-8")
+    parsed = parse_roadmap(text)
+    nodes = parse_manifest(brd_dir / "brd.manifest.yml")
+
+    warns, excluded = [], []
+    dec = Path(args.decisions)
+    if dec.is_file():
+        try:
+            excluded = json.loads(dec.read_text(encoding="utf-8")).get("excluded", [])
+        except json.JSONDecodeError as e:
+            _die(f"{dec} hỏng, không đọc được JSON ({e}).")
+    else:
+        warns.append(f"Không thấy {dec} — coi như chưa loại node nào (decisions rỗng).")
+
+    errs = check_ids(parsed) + check_placeholders(text) + check_deps(parsed)
+    cov_errs, cov_warns = check_coverage(parsed, nodes, brd_dir, args.brd_rel, excluded)
+    errs += cov_errs
+    warns += cov_warns
+
+    report = {
+        "ok": not errs,
+        "items": len(parsed["rows"]),
+        "brd_nodes": sum(1 for n in nodes if n["kind"] != "root"),
+        "excluded_nodes": len(excluded),
+        "errors": errs,
+        "warnings": warns,
+    }
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    if errs:
+        raise SystemExit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Trích outline cây BRD và gác cổng docs/roadmap.md."
@@ -482,6 +565,14 @@ def main():
     o.add_argument("--out", default=".specify/tmp/roadmap-brd/outline.json")
     o.add_argument("--head", type=int, default=15)
     o.set_defaults(func=cmd_outline)
+
+    v = sub.add_parser("verify", help="Chấm docs/roadmap.md so với cây BRD")
+    v.add_argument("roadmap")
+    v.add_argument("--brd", required=True)
+    v.add_argument("--brd-rel", default="docs/brd",
+                   help="Tiền tố đường dẫn dùng trong trường **Nguồn** của roadmap")
+    v.add_argument("--decisions", default=".specify/tmp/roadmap-brd/decisions.json")
+    v.set_defaults(func=cmd_verify)
 
     args = parser.parse_args()
     args.func(args)
