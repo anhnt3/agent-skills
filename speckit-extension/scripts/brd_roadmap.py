@@ -110,6 +110,74 @@ def breadcrumbs(nodes):
     return out
 
 
+HEADING_RE = re.compile(r"^(#{1,6})\s+(.*\S)\s*$")
+FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
+PIPE_SEP_RE = re.compile(r"^\s*\|[\s|:-]*-{2,}[\s|:-]*\|?\s*$")
+MD_IMG_RE = re.compile(r"!\[[^\]]*\]\(")
+
+ACTION_WORDS = ("thêm", "sửa", "xoá", "xóa", "tìm kiếm", "lưu", "duyệt",
+                "xuất", "nhập", "phê duyệt", "cập nhật", "tra cứu")
+PERM_WORDS = ("quyền", "vai trò", "phân quyền", "nhóm người dùng")
+FIELD_HEADERS = ("| trường", "| tên trường", "| tham số")
+
+
+def strip_frontmatter(text):
+    if not text.startswith("---\n"):
+        return text
+    end = text.find("\n---\n", 3)
+    if end < 0:
+        return text
+    return text[end + len("\n---\n"):]
+
+
+def _iter_outside_code(text):
+    in_code = False
+    for line in text.split("\n"):
+        if FENCE_RE.match(line):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        yield line
+
+
+def headings_of(text):
+    out = []
+    for line in _iter_outside_code(text):
+        m = HEADING_RE.match(line)
+        if m:
+            out.append({"level": len(m.group(1)), "text": m.group(2)})
+    return out
+
+
+def head_lines(text, n):
+    """`n` dòng đầu phi-rỗng, bỏ heading — đủ để nhận ra mục nói về cái gì."""
+    out = []
+    for line in _iter_outside_code(text):
+        s = line.strip()
+        if not s or HEADING_RE.match(line):
+            continue
+        out.append(s)
+        if len(out) >= n:
+            break
+    return out
+
+
+def signals_of(text):
+    """Đếm cơ học các dấu hiệu 'đây là một màn' — LLM đọc số, không đọc toàn văn."""
+    low = text.lower()
+    lines = text.split("\n")
+    return {
+        "tables": low.count("<table") + sum(1 for l in lines if PIPE_SEP_RE.match(l)),
+        "table_rows": low.count("<tr") + sum(1 for l in lines if l.lstrip().startswith("|")),
+        "images": low.count("<img") + len(MD_IMG_RE.findall(text)),
+        "action_words": sum(low.count(w) for w in ACTION_WORDS),
+        "permission_words": sum(low.count(w) for w in PERM_WORDS),
+        "field_table": any(h in low for h in FIELD_HEADERS),
+        "words": len(low.split()),
+    }
+
+
 def cmd_outline(args):
     raise NotImplementedError
 

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from brd_roadmap import breadcrumbs, node_loc, parse_manifest
+from brd_roadmap import head_lines, headings_of, signals_of, strip_frontmatter
 
 SCRIPT = Path(__file__).resolve().parents[1] / "brd_roadmap.py"
 
@@ -111,3 +112,61 @@ def test_breadcrumbs_theo_chuoi_cha(brd):
     crumbs = breadcrumbs(nodes)
     assert crumbs["BRD-0002"] == ['Nhóm A, phần "chính"']
     assert crumbs["BRD-0001"] == []
+
+
+def test_strip_frontmatter_go_dung_khoi_dau(brd):
+    text = (brd / "01-nhom-a" / "01-man-danh-sach.md").read_text(encoding="utf-8")
+    body = strip_frontmatter(text)
+    assert not body.startswith("---")
+    assert body.lstrip().startswith("# Màn danh sách")
+
+
+def test_headings_of_lay_du_cap(brd):
+    text = strip_frontmatter(
+        (brd / "01-nhom-a" / "01-man-danh-sach.md").read_text(encoding="utf-8")
+    )
+    assert headings_of(text) == [
+        {"level": 1, "text": "Màn danh sách"},
+        {"level": 2, "text": "Bộ lọc"},
+        {"level": 2, "text": "Quy tắc"},
+    ]
+
+
+def test_headings_of_bo_qua_heading_trong_khoi_code():
+    text = "# Thật\n\n```\n# Giả\n```\n\n## Thật 2\n"
+    assert headings_of(text) == [
+        {"level": 1, "text": "Thật"},
+        {"level": 2, "text": "Thật 2"},
+    ]
+
+
+def test_head_lines_bo_dong_trang_va_heading(brd):
+    text = strip_frontmatter(
+        (brd / "01-nhom-a" / "01-man-danh-sach.md").read_text(encoding="utf-8")
+    )
+    head = head_lines(text, 2)
+    assert head == [
+        "Màn hiển thị danh sách hợp đồng, cho phép Thêm, Sửa, Xoá và Tìm kiếm.",
+        "Người dùng có quyền Quản trị mới được Duyệt.",
+    ]
+
+
+def test_signals_of_dem_dung(brd):
+    text = strip_frontmatter(
+        (brd / "01-nhom-a" / "01-man-danh-sach.md").read_text(encoding="utf-8")
+    )
+    sig = signals_of(text)
+    assert sig["tables"] == 1
+    assert sig["table_rows"] == 4
+    assert sig["images"] == 1
+    assert sig["field_table"] is True
+    assert sig["permission_words"] >= 2      # "quyền" x2 + "vai trò" x1
+    assert sig["action_words"] >= 5          # Thêm/Sửa/Xoá/Tìm kiếm/Duyệt/Xoá
+
+
+def test_signals_of_file_khong_co_gi(brd):
+    text = strip_frontmatter((brd / "01-nhom-a" / "02-thuat-ngu.md").read_text(encoding="utf-8"))
+    sig = signals_of(text)
+    assert sig["tables"] == 0
+    assert sig["images"] == 0
+    assert sig["field_table"] is False
