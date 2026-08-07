@@ -50,9 +50,15 @@ def cmd_probe(args):
 
     tier = detect_tier(docx)
     if tier["needs_llm"]:
-        _die("Chưa dò được cấu trúc bằng bậc 1-2. Bậc 3-6 chưa cài đặt.")
+        _die("Chưa dò được cấu trúc bằng bậc 1-4. Bậc 5-6 chưa cài đặt.")
 
-    md_path = run_pandoc(docx, work)
+    if tier["tier"] == 1:
+        md_path = run_pandoc(docx, work)
+    else:
+        from brd.docx_probe import promotions_for
+        lua = Path(__file__).resolve().parent / "promote_headings.lua"
+        md_path = run_pandoc(docx, work, lua_filter=lua,
+                             metadata={"promotions": promotions_for(docx)})
     md = md_path.read_text(encoding="utf-8")
     headings = parse_headings(md)
     if not headings:
