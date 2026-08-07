@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """brd-roadmap — trích outline từ cây BRD markdown và gác cổng docs/roadmap.md.
 
-    outline <brd-dir> [--out <json>] [--head N]
-    verify <roadmap.md> --brd <dir> [--decisions <json>]
+    outline <brd-dir> [--out <json>] [--head N] [--quiet]
+    verify <roadmap.md> --brd <dir> --brd-rel <prefix> [--decisions <json>]
 """
 
 import argparse
@@ -74,24 +74,29 @@ def parse_manifest(path):
     except UnicodeDecodeError as e:
         _die(f"{path} không phải UTF-8, không đọc được ({e}).")
     nodes = []
-    for line in raw.split("\n"):
+    for lineno, line in enumerate(raw.split("\n"), start=1):
         m = NODE_RE.match(line)
         if not m:
             continue
         f = _scan_flow(m.group(1))
         parent = f.get("parent")
-        nodes.append({
-            "id": f["id"],
-            "order": int(f["order"]),
-            "depth": int(f["depth"]),
-            "kind": f["kind"],
-            "title": f["title"],
-            "path": f.get("path"),
-            "dir": f.get("dir"),
-            "inline": f.get("inline") == "true",
-            "parent": None if parent in (None, "null", "") else parent,
-            "chars": int(f["chars"]),
-        })
+        try:
+            nodes.append({
+                "id": f["id"],
+                "order": int(f["order"]),
+                "depth": int(f["depth"]),
+                "kind": f["kind"],
+                "title": f["title"],
+                "path": f.get("path"),
+                "dir": f.get("dir"),
+                "inline": f.get("inline") == "true",
+                "parent": None if parent in (None, "null", "") else parent,
+                "chars": int(f["chars"]),
+            })
+        except (KeyError, ValueError) as e:
+            node_id = f.get("id", "?")
+            _die(f"{path} dòng {lineno} (node {node_id}) hỏng, thiếu/sai kiểu trường "
+                 f"bắt buộc ({e}) — manifest có thể đã bị sửa tay lỗi.")
     if not nodes:
         _die(f"{path} không có node nào — manifest hỏng hoặc rỗng.")
     return nodes
@@ -385,7 +390,10 @@ def norm_source(raw, brd_rel):
         v, anchor = v.split("#", 1)
         anchor = anchor.strip() or None
     v = v.strip()
-    prefix = brd_rel.replace("\\", "/").rstrip("/") + "/"
+    norm_rel = brd_rel.replace("\\", "/").strip()
+    while norm_rel.startswith("./"):
+        norm_rel = norm_rel[2:]
+    prefix = norm_rel.rstrip("/") + "/"
     if v.startswith(prefix):
         return v[len(prefix):], anchor
     if v.endswith(".md") or v.endswith("/"):
@@ -394,15 +402,23 @@ def norm_source(raw, brd_rel):
 
 
 def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
-    """Mọi node BRD phải hoặc được một item trỏ tới, hoặc nằm trong `excluded` kèm lý do."""
+    """Mọi node BRD phải hoặc được một item trỏ tới, hoặc nằm trong `excluded` kèm lý do.
+
+    Trả về (errs, warns, ex_ids) — `ex_ids` là tập node_id thực sự được chấp nhận loại
+    (đã qua mọi kiểm tra định dạng), dùng để báo cáo số lượng loại trừ thật, không phải
+    số phần tử thô trong `excluded` (có thể chứa phần tử hỏng bị `check_coverage` bác).
+    """
     brd_dir = Path(brd_dir)
     errs, warns = [], []
 
     by_loc, by_id = {}, {}
+    root_locs = set()
     for n in nodes:
         by_id[n["id"]] = n
         if n["kind"] != "root":
             by_loc.setdefault(node_loc(n).rstrip("/"), []).append(n["id"])
+        else:
+            root_locs.add(node_loc(n).rstrip("/"))
 
     covered = {}
     for rid in parsed["row_order"]:
@@ -426,7 +442,12 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
             continue
         key = rel.rstrip("/")
         if key not in by_loc:
-            errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — không có node BRD nào ở vị trí đó.")
+            if key in root_locs:
+                errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — đó là phần đầu tài liệu "
+                            f"(node gốc), node gốc không tính vào phủ coverage, hãy trỏ tới "
+                            f"node BRD thật (màn/mục) mà mục này mô tả.")
+            else:
+                errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — không có node BRD nào ở vị trí đó.")
             continue
         nids = by_loc[key]
         for nid in nids:
@@ -487,7 +508,7 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
         if len(rids) == 1 and by_id[nid]["chars"] > BIG_NODE_CHARS:
             warns.append(f"Node {nid} có {by_id[nid]['chars']} ký tự nhưng chỉ map vào "
                          f"{rids[0]} — nhiều khả năng phải tách.")
-    return errs, warns
+    return errs, warns, ex_ids
 
 
 # `\d+` (không phải `\d{3}` cố định) + `(?<!\d)`/`(?!\d)`: nuốt trọn cả chuỗi
@@ -586,7 +607,7 @@ def cmd_verify(args):
         warns.append(f"Không thấy {dec} — coi như chưa loại node nào (decisions rỗng).")
 
     errs = check_ids(parsed) + check_placeholders(text) + check_deps(parsed)
-    cov_errs, cov_warns = check_coverage(parsed, nodes, brd_dir, args.brd_rel, excluded)
+    cov_errs, cov_warns, ex_ids = check_coverage(parsed, nodes, brd_dir, args.brd_rel, excluded)
     errs += cov_errs
     warns += cov_warns
 
@@ -594,7 +615,7 @@ def cmd_verify(args):
         "ok": not errs,
         "items": len(parsed["rows"]),
         "brd_nodes": sum(1 for n in nodes if n["kind"] != "root"),
-        "excluded_nodes": len(excluded),
+        "excluded_nodes": len(ex_ids),
         "errors": errs,
         "warnings": warns,
     }

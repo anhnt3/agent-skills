@@ -210,7 +210,8 @@ def test_build_outline_node_inline_khong_doc_file(brd):
     assert grp["signals"] is None
 
 
-def test_cli_outline_ghi_file_va_in_stdout(brd, tmp_path):
+def test_cli_outline_mac_dinh_khong_quiet_ghi_file_va_in_du_json(brd, tmp_path):
+    """Mặc định (không có --quiet): ghi đủ file --out, và stdout vẫn là JSON đầy đủ."""
     dest = tmp_path / "out" / "outline.json"
     proc = subprocess.run(
         [sys.executable, str(SCRIPT), "outline", str(brd), "--out", str(dest)],
@@ -218,17 +219,6 @@ def test_cli_outline_ghi_file_va_in_stdout(brd, tmp_path):
     )
     assert proc.returncode == 0, proc.stderr
     assert dest.is_file()
-    assert json.loads(proc.stdout)["node_count"] == 4
-
-
-def test_cli_outline_mac_dinh_khong_quiet_in_du_json(brd, tmp_path):
-    """Mặc định (không có --quiet) hành vi KHÔNG đổi: stdout vẫn là JSON đầy đủ."""
-    dest = tmp_path / "out" / "outline.json"
-    proc = subprocess.run(
-        [sys.executable, str(SCRIPT), "outline", str(brd), "--out", str(dest)],
-        capture_output=True, text=True, encoding="utf-8",
-    )
-    assert proc.returncode == 0, proc.stderr
     stdout_json = json.loads(proc.stdout)
     assert stdout_json["node_count"] == 4
     assert "nodes" in stdout_json and len(stdout_json["nodes"]) == 4
@@ -268,6 +258,28 @@ def test_cli_outline_thu_muc_khong_co_manifest_thi_chet(tmp_path):
     )
     assert proc.returncode == 2
     assert "brd.manifest.yml" in proc.stderr
+
+
+def test_cli_outline_node_hong_thieu_truong_thi_exit_2_khong_traceback(brd):
+    """Dòng node bị sửa tay hỏng (thiếu `chars`) -> exit 2 một dòng stderr, không traceback."""
+    manifest = (brd / "brd.manifest.yml").read_text(encoding="utf-8")
+    broken = manifest.replace(
+        '{ id: BRD-0003, order: 3, depth: 2, word_level: 3, kind: leaf, '
+        'title: "Thuật ngữ", path: "01-nhom-a/02-thuat-ngu.md", parent: BRD-0001, chars: 40 }',
+        '{ id: BRD-0003, order: 3, depth: 2, word_level: 3, kind: leaf, '
+        'title: "Thuật ngữ", path: "01-nhom-a/02-thuat-ngu.md", parent: BRD-0001 }',
+    )
+    assert broken != manifest
+    (brd / "brd.manifest.yml").write_text(broken, encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "outline", str(brd)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    assert proc.returncode == 2
+    assert "Traceback" not in proc.stderr
+    lines = [l for l in proc.stderr.splitlines() if l.strip()]
+    assert len(lines) == 1
+    assert "BRD-0003" in lines[0]
 
 
 ROADMAP_OK = """# Roadmap Build — Dự án X
@@ -367,10 +379,11 @@ def test_check_placeholders_dung_so_dong_that_sau_khoi_code():
     assert any(e.startswith(f"Dòng {target_line}:") for e in errs)
 
 
-def _cover(brd, roadmap_text, excluded=()):
+def _cover(brd, roadmap_text, excluded=(), brd_rel="docs/brd"):
     nodes = parse_manifest(brd / "brd.manifest.yml")
-    return check_coverage(parse_roadmap(roadmap_text), nodes, brd,
-                          "docs/brd", list(excluded))
+    errs, warns, _ = check_coverage(parse_roadmap(roadmap_text), nodes, brd,
+                                    brd_rel, list(excluded))
+    return errs, warns
 
 
 ROADMAP_PHU = """## Bảng tổng (thứ tự build)
@@ -550,6 +563,30 @@ def test_check_coverage_excluded_phan_tu_khong_phai_dict_thi_loi_khong_crash(brd
     errs, _ = _cover(brd, ROADMAP_PHU, ["BRD-0003"])
     assert any("BRD-0003" in e for e in errs)
     assert any("node_id" in e for e in errs)
+
+
+def test_check_coverage_nguon_tro_vao_node_goc_thi_loi_ro_nguyen_nhan(brd):
+    """**Nguồn** trỏ đúng vị trí node gốc (`_index.md`, phần đầu tài liệu) -> vẫn là lỗi
+    (node gốc không tính coverage), nhưng thông điệp phải giải thích rõ, không phải
+    thông điệp chung chung "không có node BRD nào ở vị trí đó" dễ gây hiểu lầm."""
+    text = ROADMAP_PHU.replace("- **Nguồn**: docs/brd/01-nhom-a/\n",
+                               "- **Nguồn**: docs/brd/_index.md\n")
+    errs, _ = _cover(brd, text, [{"node_id": "BRD-0001", "title": "Nhóm A", "reason": "ok"},
+                                 {"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert any("RM-001" in e and "gốc" in e for e in errs)
+
+
+def test_norm_source_brd_rel_co_tien_to_cham_gach_cheo_van_khop():
+    """`--brd-rel "./docs/brd"` (plausible: agent truyền nguyên tham số người dùng gõ) không
+    được làm gãy so khớp tiền tố với `Nguồn` viết `docs/brd/...` (không có `./`)."""
+    assert norm_source("docs/brd/01-a/02-b.md", "./docs/brd") == ("01-a/02-b.md", None)
+
+
+def test_check_coverage_brd_rel_co_tien_to_cham_gach_cheo_van_phu(brd):
+    errs, _ = _cover(brd, ROADMAP_PHU,
+                     [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}],
+                     brd_rel="./docs/brd")
+    assert errs == []
 
 
 def test_check_coverage_excluded_thieu_node_id_thi_loi_ro_rang(brd):

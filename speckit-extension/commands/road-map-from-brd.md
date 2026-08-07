@@ -131,12 +131,13 @@ trong option. **Thứ tự là quyết định của người dùng** — chờ 
 - **Trường `Nguồn`** của mỗi item: đường dẫn tương đối từ gốc repo tới file BRD nguồn
   (`docs/brd/03-quan-ly/05-danh-sach.md`), thêm `#<tiêu đề mục>` khi nhiều item cùng trỏ về một
   file. Node không có file riêng (`inline`) thì trỏ vào thư mục của nó (`docs/brd/03-quan-ly/`).
-  **Cẩn thận**: `verify` chấm phủ theo *vị trí* (file/thư mục), không theo từng node — một item
-  duy nhất trỏ `Nguồn` vào một thư mục sẽ khiến **TẤT CẢ** node `inline` nằm trong thư mục đó
-  được tính là đã phủ, kể cả những node chưa có item riêng. Gộp nhiều node inline vào chung một
-  `Nguồn` thư mục KHÔNG thay thế được việc cho mỗi màn thật một item của riêng nó — nếu một thư
-  mục có nhiều node `inline` là màn thật, mỗi node vẫn phải có item roadmap trỏ đích danh tới nó
-  (dùng `#<tiêu đề mục>` để phân biệt khi cần).
+  **Cẩn thận**: `verify` chấm phủ theo *vị trí* (file/thư mục), không theo từng node. Với cây
+  BRD do `brd-import` sinh ra, mỗi thư mục `inline` chỉ ứng với đúng một node nên việc này
+  thường không gây lệch — nhưng đừng dựa vào đó: nếu một thư mục chứa nhiều màn thật (vd sau khi
+  sửa tay `docs/brd/`), một `Nguồn` thư mục duy nhất sẽ tính TẤT CẢ các màn đó là đã phủ dù mỗi
+  màn chưa có item riêng. Nguyên tắc đúng là mỗi màn thật luôn có item roadmap trỏ đích danh tới
+  nó (dùng `#<tiêu đề mục>` để phân biệt khi cần) — không dựa vào việc gộp `Nguồn` thư mục để
+  "phủ hộ" các màn khác.
 - **KHÔNG để sót ngoặc vuông trần** ở bất cứ đâu — `verify` coi mọi `[...]` không phải link
   markdown là placeholder chưa điền và sẽ báo lỗi.
 - **Cột `Wave`** trong bảng tổng chỉ chứa **số nguyên trần**: `0`, `1`, `2`, … — KHÔNG ghi
@@ -182,8 +183,8 @@ chấm lại, xoá được khi đã hài lòng với `docs/roadmap.md`.
 - **Ghi đè `docs/roadmap.md` có sẵn** → xoá `Trạng thái` và `Nợ phát sinh` người khác đã ghi.
 - **`verify` fail rồi vẫn báo xong**, hoặc nhét node vào `decisions.json` cho qua cổng, hoặc bọc
   placeholder chưa điền trong fence code / dòng `<!-- -->` cho biến mất khỏi lượt quét → che lỗi.
-- **Gộp nhiều node `inline` vào chung một `Nguồn` thư mục rồi coi là đã phủ hết** → `verify`
-  chấm phủ theo vị trí nên gate vẫn xanh, nhưng những node đó chưa có item riêng của mình.
+- **Gộp nhiều màn thật vào chung một `Nguồn` thư mục rồi coi là đã phủ hết** → `verify` chấm
+  phủ theo vị trí nên gate có thể vẫn xanh, nhưng những màn đó chưa có item riêng của mình.
 - **Nuốt `warnings` cho gọn báo cáo** → người dùng mất thông tin cần để quyết.
 - **Đọc toàn văn mọi file BRD** → vỡ context rồi bỏ sót mục cuối. Đọc `outline.json` trước,
   chỉ `Read` thêm file nào thật sự chưa quyết được.

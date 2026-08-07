@@ -11,9 +11,9 @@ bổ sung thêm command mới theo nhu cầu.
 |---------|-------|
 | `speckit.dft-speckit.qa-spec-cycle` | **QA trọn vòng từ 1 file spec** — 13 pha: sinh testcase thủ công (xlsx 2 sheet), sinh test tự động theo pyramid, tự dựng môi trường và chạy, báo cáo, triage + fix có kiểm soát, ghi ma trận truy vết. Technology-agnostic (đặc thù stack đọc từ `.agents/qa-context.md`). Bao trùm luôn command `manual-xlsx` cũ ở Pha 4. |
 | `speckit.dft-speckit.road-map-from-codebase` | Lập/cập nhật roadmap build từ codebase — xếp thứ tự từng màn, ghi `docs/roadmap.md`. |
+| `speckit.dft-speckit.road-map-from-brd` | Lập roadmap build từ cây BRD markdown `docs/brd/` — phủ 1-1 node BRD ↔ item, gác cổng bằng script. |
 | `speckit.dft-speckit.domain-design` | Thiết kế/cập nhật domain tổng thể cho một hoặc nhiều module trong roadmap (gom 1 doc), ghi `docs/domain/<module>.md`. |
 | `speckit.dft-speckit.init-agents` | Dò stack thật của project (tín hiệu glob/grep khai trong `agents/registry.yml`, có bằng chứng file), lọc đúng agent trong catalog DFT rồi cài vào `.claude/agents/` để `/speckit.agent-assign.assign` có agent mà gán vào task. Chỉ hỗ trợ integration `claude`. Hỏi trước khi ghi đè. |
-| `speckit.dft-speckit.road-map-from-brd` | Lập roadmap build từ cây BRD markdown `docs/brd/` — phủ 1-1 node BRD ↔ item, gác cổng bằng script. |
 | `speckit.dft-speckit.brd-import` | Bẻ một file BRD `.docx` lớn thành cây markdown nhỏ phản chiếu navigation pane của Word — mỗi mục ở cấp đã chọn là một file, kèm `brd.manifest.yml`, `media/` và `reference.docx`. Dò cấu trúc 6 bậc (Heading style → style tự chế có `outlineLvl` → mục lục → đánh số gõ tay → cỡ chữ → LLM phán đoán); LLM chỉ quyết ranh giới, script chép nguyên văn. Kiểm chứng bằng ghép ngược byte-for-byte. Chạy lại khi đã có `docs/brd/` thì xuất ra `docs/brd.new/` kèm bảng khác biệt, không đè lên bản BA đã sửa tay. Ví dụ: `/speckit.dft-speckit.brd-import refs/BRD-khach-hang.docx` |
 | _(sắp có)_ | Các command DFT khác sẽ được thêm vào đây. |
 
