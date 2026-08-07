@@ -98,6 +98,46 @@ def test_khoi_code_co_dau_thang_khong_bi_viet_lai(tmp_path):
     assert reassemble(nodes, tmp_path, dmap, crumbs) == md
 
 
+def test_anh_dang_html_va_markdown_deu_ghep_nguoc_khop_byte_for_byte(tmp_path):
+    """gfm sinh ảnh dạng <img src=...>; cả hai dạng phải nghịch đảo chính xác."""
+    md = "\n".join([
+        "trang bìa",
+        '<img src="./media/media/image0.png" style="width:5in" />',
+        "# Nhóm A",
+        "![](./media/media/image1.png)",
+        "### Màn 1",
+        '<img src="./media/media/image2.png" style="width:2in;height:1in" />',
+        "### Màn 2",
+        "![](./media/media/image3.png)",
+    ])
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 2, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    crumbs = _breadcrumbs(nodes)
+    leaf = tmp_path / "01-nhom-a" / "01-man-1.md"
+    assert 'src="../media/image2.png"' in leaf.read_text(encoding="utf-8")
+    root = tmp_path / "_index.md"
+    assert 'src="media/image0.png"' in root.read_text(encoding="utf-8")
+    assert reassemble(nodes, tmp_path, dmap, crumbs) == md
+
+
+def test_secondary_checks_thay_anh_dang_html(tmp_path):
+    md = "\n".join([
+        "# Nhóm A",
+        '<img src="./media/media/image1.png" style="width:5in" />',
+        "### Màn 1",
+        "thân",
+    ])
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 2, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    (tmp_path / "media").mkdir()
+    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", shallow_heading_count=2)
+    assert any("image1.png" in w and "không tồn tại" in w for w in warnings)
+
+
 def _parse_frontmatter(text):
     """Bộ đọc frontmatter tí hon (không thêm phụ thuộc YAML)."""
     assert text.startswith("---\n")

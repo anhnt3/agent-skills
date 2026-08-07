@@ -4,9 +4,11 @@ import re
 from pathlib import Path
 
 from .outline import HEADING_RE, iter_code_aware
-from .splitter import MEDIA_SRC, frontmatter_of, rel_media_prefix
+from .splitter import frontmatter_of, unrewrite_media
 
-_IMG_RE = re.compile(r"\]\((?:\.\./)*media/([^)]+)\)")
+# Bắt cả hai dạng tham chiếu ảnh: `](../media/x.png)` và `<img src="../media/x.png"`.
+# Thiếu dạng HTML thì kiểm ảnh mồ côi / ảnh thiếu sẽ im lặng ngừng hoạt động.
+_IMG_RE = re.compile(r'(?:\]\(|src=")(?:\.\./)*media/([^)"]+)')
 
 
 class VerifyError(Exception):
@@ -40,7 +42,7 @@ def reassemble(nodes, dest, dmap, breadcrumbs):
             raise VerifyError(f'Frontmatter của {node["path"]} không khớp bản đã sinh.')
         text = text[len(fm):]
         # 2. trả đường dẫn ảnh về dạng chuẩn
-        text = text.replace("](" + rel_media_prefix(node["path"]) + "media/", MEDIA_SRC)
+        text = unrewrite_media(text, node["path"])
         # 3. trả heading về cấp Word gốc
         chunks.append("\n".join(_denormalize(text.split("\n"), node["depth"], depth_to_level)))
     return "\n".join(chunks)

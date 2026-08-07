@@ -2348,3 +2348,20 @@ Ba điểm kế hoạch **bổ sung** so với spec, đều là lỗ hổng th�
 **2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
 
 **Which approach?**
+
+---
+
+## Ghi chú bổ sung — 2026-08-07: ĐẢO NGƯỢC luật `-t markdown`
+
+Luật "luôn `-t markdown`, **cấm `-t gfm`**" ở mục Global Constraints phía trên
+**đã bị đảo ngược** theo quyết định của người dùng. Nay dùng **`-t gfm`**.
+
+- **Lý do**: markdown trung gian là thứ **người đọc**. `-t markdown` sinh grid table
+  (`+---+`) và thuộc tính ảnh `{width="5.0in" height="2.6in"}` mà không trình xem
+  markdown chuẩn nào dựng được. `-t gfm` sinh 387/387 ảnh dạng `<img src="…" style="…" />`
+  (hiện được, không lòi chữ thừa) và 270 bảng HTML thô + 27 bảng pipe (VSCode và
+  GitHub đều dựng được). Cây heading **giống hệt**: 604 heading ở cả hai bản, và
+  không dòng nào bắt đầu bằng `#` nằm trong `<table>`.
+- **Cái giá đã biết** (đo thật, chấp nhận): bảng HTML thô làm `brd-export` sau này
+  **không** đi được đường markdown → docx bằng pandoc (đường đó **mất sạch bảng**).
+  Phải đi **markdown → html → docx** (đường này giữ nguyên cấu trúc bảng và nội dung ô).

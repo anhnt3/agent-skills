@@ -263,3 +263,20 @@ Kiểm phụ — không chặn nhưng bắt buộc in ra:
 - `brd-export` (md → docx qua manifest + `reference.docx`).
 - `road-map-from-brd` (cây md → `docs/roadmap.md`).
 - Sửa `/speckit.specify` của `speckit-dft-preset` để đọc file BRD làm nguồn yêu cầu.
+
+---
+
+## Ghi chú bổ sung — 2026-08-07: ĐẢO NGƯỢC lựa chọn `-t markdown`
+
+Kết luận "`-t markdown` dùng được, tránh `-t gfm`" ở các mục trên **đã bị đảo ngược**:
+định dạng xuất chính thức nay là **`-t gfm`**.
+
+- **Lý do**: file markdown sinh ra để **người đọc xem trước**. Grid table và
+  `{width="5.0in"}` của `-t markdown` không trình xem markdown chuẩn nào dựng được.
+- **Đo thật trên BRD Mobifone**: gfm cho 387/387 ảnh `<img src="./media/media/imageN.png"
+  style="width:…;height:…" />`, 270 `<table>` HTML thô + 27 bảng pipe, và **604 heading**
+  — y hệt bản `-t markdown`.
+- **Cái giá đã biết**: `brd-export` (md → docx) **không** đi được đường
+  markdown → docx bằng pandoc, vì đường đó làm **mất hẳn** các bảng HTML thô.
+  Đường phải dùng là **markdown → html → docx**, đã kiểm: giữ đúng cấu trúc bảng
+  và nội dung từng ô.

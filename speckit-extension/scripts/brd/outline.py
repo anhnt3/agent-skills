@@ -13,6 +13,13 @@ def iter_code_aware(lines):
     Dòng mở/đóng rào cũng tính là trong khối code. Cả ba nơi đụng tới heading
     (parse_headings, splitter._normalize_headings, verify._denormalize) PHẢI
     dùng chung hàm này để không bao giờ lệch nhau.
+
+    CỐ Ý không nhận diện khối HTML thô (`<table>` do `-t gfm` sinh). Lý do: ba nơi
+    trên dùng chung hàm này nên dù một dòng `#` có lọt vào trong `<table>` thì
+    chuẩn hoá và gỡ chuẩn hoá vẫn đối xứng -> ghép ngược vẫn khớp byte-for-byte;
+    rủi ro duy nhất là sinh thừa node, mà đo trên BRD thật thì KHÔNG có dòng nào
+    bắt đầu bằng `#` nằm trong `<table>`. Thêm luật đoán khối HTML lại là thêm một
+    bộ nhận diện mập mờ, có thể làm lệch số heading — rủi ro lớn hơn lợi ích.
     """
     fence = None
     for i, line in enumerate(lines):

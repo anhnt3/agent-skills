@@ -41,7 +41,15 @@ def check_pandoc():
 
 
 def run_pandoc(docx, workdir, lua_filter=None, metadata=None):
-    """docx -> workdir/brd.md, ảnh tách vào workdir/media/media/."""
+    """docx -> workdir/brd.md (định dạng gfm), ảnh tách vào workdir/media/media/.
+
+    Dùng `-t gfm` chứ KHÔNG dùng `-t markdown`: bản markdown riêng của pandoc sinh
+    grid table (`+---+`) và thuộc tính ảnh `{width="5.0in"}` mà không trình xem
+    markdown chuẩn nào dựng được — tài liệu do người đọc nên phải xem được.
+    gfm sinh ảnh dạng `<img src="..." style="..." />` và bảng dạng HTML thô/pipe,
+    cả hai đều dựng được trên VSCode và GitHub. Cây heading giống hệt bản
+    `-t markdown` (đo trên BRD thật: 604 heading ở cả hai bản).
+    """
     docx, workdir = Path(docx), Path(workdir)
     if not docx.is_file():
         raise ConvertError(f"Không thấy file: {docx}")
@@ -49,7 +57,7 @@ def run_pandoc(docx, workdir, lua_filter=None, metadata=None):
     workdir.mkdir(parents=True, exist_ok=True)
     md_path = workdir / "brd.md"
     src_fmt = "docx+styles" if lua_filter else "docx"
-    cmd = ["pandoc", str(docx.resolve()), "-f", src_fmt, "-t", "markdown",
+    cmd = ["pandoc", str(docx.resolve()), "-f", src_fmt, "-t", "gfm",
            "--extract-media=./media", "-o", "brd.md"]
     if lua_filter:
         cmd += [f"--lua-filter={Path(lua_filter).resolve()}"]

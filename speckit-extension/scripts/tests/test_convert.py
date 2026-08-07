@@ -14,9 +14,15 @@ def test_run_pandoc_sinh_md_va_tach_anh(real_brd, tmp_path):
     md_path = run_pandoc(real_brd, tmp_path)
     assert md_path == tmp_path / "brd.md"
     text = md_path.read_text(encoding="utf-8")
-    assert "<table>" not in text, "phải dùng -t markdown (grid table), không phải gfm"
-    assert text.count("](./media/media/") == 387
+    # Hợp đồng MỚI: dùng -t gfm để người đọc xem được bản xem trước markdown.
+    assert "+---" not in text, "gfm không được sinh grid table của -t markdown"
+    assert text.count("<table>") == 270, "bảng ra dạng HTML thô — VSCode/GitHub dựng được"
+    assert text.count('src="./media/media/') == 387
+    assert text.count("](./media/media/") == 0
     assert len(list((tmp_path / "media" / "media").iterdir())) == 386
+    # Cây heading của gfm phải giống hệt bản -t markdown cũ.
+    from brd.outline import parse_headings
+    assert len(parse_headings(text)) == 604
 
 
 def test_build_reference_docx_nho_va_pandoc_chap_nhan(real_brd, tmp_path):

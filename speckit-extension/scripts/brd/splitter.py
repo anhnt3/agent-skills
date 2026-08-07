@@ -5,7 +5,12 @@ from pathlib import Path
 from .naming import slugify
 from .outline import HEADING_RE, iter_code_aware
 
+# Hai dạng tham chiếu ảnh pandoc có thể sinh ra, phải xử lý CẢ HAI:
+#   - dạng markdown:  ![](./media/media/image1.png)
+#   - dạng HTML (gfm): <img src="./media/media/image1.png" style="..." />
 MEDIA_SRC = "](./media/media/"
+MEDIA_SRC_HTML = 'src="./media/media/'
+MEDIA_FORMS = ((MEDIA_SRC, "]("), (MEDIA_SRC_HTML, 'src="'))
 
 
 class SplitError(Exception):
@@ -99,10 +104,25 @@ def _normalize_headings(lines, root_depth, dmap):
     return out
 
 
+def rewrite_media(text, path):
+    """Đổi mọi tham chiếu ảnh sang đường dẫn tương đối theo độ sâu của `path`."""
+    prefix = rel_media_prefix(path)
+    for src, head in MEDIA_FORMS:
+        text = text.replace(src, head + prefix + "media/")
+    return text
+
+
+def unrewrite_media(text, path):
+    """Nghịch đảo chính xác của `rewrite_media` — dùng khi ghép ngược."""
+    prefix = rel_media_prefix(path)
+    for src, head in MEDIA_FORMS:
+        text = text.replace(head + prefix + "media/", src)
+    return text
+
+
 def render_file(node, md_lines, dmap, breadcrumb):
     body = _normalize_headings(md_lines[node["start"]:node["end"]], node["depth"], dmap)
-    text = "\n".join(body)
-    text = text.replace(MEDIA_SRC, "](" + rel_media_prefix(node["path"]) + "media/")
+    text = rewrite_media("\n".join(body), node["path"])
     return frontmatter_of(node, breadcrumb) + text
 
 
