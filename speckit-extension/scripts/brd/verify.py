@@ -22,8 +22,8 @@ def _denormalize(lines, root_depth, depth_to_level):
             continue
         depth = root_depth + len(m.group(1)) - 1
         if depth not in depth_to_level:
-            raise VerifyError(f"Không suy được cấp Word cho heading: {m.group(2)}")
-        out.append("#" * depth_to_level[depth] + " " + m.group(2))
+            raise VerifyError(f"Không suy được cấp Word cho heading: {m.group(2).strip()}")
+        out.append("#" * depth_to_level[depth] + m.group(2))
     return out
 
 

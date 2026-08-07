@@ -82,10 +82,10 @@ def _normalize_headings(lines, root_depth, dmap):
         new_level = dmap[len(m.group(1))] - root_depth + 1
         if not 1 <= new_level <= 6:
             raise SplitError(
-                f'Heading "{m.group(2)}" rơi vào cấp {new_level} sau chuẩn hoá '
+                f'Heading "{m.group(2).strip()}" rơi vào cấp {new_level} sau chuẩn hoá '
                 f"(hợp lệ 1..6). Chọn cấp cắt sâu hơn."
             )
-        out.append("#" * new_level + " " + m.group(2))
+        out.append("#" * new_level + m.group(2))
     return out
 
 

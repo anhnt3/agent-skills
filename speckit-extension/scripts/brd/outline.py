@@ -3,7 +3,7 @@
 import re
 import statistics
 
-HEADING_RE = re.compile(r"^(#{1,9}) +(\S.*?)\s*$")
+HEADING_RE = re.compile(r"^(#{1,9})( +\S.*)$")
 
 
 def parse_headings(md):
@@ -22,7 +22,7 @@ def parse_headings(md):
             continue
         m = HEADING_RE.match(line)
         if m:
-            out.append({"line": i, "level": len(m.group(1)), "title": m.group(2)})
+            out.append({"line": i, "level": len(m.group(1)), "title": m.group(2).strip()})
     return out
 
 

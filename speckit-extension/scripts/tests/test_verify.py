@@ -66,6 +66,23 @@ def test_secondary_checks_bao_lech_so_heading(tmp_path):
     assert any("heading" in w.lower() for w in warnings)
 
 
+def test_reassemble_khop_byte_for_byte_khi_heading_co_khoang_trang_le(tmp_path):
+    md = "\n".join(
+        [
+            "#  Nhóm A {#section .TOC-Heading}",
+            "thân A",
+            "### Module A1 ",
+            "thân A1",
+        ]
+    )
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 3, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    crumbs = _breadcrumbs(nodes)
+    assert reassemble(nodes, tmp_path, dmap, crumbs) == md
+
+
 def test_reassemble_khop_byte_for_byte_khi_heading_o_dau_file(tmp_path):
     md = "\n".join(
         [

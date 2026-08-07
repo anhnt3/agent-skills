@@ -49,6 +49,15 @@ def test_parse_headings_bo_qua_thang_khong_co_dau_cach():
     assert parse_headings("#khong-phai-heading") == []
 
 
+def test_parse_headings_giu_title_da_strip_du_co_khoang_trang_thua():
+    md = "#  Tiêu đề  {#section .TOC-Heading}  \n#### Mục con "
+    hs = parse_headings(md)
+    assert [h["title"] for h in hs] == [
+        "Tiêu đề  {#section .TOC-Heading}",
+        "Mục con",
+    ]
+
+
 def test_depth_map_nen_cap_thua_thanh_lien_tuc():
     assert depth_map(parse_headings(MD)) == {1: 1, 3: 2, 6: 3, 8: 4}
 
