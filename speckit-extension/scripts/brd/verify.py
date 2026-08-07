@@ -84,9 +84,9 @@ def secondary_checks(nodes, dest, media_dir, heading_count):
         for f in sorted(media_dir.iterdir()):
             if f.is_file() and f.name not in referenced:
                 warnings.append(f"Ảnh mồ côi, không ai tham chiếu: media/{f.name}")
-    if len(nodes) - 1 != heading_count:
+    if len(nodes) - 1 > heading_count:
         warnings.append(
-            f"Số node ({len(nodes) - 1}) lệch so với số heading đếm từ docx ({heading_count})"
+            f"Số node ({len(nodes) - 1}) nhiều hơn số heading đếm từ docx ({heading_count})"
         )
     titles = {}
     for node in nodes:

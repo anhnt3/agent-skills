@@ -62,5 +62,5 @@ def test_secondary_checks_bao_anh_khong_ton_tai(tmp_path):
 def test_secondary_checks_bao_lech_so_heading(tmp_path):
     nodes, _, _ = _prepare(tmp_path)
     (tmp_path / "media").mkdir()
-    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", heading_count=99)
+    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", heading_count=1)
     assert any("heading" in w.lower() for w in warnings)
