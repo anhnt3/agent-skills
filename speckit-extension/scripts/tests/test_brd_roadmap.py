@@ -306,3 +306,21 @@ def test_check_placeholders_bat_date_va_ngoac_vuong():
 
 def test_check_placeholders_khong_bat_link_markdown():
     assert check_placeholders("xem [tài liệu](docs/a.md)\n") == []
+
+
+def test_check_placeholders_khong_bat_checkbox_task_list():
+    text = ROADMAP_OK.replace("  - (trống)", "  - [ ] dời sang RM-005")
+    assert check_placeholders(text) == []
+
+
+def test_check_placeholders_checkbox_kem_placeholder_that_van_bi_bat():
+    text = ROADMAP_OK.replace("  - (trống)", "  - [ ] chuyển sang [module]")
+    errs = check_placeholders(text)
+    assert any("[module]" in e for e in errs)
+
+
+def test_check_placeholders_dung_so_dong_that_sau_khoi_code():
+    text = ROADMAP_OK + "\n```\nkhông phải placeholder [x]\n```\n\n[DATE]\n"
+    errs = check_placeholders(text)
+    target_line = text.split("\n").index("[DATE]") + 1
+    assert any(e.startswith(f"Dòng {target_line}:") for e in errs)

@@ -130,14 +130,24 @@ def strip_frontmatter(text):
     return text[end + len("\n---\n"):]
 
 
-def _iter_outside_code(text):
+def _iter_outside_code_numbered(text):
+    """Như `_iter_outside_code` nhưng kèm số dòng gốc (1-based) của mỗi dòng yield.
+
+    Dùng khi cần báo lỗi trỏ đúng vị trí trong file gốc — `_iter_outside_code`
+    không giữ số dòng vì các hàm dùng nó trước đây không cần.
+    """
     in_code = False
-    for line in text.split("\n"):
+    for i, line in enumerate(text.split("\n"), start=1):
         if FENCE_RE.match(line):
             in_code = not in_code
             continue
         if in_code:
             continue
+        yield i, line
+
+
+def _iter_outside_code(text):
+    for _, line in _iter_outside_code_numbered(text):
         yield line
 
 
@@ -240,9 +250,15 @@ def cmd_outline(args):
 ROW_RE = re.compile(r"^\|\s*(RM-\d{3})\s*\|(.*)$")
 DETAIL_RE = re.compile(r"^###\s+(RM-\d{3})\b")
 FIELD_RE = re.compile(r"^\s*-\s*\*\*(.+?)\*\*\s*:\s*(.*)$")
-# Placeholder = span trong ngoặc vuông KHÔNG phải link markdown (`](`) và không
-# phải checkbox. Nội dung đã điền thật gần như không bao giờ còn ngoặc vuông trần.
+# Placeholder = span trong ngoặc vuông KHÔNG phải link markdown (`](`). Bản thân
+# regex này KHÔNG loại trừ checkbox task-list (`[ ]`, `[x]`) — việc đó do
+# `check_placeholders` xử lý riêng bằng CHECKBOX_RE trước khi áp regex này,
+# vì checkbox chỉ nằm ở đầu dòng còn placeholder ngoặc vuông trần thật có thể
+# nằm bất cứ đâu trên dòng. Nội dung đã điền thật gần như không bao giờ còn
+# ngoặc vuông trần.
 BRACKET_RE = re.compile(r"\[[^\]\n]{1,120}\](?!\()")
+# Checkbox task-list ở đầu dòng: `- [ ]`, `* [x]`, `+ [X]`, thụt lề tuỳ ý.
+CHECKBOX_RE = re.compile(r"^(\s*[-*+]\s*)\[[ xX]\](.*)$")
 
 
 def parse_roadmap(text):
@@ -300,10 +316,15 @@ def check_ids(parsed):
 
 def check_placeholders(text):
     errs = []
-    for i, line in enumerate(_iter_outside_code(text), start=1):
+    for i, line in _iter_outside_code_numbered(text):
         if line.lstrip().startswith("<!--"):
             continue
-        for hit in BRACKET_RE.findall(line):
+        cb = CHECKBOX_RE.match(line)
+        # Bỏ phần checkbox `- [ ]`/`- [x]` ở đầu dòng trước khi quét placeholder,
+        # nhưng vẫn quét phần còn lại của dòng — checkbox có thể đi kèm placeholder
+        # thật, ví dụ "- [ ] chuyển sang [module]".
+        scan = cb.group(2) if cb else line
+        for hit in BRACKET_RE.findall(scan):
             errs.append(f"Dòng {i}: còn placeholder chưa điền {hit}")
     return errs
 
