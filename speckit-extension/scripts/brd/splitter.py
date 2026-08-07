@@ -18,14 +18,17 @@ def rel_media_prefix(path):
 
 
 def plan_nodes(headings, dmap, cut_depth, total_lines):
-    """Node vật chất hoá, theo thứ tự tài liệu. Phần tử đầu luôn là node gốc."""
+    """Node vật chất hoá, theo thứ tự tài liệu. Phần tử đầu là node gốc, TRỪ KHI
+    heading vật chất hoá đầu tiên đã nằm ở dòng 0 (không có phần đầu tài liệu)."""
     mat = [h for h in headings if dmap[h["level"]] <= cut_depth]
     first_line = mat[0]["line"] if mat else total_lines
-    nodes = [{
-        "id": "BRD-0000", "order": 0, "depth": 0, "word_level": 0, "kind": "root",
-        "title": "(phần đầu tài liệu)", "path": "_index.md", "dir": "",
-        "parent": None, "start": 0, "end": first_line,
-    }]
+    nodes = []
+    if first_line > 0:
+        nodes.append({
+            "id": "BRD-0000", "order": 0, "depth": 0, "word_level": 0, "kind": "root",
+            "title": "(phần đầu tài liệu)", "path": "_index.md", "dir": "",
+            "parent": None, "start": 0, "end": first_line,
+        })
 
     stack = []          # node folder đang mở, theo depth tăng dần
     counters = {}       # path thư mục cha -> số con đã cấp

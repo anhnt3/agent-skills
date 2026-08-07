@@ -64,3 +64,20 @@ def test_secondary_checks_bao_lech_so_heading(tmp_path):
     (tmp_path / "media").mkdir()
     warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", heading_count=1)
     assert any("heading" in w.lower() for w in warnings)
+
+
+def test_reassemble_khop_byte_for_byte_khi_heading_o_dau_file(tmp_path):
+    md = "\n".join(
+        [
+            "# Nhóm A",
+            "thân A",
+            "### Module A1",
+            "thân A1",
+        ]
+    )
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 3, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    crumbs = _breadcrumbs(nodes)
+    assert reassemble(nodes, tmp_path, dmap, crumbs) == md

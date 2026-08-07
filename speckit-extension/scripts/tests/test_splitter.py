@@ -39,6 +39,27 @@ def test_plan_nodes_co_node_goc_giu_phan_truoc_heading_dau():
     assert (root["start"], root["end"]) == (0, 2)
 
 
+def test_plan_nodes_khong_co_node_goc_khi_heading_o_dau_file():
+    md = "\n".join(
+        [
+            "# Nhóm A",       # 0
+            "thân A",         # 1
+            "### Module A1",  # 2
+            "thân A1",        # 3
+        ]
+    )
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 3, len(md.split("\n")))
+    assert all(n["id"] != "BRD-0000" for n in nodes)
+    spans = [(n["start"], n["end"]) for n in nodes]
+    total = len(md.split("\n"))
+    assert spans[0][0] == 0
+    assert spans[-1][1] == total
+    for (_, end), (start2, _) in zip(spans, spans[1:]):
+        assert end == start2
+
+
 def test_plan_nodes_phan_loai_folder_va_leaf():
     _, _, nodes = _plan()
     kinds = [(n["title"], n["kind"]) for n in nodes[1:]]
