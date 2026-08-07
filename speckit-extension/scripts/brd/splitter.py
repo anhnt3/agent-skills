@@ -39,6 +39,8 @@ def plan_nodes(headings, dmap, cut_depth, total_lines):
             "parent": None, "start": 0, "end": first_line,
         })
 
+    # LƯỢT 1 — dựng node, đánh số anh em, xác định cha/con. Mọi node nông hơn cấp
+    # cắt tạm coi là folder để `dir` (khoá đánh số của các con) đúng như cũ.
     stack = []          # node folder đang mở, theo depth tăng dần
     counters = {}       # path thư mục cha -> số con đã cấp
     for order, h in enumerate(mat, start=1):
@@ -61,6 +63,16 @@ def plan_nodes(headings, dmap, cut_depth, total_lines):
         nodes.append(node)
         if kind == "folder":
             stack.append(node)
+
+    # LƯỢT 2 — folder KHÔNG có node con thì gộp thành một file `NN-slug.md` thay vì
+    # `NN-slug/_index.md`: thư mục chỉ chứa đúng một file là nhiễu cho người đọc.
+    # An toàn vì `dir` của một folder chỉ được các con nó tiêu thụ, mà nó không có
+    # con nào; số thứ tự anh em (counters) đã cấp xong ở lượt 1 nên không đổi.
+    has_child = {n["parent"] for n in nodes if n["parent"]}
+    for node in nodes:
+        if node["kind"] == "folder" and node["id"] not in has_child:
+            node["kind"] = "leaf"
+            node["path"] = node["path"][: -len("/_index.md")] + ".md"
 
     # Segment của MỌI node kết thúc ở node vật chất hoá kế tiếp. Nhờ vậy các
     # segment nối liền nhau, phủ kín file, không hở không chồng -> ghép ngược khớp.

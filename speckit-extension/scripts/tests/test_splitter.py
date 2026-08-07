@@ -82,6 +82,71 @@ def test_plan_nodes_duong_dan_long_theo_cay_va_co_tien_to_so():
     ]
 
 
+FOLDER_MD = "\n".join(
+    [
+        "trang bìa",         # 0
+        "",                  # 1
+        "# Nhóm A",          # 2   folder, có con
+        "thân A",            # 3
+        "### Màn A1",        # 4   leaf (đúng cấp cắt)
+        "thân A1",           # 5
+        "# Nhóm B",          # 6   folder KHÔNG con -> phải gộp thành file
+        "thân B",            # 7
+        "# Nhóm C",          # 8   folder, có con
+        "thân C",            # 9
+        "### Màn C1",        # 10
+        "thân C1",           # 11
+    ]
+)
+
+
+def _plan_folder(cut_depth=2):
+    hs = parse_headings(FOLDER_MD)
+    dmap = depth_map(hs)
+    return dmap, plan_nodes(hs, dmap, cut_depth, len(FOLDER_MD.split("\n")))
+
+
+def test_folder_khong_co_con_bi_gop_thanh_mot_file():
+    _, nodes = _plan_folder()
+    b = next(n for n in nodes if n["title"] == "Nhóm B")
+    assert b["kind"] == "leaf"
+    assert b["path"] == "02-nhom-b.md"
+
+
+def test_folder_co_con_van_giu_thu_muc_va_index():
+    _, nodes = _plan_folder()
+    a = next(n for n in nodes if n["title"] == "Nhóm A")
+    assert a["kind"] == "folder"
+    assert a["path"] == "01-nhom-a/_index.md"
+    assert a["dir"] == "01-nhom-a/"
+
+
+def test_gop_khong_lam_lech_so_thu_tu_anh_em():
+    _, nodes = _plan_folder()
+    paths = [n["path"] for n in nodes[1:]]
+    assert paths == [
+        "01-nhom-a/_index.md",
+        "01-nhom-a/01-man-a1.md",
+        "02-nhom-b.md",
+        "03-nhom-c/_index.md",
+        "03-nhom-c/01-man-c1.md",
+    ]
+
+
+def test_cay_tron_ca_hai_dang_van_ghep_nguoc_khop_byte_for_byte(tmp_path):
+    from brd.splitter import _breadcrumbs
+    from brd.verify import reassemble
+
+    dmap, nodes = _plan_folder()
+    lines = FOLDER_MD.split("\n")
+    write_tree(nodes, lines, dmap, tmp_path,
+               {"source_file": "x.docx", "sha256": "abc", "imported_at": "2026-08-07",
+                "pandoc": "3.9", "cut_depth": 2, "tier": 1, "tier_note": "test"})
+    assert (tmp_path / "02-nhom-b.md").is_file()
+    assert not (tmp_path / "02-nhom-b").exists()
+    assert reassemble(nodes, tmp_path, dmap, _breadcrumbs(nodes)) == FOLDER_MD
+
+
 def test_plan_nodes_segment_ke_tiep_nhau_khong_ho_khong_chong():
     _, _, nodes = _plan()
     spans = [(n["start"], n["end"]) for n in nodes]

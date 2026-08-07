@@ -104,6 +104,9 @@ Nhắc bước tiếp: đọc `docs/brd/brd.manifest.yml` để biết màn nào
 Nhắc về định dạng: markdown sinh ra ở dạng **gfm** — ảnh là thẻ `<img src="…" />`,
 bảng là HTML thô hoặc bảng pipe, nên xem trước được ngay trên VSCode/GitHub.
 
+Nhắc về VSCode: bật `"explorer.sortOrder": "mixed"` trong `.vscode/settings.json` để
+Explorer xếp file và thư mục xen kẽ, đúng thứ tự tài liệu (mặc định thư mục lên trước).
+
 Nhắc dọn dẹp: `.specify/tmp/brd-import/` giữ lại markdown trung gian (`brd.md`),
 `probe.json` và **toàn bộ ảnh tách ra từ docx** — có thể vài chục MB sau mỗi lần chạy.
 Nói cho người dùng biết thư mục này còn đó và có thể xoá khi đã hài lòng với `docs/brd/`.

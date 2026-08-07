@@ -24,7 +24,7 @@ def test_probe_brd_that_ra_bac_1_va_de_xuat_cap_5(real_brd, tmp_path):
     assert by_depth[6]["count"] == 432
 
 
-def test_split_brd_that_ghep_nguoc_khop_va_ra_54_file_la(real_brd, tmp_path):
+def test_split_brd_that_ghep_nguoc_khop_va_ra_115_file_la(real_brd, tmp_path):
     work, dest = tmp_path / "w", tmp_path / "out"
     assert _run("probe", str(real_brd), "--work", str(work)).returncode == 0
     proc = _run("split", "--work", str(work), "--depth", "5", "--dest", str(dest))
@@ -35,7 +35,8 @@ def test_split_brd_that_ghep_nguoc_khop_va_ra_54_file_la(real_brd, tmp_path):
     assert (dest / "brd.manifest.yml").exists()
     assert (dest / "reference.docx").stat().st_size < 1_000_000
     leaves = [p for p in dest.rglob("*.md") if p.name != "_index.md"]
-    assert len(leaves) == 54
+    # 54 node ở đúng cấp cắt + 61 folder không có con đã được gộp thành file.
+    assert len(leaves) == 115
 
 
 def test_split_tu_choi_de_len_thu_muc_da_co_manifest(real_brd, tmp_path):

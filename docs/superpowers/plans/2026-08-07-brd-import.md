@@ -2365,3 +2365,13 @@ Luật "luôn `-t markdown`, **cấm `-t gfm`**" ở mục Global Constraints ph
 - **Cái giá đã biết** (đo thật, chấp nhận): bảng HTML thô làm `brd-export` sau này
   **không** đi được đường markdown → docx bằng pandoc (đường đó **mất sạch bảng**).
   Phải đi **markdown → html → docx** (đường này giữ nguyên cấu trúc bảng và nội dung ô).
+
+## Ghi chú bổ sung — 2026-08-07: gộp thư mục không có con
+
+`plan_nodes` nay chạy **hai lượt**: lượt 1 dựng node và đánh số anh em như cũ,
+lượt 2 đổi mọi folder **không có node con** thành lá `NN-slug.md` thay vì
+`NN-slug/_index.md`. Trên BRD Mobifone việc này bỏ được **61 thư mục chỉ chứa
+đúng một file** (61 file đó đều có nội dung thật: trung vị 380 B, lớn nhất 2.161 B).
+An toàn vì `dir` của một folder chỉ được các con nó tiêu thụ, mà nó không có con nào;
+số thứ tự anh em không đổi. Kèm theo: `.vscode/settings.json` đặt
+`"explorer.sortOrder": "mixed"` để Explorer không đẩy thư mục lên trước file.
