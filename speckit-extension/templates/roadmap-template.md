@@ -18,6 +18,7 @@
 ### RM-001 — [Tên màn] ([module], Wave 0)
 
 - **Mô tả**: [ngắn gọn chức năng làm gì]
+- **Nguồn**: [docs/brd/…md#heading / đường dẫn code / N/A]
 - **Thực thể/CRUD**: [entity chính + thao tác]
 - **Phụ thuộc**: [ID khác / auth / permission / N/A]
 - **Trạng thái**: chưa
@@ -27,6 +28,7 @@
 ### RM-002 — [Tên màn] ([module], Wave 1)
 
 - **Mô tả**: [...]
+- **Nguồn**: [docs/brd/…md#heading / đường dẫn code / N/A]
 - **Thực thể/CRUD**: [...]
 - **Phụ thuộc**: [RM-001 / …]
 - **Trạng thái**: chưa
