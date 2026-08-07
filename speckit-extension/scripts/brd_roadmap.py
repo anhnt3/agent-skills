@@ -334,10 +334,25 @@ BIG_NODE_CHARS = 40_000
 
 
 def slugify_anchor(text):
-    """Slug kiểu GFM: thường hoá, bỏ ký tự không phải chữ/số, khoảng trắng -> gạch."""
+    """Thường hoá, bỏ ký tự không phải chữ/số, khoảng trắng -> gạch.
+
+    Đây KHÔNG phải slug GFM chính xác (GFM đổi mỗi khoảng trắng thành một gạch
+    riêng, không gộp chuỗi khoảng trắng liên tiếp thành một gạch) — dùng
+    `_norm_hyphens` khi so khớp để dung hoà khác biệt đó.
+    """
     s = text.strip().lower()
     s = "".join(ch for ch in s if ch.isalnum() or ch in " -_")
     return re.sub(r"\s+", "-", s.strip())
+
+
+def _norm_hyphens(s):
+    """Gộp các chuỗi gạch nối liên tiếp thành một — để so khớp anchor khoan dung.
+
+    Anchor GFM thật (lấy từ URL trên GitHub) có thể có nhiều gạch liên tiếp
+    khi tên gốc có nhiều khoảng trắng hoặc dấu câu liền nhau; `slugify_anchor`
+    gộp khoảng trắng nên hai chuỗi đó lệch nhau dù cùng trỏ một heading.
+    """
+    return re.sub(r"-{2,}", "-", s)
 
 
 def norm_source(raw, brd_rel):
@@ -372,7 +387,7 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
     for n in nodes:
         by_id[n["id"]] = n
         if n["kind"] != "root":
-            by_loc[node_loc(n).rstrip("/")] = n["id"]
+            by_loc.setdefault(node_loc(n).rstrip("/"), []).append(n["id"])
 
     covered = {}
     for rid in parsed["row_order"]:
@@ -382,28 +397,42 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
             continue
         rel, anchor = norm_source(raw, brd_rel)
         if rel is None:
+            # Giá trị hợp lệ và cố ý không trỏ vào BRD (đường dẫn code, N/A) thì
+            # im lặng — mẫu roadmap-template cho phép field này nhận cả hai dạng.
+            if raw.strip().lower() != "n/a":
+                warns.append(f"{rid}: **Nguồn** = {raw} — không trỏ vào cây BRD, "
+                             f"không truy vết được (nếu cố ý thì bỏ qua cảnh báo này).")
             continue
         key = rel.rstrip("/")
         if key not in by_loc:
             errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — không có node BRD nào ở vị trí đó.")
             continue
-        nid = by_loc[key]
-        covered.setdefault(nid, []).append(rid)
+        nids = by_loc[key]
+        for nid in nids:
+            covered.setdefault(nid, []).append(rid)
         if anchor:
             f = brd_dir / rel
             if not f.is_file():
                 errs.append(f"{rid}: **Nguồn** có anchor nhưng {rel} không phải file.")
                 continue
             hs = headings_of(strip_frontmatter(f.read_text(encoding="utf-8")))
+            anchor_slug = _norm_hyphens(slugify_anchor(anchor))
             found = any(h["text"].strip().lower() == anchor.lower()
-                        or slugify_anchor(h["text"]) == slugify_anchor(anchor)
+                        or _norm_hyphens(slugify_anchor(h["text"])) == anchor_slug
                         for h in hs)
             if not found:
                 errs.append(f"{rid}: anchor #{anchor} không khớp heading nào trong {rel}.")
 
     ex_ids = set()
     for e in excluded:
-        nid = (e or {}).get("node_id", "")
+        if not isinstance(e, dict):
+            errs.append(f"decisions.json có phần tử loại node sai định dạng: {e!r} — "
+                        f"phải là object dạng {{\"node_id\": ..., \"title\": ..., \"reason\": ...}}.")
+            continue
+        nid = (e.get("node_id") or "").strip()
+        if not nid:
+            errs.append("decisions.json có phần tử loại node thiếu \"node_id\".")
+            continue
         if nid not in by_id:
             errs.append(f"decisions.json loại node {nid} không có trong manifest.")
             continue

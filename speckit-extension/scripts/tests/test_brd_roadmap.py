@@ -431,3 +431,68 @@ def test_check_coverage_node_lon_map_mot_item_thi_canh_bao(brd):
                                           encoding="utf-8")
     _, warns = _cover(brd, ROADMAP_PHU, [{"node_id": "BRD-0003", "title": "T", "reason": "ok"}])
     assert any("BRD-0002" in w and "tách" in w for w in warns)
+
+
+def test_check_coverage_tat_ca_da_phu_khong_loai_thi_sach(brd):
+    """Happy path thật: roadmap phủ hết node non-root, không cần decisions.json."""
+    text = ROADMAP_PHU + "\n### RM-003 — Thuật ngữ (nhom-a, Wave 0)\n\n" \
+                          "- **Nguồn**: docs/brd/01-nhom-a/02-thuat-ngu.md\n"
+    text = text.replace(
+        "| RM-002 | Màn danh sách | hop-dong | 1 | RM-001 | chưa |\n",
+        "| RM-002 | Màn danh sách | hop-dong | 1 | RM-001 | chưa |\n"
+        "| RM-003 | Thuật ngữ | nhom-a | 0 | N/A | chưa |\n",
+    )
+    assert _cover(brd, text) == ([], [])
+
+
+def test_check_coverage_nguon_khong_tro_vao_cay_brd_thi_canh_bao(brd):
+    """Nguồn nhìn giống đường dẫn nhưng không có tiền tố `docs/brd/`, không đuôi `.md`/`/`
+    (vd BA gõ tắt tên thư mục, thiếu cả tiền tố lẫn dấu `/` cuối) -> cảnh báo, không im lặng."""
+    text = ROADMAP_PHU.replace("- **Nguồn**: docs/brd/01-nhom-a/\n",
+                               "- **Nguồn**: 01-nhom-a\n")
+    _, warns = _cover(brd, text, [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert any("RM-001" in w and "01-nhom-a" in w for w in warns)
+
+
+def test_check_coverage_nguon_na_thi_im_lang(brd):
+    """`N/A` (mọi cách viết hoa) là giá trị hợp lệ cố ý ngoài cây BRD — không cảnh báo."""
+    text = ROADMAP_PHU.replace("- **Nguồn**: docs/brd/01-nhom-a/\n", "- **Nguồn**: n/a\n")
+    _, warns = _cover(brd, text, [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert not any("RM-001" in w for w in warns)
+
+
+def test_check_coverage_hai_node_inline_chung_dir_deu_duoc_phu(brd):
+    """Hai node inline cùng chia sẻ một `dir:` — một item trỏ vào dir đó phải phủ cả hai."""
+    manifest = (brd / "brd.manifest.yml").read_text(encoding="utf-8")
+    extra_node = ('\n  - { id: BRD-0004, order: 4, depth: 1, word_level: 1, kind: folder, '
+                  'title: "Nhóm A phụ", inline: true, dir: "01-nhom-a/", parent: null, chars: 5 }')
+    (brd / "brd.manifest.yml").write_text(manifest.rstrip("\n") + extra_node + "\n",
+                                          encoding="utf-8")
+    errs, _ = _cover(brd, ROADMAP_PHU,
+                     [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert not any("BRD-0001" in e for e in errs)
+    assert not any("BRD-0004" in e for e in errs)
+
+
+def test_check_coverage_anchor_gfm_hai_gach_lien_tiep_van_khop(brd):
+    """Anchor GFM thật (nhiều khoảng trắng -> nhiều gạch liên tiếp) vẫn phải khớp."""
+    text = ROADMAP_PHU.replace("01-man-danh-sach.md\n",
+                               "01-man-danh-sach.md#quy-tắc--điều-kiện\n")
+    man_md = (brd / "01-nhom-a" / "01-man-danh-sach.md").read_text(encoding="utf-8")
+    man_md = man_md.replace("## Quy tắc\n", "## Quy tắc  điều kiện\n")
+    (brd / "01-nhom-a" / "01-man-danh-sach.md").write_text(man_md, encoding="utf-8")
+    errs, _ = _cover(brd, text, [{"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "ok"}])
+    assert not any("anchor" in e for e in errs)
+
+
+def test_check_coverage_excluded_phan_tu_khong_phai_dict_thi_loi_khong_crash(brd):
+    """`decisions.json` có phần tử không phải object (vd chuỗi thô) -> báo lỗi, không crash."""
+    errs, _ = _cover(brd, ROADMAP_PHU, ["BRD-0003"])
+    assert any("BRD-0003" in e for e in errs)
+    assert any("node_id" in e for e in errs)
+
+
+def test_check_coverage_excluded_thieu_node_id_thi_loi_ro_rang(brd):
+    """`decisions.json` có object nhưng thiếu `node_id` -> lỗi rõ ràng, không để trống rỗng."""
+    errs, _ = _cover(brd, ROADMAP_PHU, [{"title": "Thuật ngữ", "reason": "ok"}])
+    assert any("node_id" in e and "loại node  không có trong manifest" not in e for e in errs)
