@@ -16,7 +16,8 @@ LUA = Path(__file__).resolve().parents[1] / "promote_headings.lua"
 
 
 @pytest.fixture(scope="session", autouse=True)
-def build_fixtures():
+def build_fixtures(require_pandoc):
+    # make_fixtures.py gọi pandoc để dựng .docx nên cả module này cần pandoc.
     subprocess.run([sys.executable, str(FIXTURES / "make_fixtures.py")], check=True)
 
 
@@ -48,7 +49,7 @@ def test_detect_tier_docx_danh_so_go_tay_la_bac_4():
     assert res["needs_llm"] is False
 
 
-def test_lua_filter_nang_dung_so_heading(tmp_path):
+def test_lua_filter_nang_dung_so_heading(require_pandoc, tmp_path):
     docx = FIXTURES / "numbered.docx"
     md_path = run_pandoc(docx, tmp_path, lua_filter=LUA,
                          metadata={"promotions": promotions_for(docx)})
@@ -59,14 +60,14 @@ def test_lua_filter_nang_dung_so_heading(tmp_path):
     ]
 
 
-def test_lua_filter_nem_loi_khi_promotions_khong_khop_tai_lieu(tmp_path):
+def test_lua_filter_nem_loi_khi_promotions_khong_khop_tai_lieu(require_pandoc, tmp_path):
     from brd.convert import ConvertError
     with pytest.raises(ConvertError):
         run_pandoc(FIXTURES / "numbered.docx", tmp_path, lua_filter=LUA,
                    metadata={"promotions": [{"text": "không có thật", "level": 1}]})
 
 
-def test_lua_filter_khong_de_lai_vo_div_custom_style(tmp_path):
+def test_lua_filter_khong_de_lai_vo_div_custom_style(require_pandoc, tmp_path):
     docx = FIXTURES / "numbered.docx"
     md = run_pandoc(docx, tmp_path, lua_filter=LUA,
                     metadata={"promotions": promotions_for(docx)}
@@ -89,7 +90,7 @@ def test_detect_tier_docx_toan_doan_thuong_thi_can_llm():
     assert res["needs_llm"] is True
 
 
-def test_probe_tra_ve_candidates_khi_can_llm(tmp_path):
+def test_probe_tra_ve_candidates_khi_can_llm(require_pandoc, tmp_path):
     import json
     import subprocess
     import sys
@@ -104,7 +105,7 @@ def test_probe_tra_ve_candidates_khi_can_llm(tmp_path):
     assert len(data["candidates"]) == 5
 
 
-def test_probe_voi_outline_do_llm_quyet_thi_cat_duoc(tmp_path):
+def test_probe_voi_outline_do_llm_quyet_thi_cat_duoc(require_pandoc, tmp_path):
     import json
     import subprocess
     import sys
@@ -135,7 +136,7 @@ def test_is_bold_khong_nham_val_0_va_bcs():
     assert paras[1]["bold"] is False
 
 
-def test_probe_voi_outline_rong_van_la_bac_6_khong_fallback(tmp_path):
+def test_probe_voi_outline_rong_van_la_bac_6_khong_fallback(require_pandoc, tmp_path):
     import json
     import subprocess
     import sys

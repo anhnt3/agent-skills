@@ -3,13 +3,17 @@
 from pathlib import Path
 
 from .naming import slugify
-from .outline import HEADING_RE, segment_ends
+from .outline import HEADING_RE, iter_code_aware
 
 MEDIA_SRC = "](./media/media/"
 
 
 class SplitError(Exception):
     pass
+
+
+class DepthError(SplitError):
+    """Cấp cắt làm heading rơi ra ngoài 1..6 — lỗi chọn cấp, KHÔNG phải lỗi kiểm chứng."""
 
 
 def rel_media_prefix(path):
@@ -62,11 +66,11 @@ def plan_nodes(headings, dmap, cut_depth, total_lines):
 
 def frontmatter_of(node, breadcrumb):
     """Chuỗi frontmatter CHÍNH XÁC — verify.py dựng lại đúng chuỗi này để gỡ."""
-    crumbs = ", ".join(f'"{c}"' for c in breadcrumb)
+    crumbs = ", ".join(_q(c) for c in breadcrumb)
     return (
         "---\n"
         f'brd_id: {node["id"]}\n'
-        f'title: "{node["title"]}"\n'
+        f'title: {_q(node["title"])}\n'
         f"breadcrumb: [{crumbs}]\n"
         "---\n\n"
     )
@@ -74,16 +78,22 @@ def frontmatter_of(node, breadcrumb):
 
 def _normalize_headings(lines, root_depth, dmap):
     out = []
-    for line in lines:
-        m = HEADING_RE.match(line)
+    for _, line, in_code in iter_code_aware(lines):
+        m = None if in_code else HEADING_RE.match(line)
         if not m:
             out.append(line)
             continue
-        new_level = dmap[len(m.group(1))] - root_depth + 1
-        if not 1 <= new_level <= 6:
+        word_level = len(m.group(1))
+        if word_level not in dmap:
             raise SplitError(
+                f'Heading "{m.group(2).strip()}" ở cấp Word {word_level} không có trong '
+                f"bản đồ cấp — cây heading không nhất quán."
+            )
+        new_level = dmap[word_level] - root_depth + 1
+        if not 1 <= new_level <= 6:
+            raise DepthError(
                 f'Heading "{m.group(2).strip()}" rơi vào cấp {new_level} sau chuẩn hoá '
-                f"(hợp lệ 1..6). Chọn cấp cắt sâu hơn."
+                f"(hợp lệ 1..6)."
             )
         out.append("#" * new_level + m.group(2))
     return out

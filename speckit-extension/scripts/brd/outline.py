@@ -6,19 +6,34 @@ import statistics
 HEADING_RE = re.compile(r"^(#{1,9})( +\S.*)$")
 
 
-def parse_headings(md):
-    """[{line, level, title}] theo thứ tự xuất hiện. Bỏ qua nội dung trong khối code."""
-    out = []
+def iter_code_aware(lines):
+    """Duyệt từng dòng, trả (chỉ_số, dòng, trong_khối_code).
+
+    Nguồn duy nhất quyết định dòng nào nằm trong khối code có rào (``` hoặc ~~~).
+    Dòng mở/đóng rào cũng tính là trong khối code. Cả ba nơi đụng tới heading
+    (parse_headings, splitter._normalize_headings, verify._denormalize) PHẢI
+    dùng chung hàm này để không bao giờ lệch nhau.
+    """
     fence = None
-    for i, line in enumerate(md.split("\n")):
+    for i, line in enumerate(lines):
         stripped = line.lstrip()
         if fence is None:
             if stripped.startswith("```") or stripped.startswith("~~~"):
                 fence = stripped[:3]
+                yield i, line, True
                 continue
+            yield i, line, False
         else:
             if stripped.startswith(fence):
                 fence = None
+            yield i, line, True
+
+
+def parse_headings(md):
+    """[{line, level, title}] theo thứ tự xuất hiện. Bỏ qua nội dung trong khối code."""
+    out = []
+    for i, line, in_code in iter_code_aware(md.split("\n")):
+        if in_code:
             continue
         m = HEADING_RE.match(line)
         if m:

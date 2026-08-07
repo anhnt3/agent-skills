@@ -6,7 +6,7 @@ import pytest
 from brd.convert import ConvertError, build_reference_docx, check_pandoc, run_pandoc
 
 
-def test_check_pandoc_tra_ve_version():
+def test_check_pandoc_tra_ve_version(require_pandoc):
     assert check_pandoc().startswith("3.")
 
 
@@ -36,6 +36,6 @@ def test_build_reference_docx_nho_va_pandoc_chap_nhan(real_brd, tmp_path):
     assert styles == ["Heading1", "Heading2"]
 
 
-def test_run_pandoc_bao_loi_ro_khi_file_khong_ton_tai(tmp_path):
+def test_run_pandoc_bao_loi_ro_khi_file_khong_ton_tai(require_pandoc, tmp_path):
     with pytest.raises(ConvertError):
         run_pandoc(tmp_path / "khong-co.docx", tmp_path)

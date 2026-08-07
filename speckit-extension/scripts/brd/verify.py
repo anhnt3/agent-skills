@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-from .outline import HEADING_RE
+from .outline import HEADING_RE, iter_code_aware
 from .splitter import MEDIA_SRC, frontmatter_of, rel_media_prefix
 
 _IMG_RE = re.compile(r"\]\((?:\.\./)*media/([^)]+)\)")
@@ -15,8 +15,8 @@ class VerifyError(Exception):
 
 def _denormalize(lines, root_depth, depth_to_level):
     out = []
-    for line in lines:
-        m = HEADING_RE.match(line)
+    for _, line, in_code in iter_code_aware(lines):
+        m = None if in_code else HEADING_RE.match(line)
         if not m:
             out.append(line)
             continue
@@ -66,8 +66,13 @@ def check_roundtrip(nodes, dest, dmap, breadcrumbs, original_md):
     raise VerifyError(f"Ghép ngược lệch độ dài: gốc {len(a)} dòng, ghép ngược {len(b)} dòng.")
 
 
-def secondary_checks(nodes, dest, media_dir, heading_count):
-    """Kiểm phụ — trả về danh sách cảnh báo, KHÔNG chặn việc ghi."""
+def secondary_checks(nodes, dest, media_dir, shallow_heading_count):
+    """Kiểm phụ — trả về danh sách cảnh báo, KHÔNG chặn việc ghi.
+
+    `shallow_heading_count` là số heading ở các độ sâu <= cấp cắt, tức đúng số node
+    vật chất hoá (không kể node gốc). So sánh cùng một đơn vị nên cảnh báo mới có
+    thể kích hoạt thật; so với TỔNG heading mọi cấp thì không bao giờ nổ.
+    """
     dest, media_dir = Path(dest), Path(media_dir)
     warnings = []
     referenced = set()
@@ -84,9 +89,11 @@ def secondary_checks(nodes, dest, media_dir, heading_count):
         for f in sorted(media_dir.iterdir()):
             if f.is_file() and f.name not in referenced:
                 warnings.append(f"Ảnh mồ côi, không ai tham chiếu: media/{f.name}")
-    if len(nodes) - 1 > heading_count:
+    materialised = sum(1 for n in nodes if n["kind"] != "root")
+    if materialised != shallow_heading_count:
         warnings.append(
-            f"Số node ({len(nodes) - 1}) nhiều hơn số heading đếm từ docx ({heading_count})"
+            f"Số node vật chất hoá ({materialised}) lệch số heading ở cấp <= cấp cắt "
+            f"({shallow_heading_count})"
         )
     titles = {}
     for node in nodes:

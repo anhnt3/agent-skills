@@ -22,7 +22,7 @@ if hasattr(sys.stderr, "reconfigure"):
 from brd.convert import ConvertError, build_reference_docx, check_pandoc, run_pandoc
 from brd.docx_probe import detect_tier
 from brd.outline import depth_map, level_stats, parse_headings, recommend_depth
-from brd.splitter import SplitError, _breadcrumbs, plan_nodes, write_tree
+from brd.splitter import DepthError, SplitError, _breadcrumbs, plan_nodes, write_tree
 from brd.verify import VerifyError, check_roundtrip, secondary_checks
 
 
@@ -116,8 +116,20 @@ def cmd_split(args):
     probe_file = work / "probe.json"
     if not probe_file.is_file():
         _die(f"Chưa có {probe_file} — chạy `probe` trước.")
-    probe = json.loads(probe_file.read_text(encoding="utf-8"))
-    md = (work / "brd.md").read_text(encoding="utf-8")
+    try:
+        probe = json.loads(probe_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        _die(f"{probe_file} hỏng, không đọc được JSON ({e}) — chạy lại `probe`.")
+    if probe.get("needs_llm"):
+        _die(
+            f"{probe_file} là kết quả dò dở dang (needs_llm: true) — tài liệu không có "
+            "Heading style, cần LLM quyết ranh giới. Hãy chạy lại `probe` với "
+            "`--outline <file.json>` rồi mới `split`."
+        )
+    md_file = work / "brd.md"
+    if not md_file.is_file():
+        _die(f"Chưa có {md_file} — chạy lại `probe` để sinh markdown trung gian trước.")
+    md = md_file.read_text(encoding="utf-8")
     md_lines = md.split("\n")
 
     headings = parse_headings(md)
@@ -128,8 +140,11 @@ def cmd_split(args):
     dest = Path(args.dest)
     diff = None
     final_dest = dest
-    if (dest / "brd.manifest.yml").is_file():
+    # Đích đã có bất cứ thứ gì (kể cả thư mục làm tay không manifest) -> chuyển sang
+    # `.new`, tuyệt đối không xoá đè công của người dùng.
+    if dest.is_dir() and any(dest.iterdir()):
         final_dest = dest.with_name(dest.name + ".new")
+    replaced_new = final_dest != dest and final_dest.exists()
 
     staging = work / "staging"
     if staging.exists():
@@ -145,6 +160,12 @@ def cmd_split(args):
         })
         crumbs = _breadcrumbs(nodes)
         check_roundtrip(nodes, staging, dmap, crumbs, md)
+    except DepthError as e:
+        _die(
+            f"Cấp cắt {args.depth} không dùng được — KHÔNG ghi gì ra {final_dest}.\n{e}\n"
+            "Đây là lỗi chọn cấp cắt, không phải lỗi kiểm chứng: hãy chọn cấp cắt khác "
+            "(thường là sâu hơn) rồi chạy lại."
+        )
     except (SplitError, VerifyError) as e:
         _die(f"Kiểm chứng thất bại — KHÔNG ghi gì ra {final_dest}.\n{e}")
 
@@ -155,10 +176,14 @@ def cmd_split(args):
     else:
         media_dst.mkdir()
     build_reference_docx(probe["source"]["path"], staging / "reference.docx")
-    warnings = secondary_checks(nodes, staging, media_dst,
-                                sum(lv["count"] for lv in probe["levels"]))
+    warnings = secondary_checks(
+        nodes, staging, media_dst,
+        sum(lv["count"] for lv in probe["levels"] if lv["depth"] <= args.depth),
+    )
 
-    if final_dest.exists():
+    if final_dest.exists() and not final_dest.is_dir():
+        _die(f"{final_dest} đã tồn tại nhưng không phải thư mục — không ghi đè.")
+    if final_dest.is_dir():
         shutil.rmtree(final_dest)
     final_dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(staging), str(final_dest))
@@ -175,6 +200,10 @@ def cmd_split(args):
     }
     if diff is not None:
         report["diff"] = diff
+    if replaced_new:
+        report["replaced_previous_new"] = (
+            f"{final_dest} của lần chạy trước đã bị thay thế (chưa hợp nhất vào {dest})"
+        )
     print(json.dumps(report, ensure_ascii=False))
 
 

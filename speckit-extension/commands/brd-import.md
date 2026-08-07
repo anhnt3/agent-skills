@@ -77,18 +77,34 @@ python .specify/extensions/dft-speckit/scripts/brd_import.py split \
 
 - Mã thoát khác 0 → **DỪNG**, in nguyên thông điệp. Script đã tự bảo đảm KHÔNG ghi gì
   ra đích khi kiểm chứng thất bại — đừng cố chạy lại với cấp khác để "cho qua".
-- `docs/brd/` đã có `brd.manifest.yml` → script tự đổi đích sang `docs/brd.new/` và
-  trả thêm khoá `diff`. Đây là **cố ý**: markdown là nguồn sự thật, BA có thể đã sửa tay.
+- Ngoại lệ duy nhất: thông điệp bắt đầu bằng **"Cấp cắt … không dùng được"** là lỗi
+  *chọn cấp*, không phải lỗi kiểm chứng. Lúc đó được phép quay lại bước 3 hỏi người dùng
+  chọn cấp khác — nhưng vẫn phải **hỏi thật**, không tự chọn.
+- `docs/brd/` đã tồn tại và **không rỗng** (dù có manifest hay không) → script tự đổi
+  đích sang `docs/brd.new/` và trả thêm khoá `diff`. Đây là **cố ý**: markdown là nguồn
+  sự thật, BA có thể đã sửa tay.
   Trình bảng `diff` (thêm / mất / đổi) cho người dùng tự quyết cách hợp nhất.
   **KHÔNG tự merge, KHÔNG tự xoá `docs/brd/`.**
+- Báo cáo có khoá `replaced_previous_new` → một thư mục `docs/brd.new/` của lần chạy
+  trước đã bị thay thế. **Nói thẳng điều này cho người dùng**, vì lần hợp nhất trước
+  có thể chưa làm.
 
 ### 5. Báo cáo
 
-Từ `report.json`, báo: đường dẫn đích, số file, số thư mục, cấp đã cắt, bậc dò đã dùng,
-số ảnh, `roundtrip: OK`, và **liệt kê đầy đủ `warnings`** (file quá lớn, ảnh mồ côi,
-trùng tiêu đề). Cảnh báo không được im lặng bỏ qua.
+Lệnh `split` **in báo cáo JSON ra stdout** (không ghi ra file `report.json` nào cả) —
+đọc trực tiếp stdout của lệnh ở bước 4.
+
+Từ báo cáo đó, báo: đường dẫn đích (`dest`), số file (`files`), số thư mục (`folders`),
+cấp đã cắt (`cut_depth`), bậc dò đã dùng (`tier`), số ảnh (`media`), `roundtrip: OK`,
+và **liệt kê đầy đủ `warnings`** (file quá lớn, ảnh mồ côi, trùng tiêu đề, lệch số node).
+Cảnh báo không được im lặng bỏ qua.
 
 Nhắc bước tiếp: đọc `docs/brd/brd.manifest.yml` để biết màn nào nằm ở file nào.
+
+Nhắc dọn dẹp: `.specify/tmp/brd-import/` giữ lại markdown trung gian (`brd.md`),
+`probe.json` và **toàn bộ ảnh tách ra từ docx** — có thể vài chục MB sau mỗi lần chạy.
+Nói cho người dùng biết thư mục này còn đó và có thể xoá khi đã hài lòng với `docs/brd/`.
+**Đừng tự xoá** khi chưa hỏi: nếu còn `docs/brd.new/` chưa hợp nhất thì vẫn cần chạy lại.
 
 ## Sai lầm thường gặp
 

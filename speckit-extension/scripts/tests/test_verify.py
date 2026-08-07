@@ -55,15 +55,92 @@ def test_check_roundtrip_nem_khi_co_nguoi_sua_mot_file(tmp_path):
 def test_secondary_checks_bao_anh_khong_ton_tai(tmp_path):
     nodes, _, _ = _prepare(tmp_path)
     (tmp_path / "media").mkdir()
-    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", heading_count=5)
+    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", shallow_heading_count=4)
     assert any("image1.png" in w for w in warnings)
+
+
+def test_secondary_checks_im_lang_khi_so_node_khop_so_heading_nong(tmp_path):
+    nodes, _, _ = _prepare(tmp_path)
+    (tmp_path / "media").mkdir()
+    # MD có 4 heading ở độ sâu <= 3 (Nhóm A, Module A1, Màn 1, Màn 2)
+    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", shallow_heading_count=4)
+    assert not any("node" in w.lower() for w in warnings)
 
 
 def test_secondary_checks_bao_lech_so_heading(tmp_path):
     nodes, _, _ = _prepare(tmp_path)
     (tmp_path / "media").mkdir()
-    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", heading_count=1)
+    warnings = secondary_checks(nodes, tmp_path, tmp_path / "media", shallow_heading_count=1)
     assert any("heading" in w.lower() for w in warnings)
+
+
+def test_khoi_code_co_dau_thang_khong_bi_viet_lai(tmp_path):
+    """Dòng giống heading nằm trong khối code phải đi qua nguyên vẹn cả hai chiều."""
+    md = "\n".join([
+        "### A",
+        "",
+        "```",
+        "# not a heading",
+        "###### cũng không phải",
+        "```",
+        "",
+        "#### B",
+        "thân B",
+    ])
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 1, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    crumbs = _breadcrumbs(nodes)
+    on_disk = (tmp_path / nodes[0]["path"]).read_text(encoding="utf-8")
+    assert "\n# not a heading\n" in on_disk
+    assert "\n###### cũng không phải\n" in on_disk
+    assert reassemble(nodes, tmp_path, dmap, crumbs) == md
+
+
+def _parse_frontmatter(text):
+    """Bộ đọc frontmatter tí hon (không thêm phụ thuộc YAML)."""
+    assert text.startswith("---\n")
+    body = text[4:]
+    end = body.index("\n---\n")
+    out = {}
+    for line in body[:end].split("\n"):
+        key, _, val = line.partition(": ")
+        out[key] = val
+    return out
+
+
+def _unquote(val):
+    assert val.startswith('"') and val.endswith('"'), val
+    inner, res, i = val[1:-1], [], 0
+    while i < len(inner):
+        if inner[i] == "\\":
+            i += 1
+            assert i < len(inner), "dấu \\ treo lơ lửng -> YAML hỏng"
+            res.append(inner[i])
+        else:
+            assert inner[i] != '"', "dấu \" chưa escape -> YAML hỏng"
+            res.append(inner[i])
+        i += 1
+    return "".join(res)
+
+
+def test_frontmatter_escape_dau_nhay_va_backslash(tmp_path):
+    title = 'Màn "Đăng nhập" C:\\path'
+    md = "\n".join(["# " + title, "thân A", "### Con", "thân con"])
+    hs = parse_headings(md)
+    dmap = depth_map(hs)
+    nodes = plan_nodes(hs, dmap, 2, len(md.split("\n")))
+    write_tree(nodes, md.split("\n"), dmap, tmp_path, META)
+    crumbs = _breadcrumbs(nodes)
+
+    root_fm = _parse_frontmatter((tmp_path / nodes[0]["path"]).read_text(encoding="utf-8"))
+    assert _unquote(root_fm["title"]) == title
+    child_fm = _parse_frontmatter((tmp_path / nodes[1]["path"]).read_text(encoding="utf-8"))
+    assert child_fm["breadcrumb"].startswith("[") and child_fm["breadcrumb"].endswith("]")
+    assert _unquote(child_fm["breadcrumb"][1:-1]) == title
+
+    assert reassemble(nodes, tmp_path, dmap, crumbs) == md
 
 
 def test_reassemble_khop_byte_for_byte_khi_heading_co_khoang_trang_le(tmp_path):
