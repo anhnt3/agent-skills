@@ -53,7 +53,7 @@ speckit-extension/
 ├── scripts/                   # script hỗ trợ dùng chung cho các command
 │   ├── csv_to_xlsx.py         # CSV/JSON -> XLSX 2 sheet (tự dựng venv + openpyxl lần đầu)
 │   ├── brd_import.py          # CLI probe|split cho brd-import
-│   ├── brd_roadmap.py         # CLI outline|verify cho road-map-from-brd
+│   ├── brd_roadmap.py         # CLI manifest|outline|verify cho road-map-from-brd
 │   ├── promote_headings.lua   # Lua filter cho pandoc (bậc dò 2-4)
 │   └── brd/                   # engine brd-import (naming/outline/convert/docx_probe/splitter/verify)
 ├── templates/                 # khung output cố định (resolve qua `specify preset resolve <tên>`)

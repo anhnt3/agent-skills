@@ -28,6 +28,7 @@ Hỏi cái đáng hỏi, không rải đều: **ranh giới wave, thứ tự có
 - **File CHƯA tồn tại** → copy đúng cấu trúc khung (bảng tổng + khối chi tiết mỗi item), chỉ **điền** placeholder `[…]`, thay `[DATE]` bằng ngày hiện tại. Giữ nguyên tên cột, thứ tự mục, format.
 - **Trường `Nguồn`**: điền đường dẫn file/thư mục code là căn cứ nhận ra màn đó (vd `src/app/hop-dong/list/`). Không xác định được nguồn rõ ràng → ghi `N/A`, KHÔNG bỏ trống và KHÔNG để nguyên placeholder.
 - **File ĐÃ tồn tại** → **ĐỌC file hiện tại trước**, chỉ chèn/sửa item tại chỗ, **KHÔNG copy khung đè**. Giữ nguyên cột `Trạng thái` và mục `Nợ phát sinh` của mọi item cũ; chỉ thêm item mới vào đúng wave / tính lại thứ tự khi người dùng yêu cầu.
+- **Ô `ID` trong bảng tổng là link** tới chính nguồn của item, cùng đích với trường `Nguồn` nhưng **viết theo hệ quy chiếu khác**: `Nguồn` tương đối gốc repo (`src/app/hop-dong/list/`), còn link tương đối thư mục chứa `docs/roadmap.md` → `| [RM-001](../src/app/hop-dong/list/) | …`. Copy nguyên chuỗi `Nguồn` vào link là ra `docs/src/app/…`, bấm vào 404. `Nguồn` = `N/A` thì để ô ID là text trần `RM-001`.
 - **ID ổn định** (`RM-001`, `RM-002`, …) khớp giữa bảng tổng và khối chi tiết — để `/speckit.specify <ID>` lấy được. Cấp **tăng dần theo lần thêm**, **KHÔNG bao giờ đánh số lại** khi đổi thứ tự (domain doc và spec cũ trỏ vào ID này). Thứ tự build thể hiện bằng cột `Wave` + vị trí dòng, KHÔNG bằng con số trong ID.
 
 ## 5. Kiểm lại (trước khi báo xong)

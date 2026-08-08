@@ -6,10 +6,16 @@
 
 ## Bảng tổng (thứ tự build)
 
+<!-- Ô ID là link tới nguồn của item. Link markdown resolve TƯƠNG ĐỐI VỚI FILE NÀY,
+     còn trường **Nguồn** ở khối chi tiết viết tương đối GỐC REPO — hai hệ quy chiếu
+     khác nhau. Roadmap ở docs/roadmap.md, nguồn ở docs/brd/x.md => link là brd/x.md
+     (viết docs/brd/x.md sẽ ra docs/docs/brd/x.md, bấm vào 404). Nguồn là code ở
+     src/app/y/ => link là ../src/app/y/. Nguồn = N/A => để ID text trần. -->
+
 | ID | Màn | Module | Wave | Phụ thuộc | Trạng thái |
 |--------|-----|--------|------|-----------|------------|
-| RM-001 | [Tên màn] | [module] | 0 | [ID khác / auth / N/A] | chưa |
-| RM-002 | [Tên màn] | [module] | 1 | [RM-001 / …] | chưa |
+| [RM-001](brd/…md#heading) | [Tên màn] | [module] | 0 | [ID khác / auth / N/A] | chưa |
+| [RM-002](brd/…md#heading) | [Tên màn] | [module] | 1 | [RM-001 / …] | chưa |
 
 ## Chi tiết
 

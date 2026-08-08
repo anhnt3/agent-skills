@@ -11,6 +11,8 @@ from brd_roadmap import build_outline, tree_diff
 from brd_roadmap import check_ids, check_placeholders, parse_roadmap
 from brd_roadmap import check_coverage, norm_source, slugify_anchor
 from brd_roadmap import check_deps
+from brd_roadmap import build_manifest, scan_tree
+from brd_roadmap import resolve_link, resolve_link_suggestion
 
 SCRIPT = Path(__file__).resolve().parents[1] / "brd_roadmap.py"
 
@@ -806,3 +808,261 @@ def test_cli_verify_manifest_khong_phai_utf8_thi_exit_2(tmp_path):
     assert proc.stdout == ""
     lines = [l for l in proc.stderr.splitlines() if l.strip()]
     assert len(lines) == 1
+
+
+# ------------------------------------------------------------ lệnh manifest --
+
+def _handmade(tmp_path):
+    """Cây BRD BA viết tay: không manifest, thư mục thuần gom nhóm, có file index gốc."""
+    brd = tmp_path / "brd"
+    (brd / "01-nhom-a").mkdir(parents=True)
+    (brd / "media").mkdir()
+    (brd / "_index.md").write_text("# Tài liệu BRD\n\nGiới thiệu.\n", encoding="utf-8")
+    (brd / "01-nhom-a" / "01-man-danh-sach.md").write_text(
+        "# Màn danh sách\n\nNội dung.\n", encoding="utf-8")
+    (brd / "01-nhom-a" / "02-thuat-ngu.md").write_text(
+        "Không có heading nào ở đây.\n", encoding="utf-8")
+    (brd / "media" / "note.md").write_text("# Bỏ qua\n", encoding="utf-8")
+    return brd
+
+
+def test_manifest_cay_tay_moi_file_mot_node_thu_muc_khong_thanh_node(tmp_path):
+    """Mô hình B: mỗi file .md = đúng một node; thư mục chỉ là đường dẫn.
+
+    Thư mục thành node thì mọi thư mục gom nhóm đều phải bị khai loại kèm lý do
+    trong decisions.json — đẻ ra hàng chục mục loại trừ giả.
+    """
+    brd = _handmade(tmp_path)
+    lines, report = build_manifest(brd, brd / "brd.manifest.yml")
+    assert report["total"] == 3          # _index + 2 file, KHÔNG có node cho 01-nhom-a/
+    assert len(report["added"]) == 3
+    assert report["kept"] == 0
+    locs = [n["loc"] for n in report["nodes"]]
+    assert "01-nhom-a" not in locs and "01-nhom-a/" not in locs
+    assert "media/note.md" not in locs   # media/ bị loại khỏi lượt duyệt
+    assert all(l.startswith("  - { ") for l in lines)
+
+
+def test_manifest_title_uu_tien_frontmatter_roi_heading_roi_ten_file(tmp_path):
+    brd = _handmade(tmp_path)
+    (brd / "01-nhom-a" / "03-co-fm.md").write_text(
+        '---\ntitle: "Tên từ frontmatter"\n---\n\n# Heading khác\n', encoding="utf-8")
+    _, report = build_manifest(brd, brd / "brd.manifest.yml")
+    by_loc = {n["loc"]: n["title"] for n in report["nodes"]}
+    assert by_loc["01-nhom-a/03-co-fm.md"] == "Tên từ frontmatter"
+    assert by_loc["01-nhom-a/01-man-danh-sach.md"] == "Màn danh sách"   # H1
+    assert by_loc["01-nhom-a/02-thuat-ngu.md"] == "Thuat ngu"           # de-slug tên file
+
+
+def test_manifest_parent_theo_file_index_va_node_goc(tmp_path):
+    brd = _handmade(tmp_path)
+    (brd / "01-nhom-a" / "_index.md").write_text("# Nhóm A\n", encoding="utf-8")
+    lines, _ = build_manifest(brd, brd / "brd.manifest.yml")
+    (brd / "brd.manifest.yml").write_text("nodes:\n" + "\n".join(lines) + "\n",
+                                          encoding="utf-8")
+    nodes = parse_manifest(brd / "brd.manifest.yml")
+    by_path = {n["path"]: n for n in nodes}
+    root = by_path["_index.md"]
+    assert root["kind"] == "root" and root["parent"] is None
+    nhom_a = by_path["01-nhom-a/_index.md"]
+    assert nhom_a["parent"] == root["id"]           # index thư mục con -> cha là root
+    assert by_path["01-nhom-a/01-man-danh-sach.md"]["parent"] == nhom_a["id"]
+
+
+def test_manifest_ghi_file_chi_khi_write(tmp_path):
+    """Dry-run là mặc định: manifest là nền của mọi thứ phía sau, không ghi trước khi user duyệt."""
+    brd = _handmade(tmp_path)
+    out = brd / "brd.manifest.yml"
+    proc = subprocess.run([sys.executable, str(SCRIPT), "manifest", str(brd)],
+                          capture_output=True, text=True, encoding="utf-8")
+    assert proc.returncode == 0
+    assert json.loads(proc.stdout)["written"] is None
+    assert not out.exists()
+
+    proc = subprocess.run([sys.executable, str(SCRIPT), "manifest", str(brd), "--write"],
+                          capture_output=True, text=True, encoding="utf-8")
+    assert proc.returncode == 0
+    assert json.loads(proc.stdout)["written"]
+    assert out.is_file()
+    assert len(parse_manifest(out)) == 3
+
+
+def test_manifest_merge_giu_id_cu_them_id_moi_go_node_mat_file(tmp_path):
+    """Hoà giải: id ổn định, vì decisions.json và trường Nguồn của roadmap trỏ theo id/path."""
+    brd = _handmade(tmp_path)
+    out = brd / "brd.manifest.yml"
+    lines, _ = build_manifest(brd, out)
+    out.write_text("nodes:\n" + "\n".join(lines) + "\n", encoding="utf-8")
+    truoc = {n["path"]: n["id"] for n in parse_manifest(out)}
+
+    (brd / "01-nhom-a" / "02-thuat-ngu.md").unlink()
+    (brd / "01-nhom-a" / "03-man-moi.md").write_text("# Màn mới\n", encoding="utf-8")
+
+    lines, report = build_manifest(brd, out)
+    out.write_text("nodes:\n" + "\n".join(lines) + "\n", encoding="utf-8")
+    sau = {n["path"]: n["id"] for n in parse_manifest(out)}
+
+    assert sau["01-nhom-a/01-man-danh-sach.md"] == truoc["01-nhom-a/01-man-danh-sach.md"]
+    assert sau["_index.md"] == truoc["_index.md"]
+    assert report["added"] == ["01-nhom-a/03-man-moi.md"]
+    assert [r["path"] for r in report["removed"]] == ["01-nhom-a/02-thuat-ngu.md"]
+    # KHÔNG tái dùng id của node đã gỡ: id mới phải khác mọi id cũ.
+    assert sau["01-nhom-a/03-man-moi.md"] not in truoc.values()
+
+
+def test_manifest_idempotent_tren_cay_import_giu_nguyen_thu_tu(tmp_path, brd):
+    """Chạy trên cây do brd-import sinh: không được xáo id/thứ tự, không mất node thư mục."""
+    out = brd / "brd.manifest.yml"
+    truoc = parse_manifest(out)
+    lines, report = build_manifest(brd, out)
+    out.write_text("nodes:\n" + "\n".join(lines) + "\n", encoding="utf-8")
+    sau = parse_manifest(out)
+    assert [n["id"] for n in truoc] == [n["id"] for n in sau]
+    assert [n["title"] for n in truoc] == [n["title"] for n in sau]
+    assert report["added"] == [] and report["removed"] == []
+    assert any(n["inline"] for n in sau)          # node thư mục của bản import còn nguyên
+
+
+def test_manifest_thu_muc_khong_co_md_thi_exit_2(tmp_path):
+    brd = tmp_path / "rong"
+    brd.mkdir()
+    proc = subprocess.run([sys.executable, str(SCRIPT), "manifest", str(brd)],
+                          capture_output=True, text=True, encoding="utf-8")
+    assert proc.returncode == 2
+    assert proc.stdout == ""
+
+
+def test_check_coverage_canh_bao_file_nhieu_heading_chi_mot_item(tmp_path, brd):
+    """File nhiều mục cấp 2 mà chỉ 1 item -> mô hình phủ theo vị trí vẫn xanh, phải cảnh báo.
+
+    Đây là chỗ "một file = một node" mất màn im lặng: item duy nhất phủ cả node,
+    gate không có cách nào biết bên trong file có 12 màn.
+    """
+    f = brd / "01-nhom-a" / "01-man-danh-sach.md"
+    f.write_text(f.read_text(encoding="utf-8")
+                 + "\n" + "\n".join(f"## Màn {i}\n\nNội dung.\n" for i in range(6)),
+                 encoding="utf-8")
+    _, warns = _cover(brd, ROADMAP_PHU,
+                      [{"node_id": "BRD-0001", "title": "Nhóm A", "reason": "gom nhóm"},
+                       {"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "từ điển"}])
+    assert any("mục cấp 2" in w and "BRD-0002" in w for w in warns)
+
+
+# ------------------------------------------------- ô ID là link tới nguồn --
+
+def test_parse_roadmap_o_id_dang_link_van_doc_duoc_hang():
+    """Khuôn mới để ô ID là link. Regex hàng phải nhận cả link lẫn text trần."""
+    text = ROADMAP_PHU.replace("| RM-001 |", "| [RM-001](docs/brd/01-nhom-a/01-man-danh-sach.md) |")
+    parsed = parse_roadmap(text)
+    goc = parse_roadmap(ROADMAP_PHU)["rows"]["RM-001"]
+    assert "RM-001" in parsed["rows"]
+    row = parsed["rows"]["RM-001"]
+    assert row["id_link"] == "docs/brd/01-nhom-a/01-man-danh-sach.md"
+    assert row["wave"] == goc["wave"]
+    assert row["deps_raw"] == goc["deps_raw"]
+    assert row["trang_thai"] == goc["trang_thai"]
+
+
+def test_cli_verify_canh_bao_khi_link_o_id_lech_nguon(tmp_path, brd):
+    """Link ô ID trỏ khác **Nguồn** -> bấm vào rơi sai chỗ mà gate phủ vẫn xanh."""
+    text = ROADMAP_PHU.replace("| RM-001 |", "| [RM-001](docs/brd/01-nhom-a/02-thuat-ngu.md) |")
+    rm = tmp_path / "roadmap.md"
+    rm.write_text(text, encoding="utf-8")
+    dec = tmp_path / "decisions.json"
+    dec.write_text(json.dumps({"excluded": [
+        {"node_id": "BRD-0001", "title": "Nhóm A", "reason": "gom nhóm"},
+        {"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "từ điển"}]},
+        ensure_ascii=False), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "verify", str(rm), "--brd", str(brd),
+         "--brd-rel", "docs/brd", "--decisions", str(dec)],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    report = json.loads(proc.stdout)
+    assert any("RM-001" in w and "ô ID" in w for w in report["warnings"])
+
+
+def test_check_placeholders_bo_qua_o_id_dang_link():
+    """`[RM-001](…)` là link markdown, không phải placeholder chưa điền."""
+    assert check_placeholders("| [RM-001](docs/brd/a.md#x) | Màn | m | 0 | N/A | chưa |") == []
+
+
+def test_resolve_link_quy_ve_goc_repo_theo_cho_roadmap_dung():
+    """Link markdown resolve theo thư mục chứa file, `**Nguồn**` viết theo gốc repo.
+
+    Roadmap ở `docs/roadmap.md` thì link bấm được là `brd/x.md`; copy nguyên
+    `docs/brd/x.md` vào link sẽ ra `docs/docs/brd/x.md` -> 404.
+    """
+    assert resolve_link("brd/x.md", "docs/roadmap.md") == "docs/brd/x.md"
+    assert resolve_link("docs/brd/x.md", "docs/roadmap.md") == "docs/docs/brd/x.md"
+    assert resolve_link("brd/x.md#muc", "docs/roadmap.md") == "docs/brd/x.md#muc"
+    assert resolve_link("brd/thu-muc/", "docs/roadmap.md") == "docs/brd/thu-muc/"
+    assert resolve_link("../src/app/", "docs/roadmap.md") == "src/app/"
+    assert resolve_link("brd/x.md", "roadmap.md") == "brd/x.md"      # roadmap ở gốc repo
+    assert resolve_link("https://x/y", "docs/roadmap.md") == "https://x/y"
+
+
+def test_resolve_link_suggestion_la_nghich_dao():
+    assert resolve_link_suggestion("docs/brd/x.md", "docs/roadmap.md") == "brd/x.md"
+    assert resolve_link_suggestion("docs/brd/x.md", "roadmap.md") == "docs/brd/x.md"
+
+
+def test_cli_verify_link_o_id_dung_he_quy_chieu_thi_khong_canh_bao(tmp_path, brd):
+    """Gate KHÔNG được ép dạng link 404: `brd/…` (đúng) phải sạch, `docs/brd/…` mới bị bắt."""
+    docs = brd.parent
+    (tmp_path / "decisions.json").write_text(json.dumps({"excluded": [
+        {"node_id": "BRD-0001", "title": "Nhóm A", "reason": "gom nhóm"},
+        {"node_id": "BRD-0003", "title": "Thuật ngữ", "reason": "từ điển"}]},
+        ensure_ascii=False), encoding="utf-8")
+
+    def chay(link):
+        text = ROADMAP_PHU.replace("| RM-001 |", f"| [RM-001]({link}) |")
+        (docs / "roadmap.md").write_text(text, encoding="utf-8")
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "verify", "docs/roadmap.md",
+             "--brd", str(brd), "--brd-rel", "docs/brd",
+             "--decisions", str(tmp_path / "decisions.json")],
+            capture_output=True, text=True, encoding="utf-8", cwd=tmp_path,
+        )
+        return [w for w in json.loads(proc.stdout)["warnings"] if "RM-001" in w and "ô ID" in w]
+
+    # RM-001 có **Nguồn** = docs/brd/01-nhom-a/ (gốc repo) -> link đúng là brd/01-nhom-a/.
+    assert chay("brd/01-nhom-a/") == []
+    assert len(chay("docs/brd/01-nhom-a/")) == 1
+
+
+def test_check_coverage_bo_muc_chuan_lap_o_moi_file_khong_bi_coi_la_nhieu_man(tmp_path):
+    """8 mục cấp 2 lặp y hệt ở mọi file là KHUÔN tài liệu, không phải 8 màn.
+
+    Đếm heading trần làm mọi file BRD kiểu "Đối tượng tham gia / Điều kiện thực
+    hiện / Thiết kế UX/UI…" đều bị cảnh báo -> phần lớn cảnh báo là giả, người
+    dùng bỏ qua cả cảnh báo thật.
+    """
+    root = tmp_path / "docs" / "brd"
+    root.mkdir(parents=True)
+    man = ['schema_version: "1.0"', "nodes:"]
+    for i in range(1, 4):
+        man.append(f'  - {{ id: BRD-000{i}, order: {i}, depth: 1, kind: leaf, '
+                   f'title: "Màn {i}", path: "man-{i}.md", parent: null, chars: 100 }}')
+    nl = chr(10)
+    (root / "brd.manifest.yml").write_text(nl.join(man) + nl, encoding="utf-8")
+
+    chuan = nl.join(f"## Mục chuẩn {j}{nl}{nl}Nội dung.{nl}" for j in range(6))
+    for i in range(1, 4):
+        (root / f"man-{i}.md").write_text(f"# Màn {i}{nl}{nl}{chuan}", encoding="utf-8")
+
+    rows = nl.join(f"| RM-00{i} | Màn {i} | m | 0 | N/A | chưa |" for i in range(1, 4))
+    details = nl.join(f"### RM-00{i} — Màn {i} (m, Wave 0){nl}{nl}"
+                      f"- **Nguồn**: docs/brd/man-{i}.md{nl}" for i in range(1, 4))
+    roadmap = ("| ID | Màn | Module | Wave | Phụ thuộc | Trạng thái |" + nl
+               + "|--|--|--|--|--|--|" + nl + rows + nl + nl
+               + "## Chi tiết" + nl + nl + details)
+
+    _, warns = _cover(root, roadmap)
+    assert not any("mục cấp 2" in w for w in warns)
+
+    # Một file có 6 mục RIÊNG (không lặp ở file khác) -> vẫn phải cảnh báo.
+    rieng = nl.join(f"## Màn con {j}{nl}{nl}Nội dung.{nl}" for j in range(6))
+    (root / "man-2.md").write_text(f"# Màn 2{nl}{nl}{chuan}{nl}{rieng}", encoding="utf-8")
+    _, warns = _cover(root, roadmap)
+    assert any("mục cấp 2 riêng" in w and "BRD-0002" in w for w in warns)

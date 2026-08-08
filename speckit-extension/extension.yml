@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "dft-speckit"
   name: "DFT Spec Kit Extension"
-  version: "0.0.7"
+  version: "0.0.8"
   description: "Bộ command dùng chung của DFT cho Spec Kit — tập hợp các command hỗ trợ quy trình spec-driven development của công ty. Sẽ mở rộng dần nhiều command."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/anhnt3/agent-skills"
@@ -35,7 +35,7 @@ provides:
 
     - name: "speckit.dft-speckit.road-map-from-brd"
       file: "commands/road-map-from-brd.md"
-      description: "Lập roadmap build từ cây BRD markdown docs/brd/ (đầu ra của brd-import) — script trích outline gọn từ brd.manifest.yml, LLM phân loại node (là màn / tách k màn / không phải màn kèm lý do), quét codebase CHỈ để suy phụ thuộc, chốt wave qua 2 lượt interview rồi ghi docs/roadmap.md theo roadmap-template. Cổng cuối là `brd_roadmap.py verify`: mọi node BRD phải có item trỏ tới qua trường Nguồn hoặc bị khai loại kèm lý do, cộng kiểm ID/placeholder/chu trình phụ thuộc/wave nghịch — exit ≠ 0 là cấm báo xong. Dừng nếu docs/roadmap.md đã tồn tại (không merge)."
+      description: "Lập roadmap build từ cây BRD markdown docs/brd/ (đầu ra của brd-import, hoặc cây .md BA viết tay — thiếu brd.manifest.yml thì `brd_roadmap.py manifest` dựng/hoà giải từ chính cây thư mục, mỗi file .md là một node, giữ nguyên id cũ) — script trích outline gọn từ brd.manifest.yml, LLM phân loại node (là màn / tách k màn / không phải màn kèm lý do), quét codebase CHỈ để suy phụ thuộc, chốt wave qua 2 lượt interview rồi ghi docs/roadmap.md theo roadmap-template. Cổng cuối là `brd_roadmap.py verify`: mọi node BRD phải có item trỏ tới qua trường Nguồn hoặc bị khai loại kèm lý do, cộng kiểm ID/placeholder/chu trình phụ thuộc/wave nghịch — exit ≠ 0 là cấm báo xong. Dừng nếu docs/roadmap.md đã tồn tại (không merge)."
 
     - name: "speckit.dft-speckit.brd-import"
       file: "commands/brd-import.md"

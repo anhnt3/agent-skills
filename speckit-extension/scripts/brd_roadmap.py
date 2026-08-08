@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """brd-roadmap — trích outline từ cây BRD markdown và gác cổng docs/roadmap.md.
 
+    manifest <brd-dir> [--write] [--out <yml>]
     outline <brd-dir> [--out <json>] [--head N] [--quiet]
     verify <roadmap.md> --brd <dir> --brd-rel <prefix> [--decisions <json>]
 """
 
 import argparse
 import json
+import posixpath
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -68,7 +70,9 @@ def parse_manifest(path):
     """Đọc `brd.manifest.yml` -> danh sách node theo thứ tự tài liệu."""
     path = Path(path)
     if not path.is_file():
-        _die(f"Không thấy {path} — thư mục này không phải cây BRD do brd-import sinh ra.")
+        _die(f"Không thấy {path} — cây BRD chưa có manifest. Nếu đây là cây .md BA "
+             f"viết tay, dựng manifest bằng: brd_roadmap.py manifest <thư-mục-brd> "
+             f"(xem báo cáo trước, rồi chạy lại với --write).")
     try:
         raw = path.read_text(encoding="utf-8")
     except UnicodeDecodeError as e:
@@ -267,7 +271,269 @@ def cmd_outline(args):
         print(json.dumps(result, ensure_ascii=False))
 
 
-ROW_RE = re.compile(r"^\|\s*(RM-\d{3})\s*\|(.*)$")
+# ---------------------------------------------------------------- manifest --
+# Cây BRD do BA viết tay không có `brd.manifest.yml`. Lệnh con `manifest` dựng
+# nó từ chính cây thư mục: MỖI FILE .md LÀ ĐÚNG MỘT NODE, thư mục chỉ là đường
+# dẫn (không sinh node). Không đụng một byte nào của file BA.
+#
+# Vì sao thư mục không thành node: cây do `brd-import` sinh có node `folder`
+# ứng với một mục Word CÓ NỘI DUNG riêng. Thư mục trong cây viết tay thường chỉ
+# để gom nhóm, không có nội dung — biến chúng thành node thì mọi thư mục đều
+# phải "có item roadmap trỏ tới hoặc bị khai loại kèm lý do", đẻ ra hàng chục
+# mục loại trừ giả và làm nổ oan cảnh báo "loại quá nửa số node" trong `verify`.
+
+SKIP_DIR_NAMES = {"media", "__pycache__", "node_modules"}
+INDEX_NAMES = ("_index.md", "README.md", "readme.md", "index.md")
+ID_RE = re.compile(r"^(.*?)(\d+)$")
+ORDER_TOKEN_RE = re.compile(r"(\border:\s*)(\d+)")
+
+
+def _deslug(stem):
+    """`03-mo-ta-chuc-nang` -> `Mo ta chuc nang` — chốt chặn cuối khi file không có heading."""
+    s = re.sub(r"^\d+[-_. ]+", "", stem)
+    s = s.replace("_", " ").replace("-", " ").strip()
+    s = re.sub(r"\s+", " ", s)
+    return (s[:1].upper() + s[1:]) if s else stem
+
+
+def _walk_md(d, out):
+    """Duyệt cây theo thứ tự tài liệu: file index trước, rồi file thường, rồi thư mục con."""
+    try:
+        entries = sorted(d.iterdir(), key=lambda p: p.name.lower())
+    except OSError as e:
+        _die(f"Không đọc được thư mục {d} ({e}).")
+    files = [p for p in entries
+             if p.is_file() and p.suffix.lower() == ".md" and not p.name.startswith(".")]
+    idx = [p for p in files if p.name in INDEX_NAMES]
+    out.extend(idx)
+    out.extend(p for p in files if p.name not in INDEX_NAMES)
+    for sd in entries:
+        if sd.is_dir() and sd.name not in SKIP_DIR_NAMES and not sd.name.startswith("."):
+            _walk_md(sd, out)
+
+
+FM_TITLE_RE = re.compile(r'^title:\s*"?(.+?)"?\s*$', re.MULTILINE)
+
+
+def _title_of(path, text):
+    # `title:` trong frontmatter là tên do người/`brd-import` đặt -> ưu tiên nhất.
+    if text.startswith("---\n"):
+        end = text.find("\n---\n", 3)
+        if end > 0:
+            m = FM_TITLE_RE.search(text[4:end])
+            if m and m.group(1).strip():
+                return m.group(1).strip()
+    for h in headings_of(strip_frontmatter(text)):
+        if h["text"].strip():
+            return h["text"].strip()
+    return _deslug(path.stem)
+
+
+def scan_tree(brd_dir):
+    """Cây .md -> danh sách node theo thứ tự tài liệu (chưa cấp id)."""
+    brd_dir = Path(brd_dir)
+    files = []
+    _walk_md(brd_dir, files)
+    if not files:
+        _die(f"Không thấy file .md nào trong {brd_dir} — đây không phải cây BRD markdown.")
+
+    # Thư mục nào có file index thì file đó là node đại diện, làm cha của mọi
+    # node bên dưới. Thư mục không có index -> cha là node index của tổ tiên gần nhất.
+    index_of_dir = {}
+    for p in files:
+        if p.name in INDEX_NAMES:
+            index_of_dir.setdefault(p.parent, p)
+
+    nodes = []
+    for p in files:
+        rel = p.relative_to(brd_dir).as_posix()
+        try:
+            text = p.read_text(encoding="utf-8")
+        except UnicodeDecodeError as e:
+            _die(f"{p} không phải UTF-8, không đọc được ({e}).")
+        # Duyệt lên theo CÁC TỔ TIÊN TRONG brd_dir. Không dùng vòng `while` bám
+        # `cur.parent`: file index ở gốc có `start` nằm ngoài brd_dir, `cur` không
+        # bao giờ chạm brd_dir và `Path('.').parent == Path('.')` -> lặp vô hạn.
+        rel_dirs = list(Path(rel).parents)          # [.., '.']  — trong brd_dir
+        if p.name in INDEX_NAMES:
+            rel_dirs = rel_dirs[1:]                 # index không nhận chính thư mục nó làm cha
+        parent_file = None
+        for rd in rel_dirs:
+            parent_file = index_of_dir.get(brd_dir / rd if str(rd) != "." else brd_dir)
+            if parent_file is not None:
+                break
+        is_root = p.name in INDEX_NAMES and p.parent == brd_dir
+        nodes.append({
+            "depth": len(Path(rel).parts) - 1,
+            "kind": "root" if is_root else "leaf",
+            "title": _title_of(p, text),
+            "path": rel,
+            "dir": None,
+            "inline": False,
+            "parent_path": None if parent_file is None else parent_file.relative_to(brd_dir).as_posix(),
+            "chars": len(text),
+        })
+    return nodes
+
+
+def _yaml_str(s):
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def render_node_line(n):
+    parts = [f"id: {n['id']}", f"order: {n['order']}", f"depth: {n['depth']}",
+             f"kind: {n['kind']}", f"title: {_yaml_str(n['title'])}"]
+    if n.get("path"):
+        parts.append(f"path: {_yaml_str(n['path'])}")
+    else:
+        parts.append("inline: true")
+        parts.append(f"dir: {_yaml_str(n.get('dir') or '')}")
+    parts.append(f"parent: {n['parent'] or 'null'}")
+    parts.append(f"chars: {n['chars']}")
+    return "  - { " + ", ".join(parts) + " }"
+
+
+def _next_id_factory(existing_ids):
+    """Cấp id mới nối tiếp id lớn nhất đang có; KHÔNG tái dùng id của node đã gỡ."""
+    prefix, width, biggest = "BRD-", 4, -1
+    for i in existing_ids:
+        m = ID_RE.match(i)
+        if m:
+            prefix, width = m.group(1), max(width, len(m.group(2)))
+            biggest = max(biggest, int(m.group(2)))
+    counter = {"n": biggest}
+
+    def nxt():
+        counter["n"] += 1
+        return f"{prefix}{counter['n']:0{width}d}"
+    return nxt
+
+
+def build_manifest(brd_dir, old_path):
+    """Trả (danh sách dòng node, báo cáo). Có manifest cũ thì HOÀ GIẢI, không sinh lại.
+
+    Node còn khớp `path` giữ nguyên **id và cả dòng gốc** (chỉ đánh lại `order`) —
+    id ổn định là điều kiện để `decisions.json` và trường `Nguồn` của roadmap cũ
+    không trỏ sai. Node của bản import cũ có `dir` (không ứng file .md nào) cũng
+    giữ nguyên, để cây do `brd-import` sinh vẫn chạy đúng như trước.
+    """
+    scanned = scan_tree(brd_dir)
+    old_path = Path(old_path)
+    old_nodes, old_lines = [], {}
+    if old_path.is_file():
+        old_nodes = parse_manifest(old_path)
+        raw = old_path.read_text(encoding="utf-8")
+        for line in raw.split("\n"):
+            m = NODE_RE.match(line)
+            if m:
+                f = _scan_flow(m.group(1))
+                old_lines[f["id"]] = line
+
+    by_path = {n["path"]: n for n in old_nodes if n["path"]}
+    nxt = _next_id_factory([n["id"] for n in old_nodes])
+
+    added, kept = [], []
+    for n in scanned:
+        old = by_path.get(n["path"])
+        if old:
+            n["id"] = old["id"]
+            kept.append(n["path"])
+        else:
+            n["id"] = nxt()
+            added.append(n["path"])
+    id_by_path = {n["path"]: n["id"] for n in scanned}
+    for n in scanned:
+        n["parent"] = id_by_path.get(n["parent_path"])
+
+    # Node cũ kiểu thư mục (`dir`, không có `path`): giữ nếu thư mục còn trên đĩa.
+    brd = Path(brd_dir)
+    dir_nodes, removed = [], []
+    for o in old_nodes:
+        if o["path"]:
+            if o["path"] not in id_by_path:
+                removed.append({"id": o["id"], "path": o["path"]})
+            continue
+        loc = (o["dir"] or "").rstrip("/")
+        if loc and (brd / loc).is_dir():
+            dir_nodes.append(o)
+        else:
+            removed.append({"id": o["id"], "dir": o["dir"]})
+
+    # Thứ tự: node đã có trong manifest giữ ĐÚNG vị trí cũ (thứ tự tài liệu của
+    # bản import là thông tin thật, không được xáo); node mới chèn ngay sau node
+    # cũ gần nhất đứng trước nó trong cây. `order` đánh lại tuần tự sau cùng.
+    old_order = {o["id"]: o["order"] for o in old_nodes}
+    keyed, last_seen, tie = [], -1, 0
+    for n in dir_nodes + scanned:
+        if n["id"] in old_order:
+            last_seen, tie = old_order[n["id"]], 0
+            keyed.append(((last_seen, 0, 0), n))
+        else:
+            tie += 1
+            keyed.append(((last_seen, 1, tie), n))
+    keyed.sort(key=lambda t: t[0])
+    ordered = [n for _, n in keyed]
+
+    lines = []
+    for i, n in enumerate(ordered):
+        n["order"] = i
+        raw_line = old_lines.get(n["id"])
+        reuse = raw_line is not None and (not n.get("path") or n["path"] in kept)
+        if reuse:
+            lines.append(ORDER_TOKEN_RE.sub(lambda m: m.group(1) + str(i), raw_line, count=1))
+        else:
+            lines.append(render_node_line(n))
+
+    warnings = []
+    if removed:
+        warnings.append(f"{len(removed)} node trong manifest cũ không còn trên đĩa — đã gỡ.")
+    if any(n["kind"] == "root" for n in scanned) is False:
+        warnings.append("Cây không có file index ở gốc (_index.md/README.md) — "
+                        "không có node gốc, mọi file đều tính vào phủ coverage.")
+    report = {
+        "brd_dir": str(brd_dir).replace("\\", "/"),
+        "total": len(ordered),
+        "kept": len(kept) + len(dir_nodes),
+        "added": added,
+        "removed": removed,
+        "warnings": warnings,
+        "nodes": [{"id": n["id"], "kind": n["kind"], "title": n["title"],
+                   "loc": n.get("path") or n.get("dir"), "chars": n["chars"]}
+                  for n in ordered],
+    }
+    return lines, report
+
+
+HEADER_DEFAULT = ('schema_version: "1.0"\n'
+                  'source: { kind: handmade, note: "manifest dựng từ cây .md có sẵn, '
+                  'không import từ .docx" }\n')
+
+
+def cmd_manifest(args):
+    brd_dir = Path(args.brd_dir)
+    if not brd_dir.is_dir():
+        _die(f"Không thấy thư mục BRD: {brd_dir}")
+    out = Path(args.out) if args.out else brd_dir / "brd.manifest.yml"
+    lines, report = build_manifest(brd_dir, out)
+
+    header = HEADER_DEFAULT
+    if out.is_file():
+        raw = out.read_text(encoding="utf-8")
+        i = raw.find("\nnodes:")
+        head = raw[:i + 1] if i >= 0 else (raw if raw.endswith("\n") else raw + "\n")
+        header = head
+    content = header + "nodes:\n" + "\n".join(lines) + "\n"
+
+    report["written"] = None
+    if args.write:
+        out.write_text(content, encoding="utf-8", newline="\n")
+        report["written"] = str(out).replace("\\", "/")
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+
+
+# Ô ID trong bảng tổng là LINK tới nguồn: `| [RM-001](docs/brd/…md#heading) |`.
+# Vẫn nhận dạng trần `| RM-001 |` để roadmap viết trước khi đổi khuôn không gãy.
+ROW_RE = re.compile(r"^\|\s*(?:\[\s*)?(RM-\d{3})\s*(?:\]\(([^)\n]*)\))?\s*\|(.*)$")
 DETAIL_RE = re.compile(r"^###\s+(RM-\d{3})\b")
 FIELD_RE = re.compile(r"^\s*-\s*\*\*(.+?)\*\*\s*:\s*(.*)$")
 # Placeholder = span trong ngoặc vuông KHÔNG phải link markdown (`](`). Bản thân
@@ -288,11 +554,12 @@ def parse_roadmap(text):
         m = ROW_RE.match(line)
         if m:
             rid = m.group(1)
-            cells = [c.strip() for c in m.group(2).split("|")]
+            cells = [c.strip() for c in m.group(3).split("|")]
             cells += [""] * (5 - len(cells))
             rows.setdefault(rid, {
                 "man": cells[0], "module": cells[1], "wave": cells[2],
                 "deps_raw": cells[3], "trang_thai": cells[4],
+                "id_link": (m.group(2) or "").strip(),
             })
             row_order.append(rid)
             continue
@@ -351,6 +618,8 @@ def check_placeholders(text):
 
 LINK_RE = re.compile(r"^\[[^\]]*\]\((.+?)\)$")
 BIG_NODE_CHARS = 40_000
+MANY_HEADINGS = 5
+BOILERPLATE_MIN_FILES = 3
 
 
 def slugify_anchor(text):
@@ -373,6 +642,43 @@ def _norm_hyphens(s):
     gộp khoảng trắng nên hai chuỗi đó lệch nhau dù cùng trỏ một heading.
     """
     return re.sub(r"-{2,}", "-", s)
+
+
+def resolve_link(link, roadmap_path):
+    """Link markdown -> đường dẫn tương đối GỐC REPO.
+
+    Link trong markdown resolve theo thư mục chứa file, còn `**Nguồn**` viết
+    tương đối gốc repo. Hai hệ quy chiếu khác nhau: roadmap ở `docs/roadmap.md`
+    thì link bấm được là `brd/…`, trong khi `Nguồn` là `docs/brd/…`. So sánh
+    thẳng hai chuỗi sẽ ép người viết dùng `docs/brd/…` làm link — bấm vào ra
+    `docs/docs/brd/…`, 404. Phải quy link về cùng hệ với `Nguồn` trước khi so.
+    """
+    v = (link or "").strip()
+    if not v or "://" in v or v.startswith("/"):
+        return v
+    anchor = ""
+    if "#" in v:
+        v, anchor = v.split("#", 1)
+        anchor = "#" + anchor
+    base = PurePosixPath(str(roadmap_path).replace("\\", "/")).parent
+    joined = posixpath.normpath(str(base / v.replace("\\", "/")))
+    if joined.startswith("./"):
+        joined = joined[2:]
+    if v.endswith("/") and not joined.endswith("/"):
+        joined += "/"
+    return joined + anchor
+
+
+def resolve_link_suggestion(nguon, roadmap_path):
+    """Nghịch đảo `resolve_link`: `**Nguồn**` (gốc repo) -> link viết từ chỗ roadmap đứng."""
+    v = (nguon or "").strip().strip("`").strip()
+    m = LINK_RE.match(v)
+    if m:
+        v = m.group(1).strip()
+    v = v.replace("\\", "/")
+    base = PurePosixPath(str(roadmap_path).replace("\\", "/")).parent
+    base_s = "" if str(base) in (".", "") else str(base).rstrip("/") + "/"
+    return v[len(base_s):] if base_s and v.startswith(base_s) else v
 
 
 def norm_source(raw, brd_rel):
@@ -449,8 +755,8 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
             elif (brd_dir / key).is_file():
                 errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — file có trên đĩa nhưng "
                             f"manifest không khai node nào ở đó (BA thêm tay sau import). "
-                            f"Chạy lại brd-import để manifest biết file này, đừng trỏ "
-                            f"**Nguồn** vào file ngoài manifest.")
+                            f"Chạy `brd_roadmap.py manifest <thư-mục-brd> --write` để manifest "
+                            f"biết file này, đừng trỏ **Nguồn** vào file ngoài manifest.")
             else:
                 errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — không có node BRD nào ở vị trí đó.")
             continue
@@ -534,10 +840,40 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
         errs.append(f"Node {n['id']} \"{n['title']}\" ({node_loc(n)}) chưa có item roadmap "
                     f"nào trỏ tới và cũng không nằm trong decisions.json.")
 
-    for nid, rids in covered.items():
-        if len(rids) == 1 and by_id[nid]["chars"] > BIG_NODE_CHARS:
-            warns.append(f"Node {nid} có {by_id[nid]['chars']} ký tự nhưng chỉ map vào "
-                         f"{rids[0]} — nhiều khả năng phải tách.")
+    # Một file = một node (mô hình phủ theo vị trí) nên file chứa nhiều màn vẫn
+    # "phủ đủ" chỉ với một item. Đếm heading cấp 2 là mỏ neo rẻ để lộ chỗ đó —
+    # NHƯNG đếm trần thì bắt nhầm: BRD thường có bộ mục chuẩn lặp ở mọi màn
+    # ("Đối tượng tham gia", "Điều kiện thực hiện", "Thiết kế UX/UI"…), file nào
+    # cũng 8 mục cấp 2 mà vẫn chỉ là MỘT màn. Nên chỉ đếm heading ĐẶC THÙ: tiêu
+    # đề xuất hiện ở ≥3 file khác nhau là khuôn tài liệu, không phải tên màn.
+    single = {nid: rids[0] for nid, rids in covered.items() if len(rids) == 1}
+    h2_of, freq = {}, {}
+    for nid in single:
+        n = by_id[nid]
+        f = brd_dir / n["path"] if n["path"] else None
+        if f is None or not f.is_file():
+            continue
+        try:
+            body = strip_frontmatter(f.read_text(encoding="utf-8"))
+        except UnicodeDecodeError:
+            continue
+        hs = [h["text"].strip().lower() for h in headings_of(body) if h["level"] == 2]
+        h2_of[nid] = hs
+        for t in set(hs):
+            freq[t] = freq.get(t, 0) + 1
+    boilerplate = {t for t, c in freq.items() if c >= BOILERPLATE_MIN_FILES}
+
+    for nid, rid in single.items():
+        n = by_id[nid]
+        if n["chars"] > BIG_NODE_CHARS:
+            warns.append(f"Node {nid} có {n['chars']} ký tự nhưng chỉ map vào "
+                         f"{rid} — nhiều khả năng phải tách.")
+            continue
+        rieng = [t for t in h2_of.get(nid, []) if t not in boilerplate]
+        if len(rieng) >= MANY_HEADINGS:
+            warns.append(f"Node {nid} có {len(rieng)} mục cấp 2 riêng (không thuộc bộ mục "
+                         f"chuẩn của tài liệu) nhưng chỉ map vào {rid} — file này nhiều "
+                         f"khả năng chứa nhiều màn, cân nhắc tách item.")
     return errs, warns, ex_ids
 
 
@@ -636,6 +972,30 @@ def cmd_verify(args):
     else:
         warns.append(f"Không thấy {dec} — coi như chưa loại node nào (decisions rỗng).")
 
+    # Ô ID là link bấm-vào-mở-nguồn. Link trỏ khác **Nguồn** thì người đọc bấm vào
+    # rơi sai chỗ, mà mọi gate phủ lại chấm theo **Nguồn** nên không ai phát hiện.
+    for rid in parsed["row_order"]:
+        row = parsed["rows"].get(rid, {})
+        link = (row.get("id_link") or "").strip()
+        nguon = parsed["details"].get(rid, {}).get("Nguồn")
+        n_rel, n_anc = norm_source(nguon, args.brd_rel) if nguon else (None, None)
+        if not link:
+            # Chỉ nhắc khi có đích thật để trỏ tới; `Nguồn` = N/A thì text trần là đúng.
+            if n_rel is not None:
+                goi_y = resolve_link_suggestion(nguon, roadmap)
+                warns.append(f"{rid}: ô ID trong bảng tổng chưa phải link — nên là "
+                             f"`[{rid}]({goi_y})` để bấm vào mở thẳng nguồn.")
+            continue
+        if not nguon:
+            continue
+        l_rel, l_anc = norm_source(resolve_link(link, roadmap), args.brd_rel)
+        if (l_rel, l_anc) != (n_rel, n_anc):
+            rm_hien = str(roadmap).replace("\\", "/")
+            warns.append(f"{rid}: link ở ô ID trỏ {link} (tính từ {rm_hien} ra "
+                         f"{resolve_link(link, roadmap)}) nhưng **Nguồn** là {nguon} — "
+                         f"hai chỗ phải cùng một đích; link đúng là "
+                         f"`{resolve_link_suggestion(nguon, roadmap)}`.")
+
     # Roadmap do lệnh này sinh ra là roadmap mới -> mọi item phải ở `chưa`. Giá trị
     # khác gần như luôn là model tự suy từ codebase, đúng thứ nguyên tắc lõi cấm.
     for rid in parsed["row_order"]:
@@ -667,6 +1027,15 @@ def main():
         description="Trích outline cây BRD và gác cổng docs/roadmap.md."
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
+
+    m = sub.add_parser("manifest",
+                       help="Dựng/hoà giải brd.manifest.yml từ cây .md có sẵn")
+    m.add_argument("brd_dir")
+    m.add_argument("--write", action="store_true",
+                   help="Thực sự ghi file (mặc định chỉ in báo cáo, KHÔNG ghi gì)")
+    m.add_argument("--out", default=None,
+                   help="Đường dẫn manifest (mặc định <brd-dir>/brd.manifest.yml)")
+    m.set_defaults(func=cmd_manifest)
 
     o = sub.add_parser("outline", help="Trích outline gọn từ cây BRD markdown")
     o.add_argument("brd_dir")

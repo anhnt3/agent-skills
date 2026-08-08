@@ -16,8 +16,9 @@ dùng để suy thứ tự; nó KHÔNG được thêm hay bớt item, KHÔNG đ�
 `$ARGUMENTS`
 
 Kỳ vọng: **đường dẫn thư mục BRD tương đối từ gốc repo** (vd `docs/brd`), mặc định `docs/brd`
-khi để trống. Thư mục không tồn tại, hoặc không có `brd.manifest.yml` → **hỏi lại**, KHÔNG tự
-đi tìm thư mục khác trong repo.
+khi để trống. Thư mục không tồn tại → **hỏi lại**, KHÔNG tự đi tìm thư mục khác trong repo.
+Thư mục có `.md` nhưng **thiếu `brd.manifest.yml`** (BRD do BA viết tay, không qua `brd-import`)
+→ KHÔNG dừng: chạy bước 0.5 dựng manifest.
 
 Đường dẫn **tuyệt đối** (`C:/proj/docs/brd`, `/home/…`) hoặc có `../` → quy đổi về tương đối
 gốc repo trước khi dùng; không quy đổi được (nằm ngoài repo) → **hỏi lại**, KHÔNG chạy tiếp.
@@ -54,6 +55,40 @@ báo — **KHÔNG sinh lại file từ khung**, KHÔNG đụng dòng/khối đan
 người dùng sửa tay giữa hai phiên). Chỉ dùng bước 6 làm **luật định dạng** cho phần đang sửa.
 KHÔNG hỏi lại người dùng những gì `decisions.json` đã ghi.
 
+### 0.5. Dựng `brd.manifest.yml` khi thiếu (BRD viết tay)
+
+`brd.manifest.yml` là **danh sách node** — mỏ neo đếm mà toàn bộ gate phủ 1-1 dựa vào. Cây do
+`brd-import` sinh đã có sẵn; cây BA viết tay thì chưa. **Bỏ qua bước này khi file đã tồn tại và
+cây không lệch** (bước 1 sẽ báo `files_without_node`/`nodes_without_file` nếu lệch).
+
+```bash
+python .specify/extensions/dft-speckit/scripts/brd_roadmap.py manifest "<thư-mục-brd>"
+```
+
+Mặc định là **dry-run, không ghi gì**. Báo cáo JSON trả `total`, `kept`, `added`, `removed`,
+`warnings`, `nodes`. Mô hình: **mỗi file `.md` là đúng một node**, thư mục chỉ là đường dẫn
+(không sinh node), `media/` bị bỏ qua, `_index.md`/`README.md` ở gốc là node gốc (không tính
+coverage). Title lấy theo thứ tự: `title` trong frontmatter → heading đầu tiên → tên file.
+
+Trình cho người dùng: **tổng số node**, danh sách `added`/`removed` (đầy đủ khi ≤20 dòng, dài
+hơn thì rút gọn nhưng phải nói rõ đã rút bao nhiêu), mọi `warnings`. Rồi hỏi qua
+**AskUserQuestion**: "đây có đúng là danh sách mục BRD của anh/chị không?" — đây là **quyết định
+của BA**, không phải fact để tự chốt. Có phản hồi đồng ý mới chạy lại kèm `--write`:
+
+```bash
+python .specify/extensions/dft-speckit/scripts/brd_roadmap.py manifest "<thư-mục-brd>" --write
+```
+
+- Manifest đã có sẵn thì lệnh **hoà giải, không sinh lại**: node còn khớp đường dẫn giữ nguyên
+  `id`, file mới cấp `id` tiếp theo (không tái dùng id đã gỡ), node mất file bị gỡ và liệt kê
+  trong `removed`. Giữ `id` ổn định là điều kiện để `decisions.json` và trường `Nguồn` của
+  roadmap cũ không trỏ sai — CẤM xoá manifest đi sinh lại cho "sạch".
+- Người dùng nói danh sách sai (thiếu mục, gom nhầm) → vấn đề nằm ở **cấu trúc file BRD**, không
+  phải ở lệnh này: bảo họ tách/gộp file `.md` rồi chạy lại. KHÔNG sửa tay `brd.manifest.yml`.
+- Mô hình một-file-một-node có hệ quả: **file chứa nhiều màn vẫn chỉ là một node**, một item
+  roadmap là "phủ đủ". `verify` cảnh báo khi node >40.000 ký tự hoặc có ≥5 mục cấp 2 mà chỉ 1
+  item trỏ tới — gặp cảnh báo đó thì tách item (bước 3, nhánh "chứa k màn"), đừng bỏ qua.
+
 ### 1. Trích outline
 
 ```bash
@@ -73,7 +108,9 @@ Mã thoát khác 0 → **DỪNG**, in nguyên thông điệp lỗi. Không tự 
 khác 0, mở `outline.json` để lấy danh sách chi tiết. Báo cho người dùng: số node, và **liệt kê
 đầy đủ** `files_without_node` (file BA thêm tay, manifest chưa biết) + `nodes_without_file`
 (file đã bị xoá) khi hai danh sách đó không rỗng. Hai danh sách này không chặn nhưng **không
-được im lặng bỏ qua** — chúng đổi cách hiểu cây. Đừng đọc lại toàn bộ `outline.json` nếu dòng
+được im lặng bỏ qua** — chúng đổi cách hiểu cây. Cách xử đúng: quay lại **bước 0.5** chạy
+`manifest` để hoà giải (giữ id cũ, thêm node cho file mới, gỡ node mất file), rồi chạy lại
+`outline`. Đừng đi tiếp với manifest lệch: file ngoài manifest không được phép làm `Nguồn`. Đừng đọc lại toàn bộ `outline.json` nếu dòng
 tóm tắt đã cho biết cả hai danh sách đều rỗng.
 
 ### 2. Quét codebase — CHỈ để suy phụ thuộc
@@ -204,6 +241,16 @@ Bước này có hai nhánh: **chạy mới** → sinh file từ khung theo lu�
   item nào trỏ tới" cho toàn bộ BRD, che mất nguyên nhân thật. Quá 999 item thì dừng, báo người dùng.
 - **Cột `Trạng thái`** của MỌI item: `chưa`. Roadmap này mới sinh — không có item nào "đang"/"xong",
   kể cả khi codebase đã có màn đó (`verify` cảnh báo nếu khác).
+- **Ô `ID` trong bảng tổng là LINK** tới chính nguồn của item — bấm vào mở thẳng mục BRD.
+  **Hai trường này viết theo hai hệ quy chiếu khác nhau, đừng copy chuỗi từ cái nọ sang cái kia:**
+  - `Nguồn` (khối chi tiết) — tương đối **gốc repo**: `docs/brd/03-quan-ly/05-danh-sach.md`
+  - link ô ID — tương đối **thư mục chứa `docs/roadmap.md`**, tức bỏ tiền tố `docs/`:
+    `| [RM-001](brd/03-quan-ly/05-danh-sach.md#danh-sách) | …`
+
+  Viết `docs/brd/…` làm link thì trình đọc hiểu thành `docs/docs/brd/…` → bấm vào 404.
+  `verify` resolve link theo vị trí roadmap rồi mới so với `Nguồn`, cảnh báo kèm link đúng nếu
+  lệch, hoặc nếu ô ID còn là text trần trong khi `Nguồn` có đích thật. `Nguồn` = `N/A` → để ID
+  text trần, không bịa link.
 - **Trường `Nguồn`** của mỗi item: đường dẫn tương đối từ gốc repo tới file BRD nguồn
   (`docs/brd/03-quan-ly/05-danh-sach.md`), thêm `#<tiêu đề mục>` khi nhiều item cùng trỏ về một
   file. Node không có file riêng (`inline`) thì trỏ vào thư mục của nó (`docs/brd/03-quan-ly/`);
@@ -212,7 +259,7 @@ Bước này có hai nhánh: **chạy mới** → sinh file từ khung theo lu�
   chiếu heading (không có file để đối chiếu), nên anchor ở đây chỉ là nhãn cho người đọc.
   **Chỉ trỏ vào file/thư mục có trong `brd.manifest.yml`**: file BA thêm tay sau import
   (`files_without_node` ở bước 1) không có node nào ứng với nó → `verify` báo lỗi. Muốn đưa vào
-  roadmap thì chạy lại `/speckit.dft-speckit.brd-import` cho manifest biết file đó, đừng cố trỏ
+  roadmap thì quay lại bước 0.5 chạy `manifest --write` cho manifest biết file đó, đừng cố trỏ
   `Nguồn` vào nó rồi gỡ item khi gate đỏ.
   **Cẩn thận**: `verify` chấm phủ theo *vị trí* (file/thư mục), không theo từng node. Với cây
   BRD do `brd-import` sinh ra, mỗi thư mục `inline` chỉ ứng với đúng một node nên việc này
