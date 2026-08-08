@@ -39,6 +39,14 @@ def _sha256(path):
     return h.hexdigest()
 
 
+def _emit(result, quiet, summary):
+    """In kết quả: đầy đủ JSON, hoặc tóm tắt + trỏ về probe.json khi --quiet."""
+    if quiet:
+        print(summary)
+    else:
+        print(json.dumps(result, ensure_ascii=False))
+
+
 def cmd_probe(args):
     docx = Path(args.docx)
     if docx.suffix.lower() != ".docx":
@@ -50,11 +58,15 @@ def cmd_probe(args):
 
     tier = detect_tier(docx)
 
-    from brd.docx_probe import promotions_for
+    from brd.docx_probe import format_candidates, promotions_for
 
     outline = None
     if args.outline:
         outline = json.loads(Path(args.outline).read_text(encoding="utf-8"))
+        n_cands = len(tier["candidates"] if "candidates" in tier
+                      else format_candidates(docx))
+        if len(outline) > n_cands:
+            _die(f"outline.json có {len(outline)} mục > {n_cands} ứng viên — sai dữ liệu.")
 
     if tier["needs_llm"] and outline is None:
         result = {
@@ -66,7 +78,9 @@ def cmd_probe(args):
         }
         (work / "probe.json").write_text(json.dumps(result, ensure_ascii=False, indent=2),
                                          encoding="utf-8")
-        print(json.dumps(result, ensure_ascii=False))
+        _emit(result, args.quiet,
+              f"needs_llm: true — {len(result['candidates'])} ứng viên trong "
+              f"{work / 'probe.json'} (khoá `candidates`, mỗi mục có `i` = vị trí trong mảng).")
         return
 
     promos = promotions_for(docx, outline=outline)
@@ -96,7 +110,9 @@ def cmd_probe(args):
     }
     (work / "probe.json").write_text(json.dumps(result, ensure_ascii=False, indent=2),
                                      encoding="utf-8")
-    print(json.dumps(result, ensure_ascii=False))
+    _emit(result, args.quiet,
+          f"tier {result['tier']} — {len(headings)} tiêu đề, {len(stats)} cấp, "
+          f"đề xuất cắt cấp {result['recommend_depth']}. Bảng `levels` ở {work / 'probe.json'}.")
 
 
 def _diff_trees(old, new):
@@ -215,7 +231,10 @@ def main():
     p.add_argument("docx")
     p.add_argument("--work", required=True)
     p.add_argument("--outline", default=None,
-                   help="JSON [{index, level}] do LLM quyết khi bậc 1-5 mù")
+                   help="JSON [{i, level}] do LLM quyết khi bậc 1-5 mù; `i` là vị trí "
+                        "trong mảng candidates")
+    p.add_argument("--quiet", action="store_true",
+                   help="Chỉ in tóm tắt thay vì toàn bộ JSON (JSON vẫn ghi ra probe.json)")
     p.set_defaults(func=cmd_probe)
 
     s = sub.add_parser("split", help="Cắt cây và kiểm chứng")
@@ -227,7 +246,7 @@ def main():
     args = parser.parse_args()
     try:
         args.func(args)
-    except ConvertError as e:
+    except (ConvertError, ValueError) as e:
         _die(str(e))
 
 

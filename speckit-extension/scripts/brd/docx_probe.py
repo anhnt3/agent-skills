@@ -191,13 +191,35 @@ def numbered_titles(docx):
 def promotions_for(docx, outline=None):
     """[{'text','level'}] nạp cho Lua filter.
 
-    outline: [{'index','level'}] do LLM quyết (bậc 6) — chỉ số trỏ vào
-    format_candidates(docx), KHÔNG phải chỉ số đoạn trong tài liệu.
+    outline: [{'i','level'}] do LLM quyết (bậc 6) — `i` là VỊ TRÍ trong mảng
+    format_candidates(docx) (0,1,2,…), KHÔNG phải chỉ số đoạn trong tài liệu.
+    Khoá cũ 'index' bị từ chối: nó từng mang nghĩa chỉ số đoạn, chấp nhận im
+    lặng sẽ nâng nhầm đoạn.
     """
     if outline is not None:
         cands = format_candidates(docx)
-        return [{"text": cands[o["index"]]["text"], "level": o["level"]}
-                for o in outline if 0 <= o["index"] < len(cands)]
+        out = []
+        for o in outline:
+            if "i" not in o and "index" in o:
+                raise ValueError(
+                    "outline.json: khoá `index` đã bỏ — dùng `i` = VỊ TRÍ của ứng viên "
+                    "trong mảng candidates (đúng giá trị trường `i` trong probe.json)."
+                )
+            i = o.get("i")
+            if not isinstance(i, int) or isinstance(i, bool) or not 0 <= i < len(cands):
+                raise ValueError(
+                    f"outline.json: vị trí ứng viên {i!r} nằm ngoài mảng candidates "
+                    f"(có {len(cands)} mục, hợp lệ 0..{len(cands) - 1}). Nhớ: `i` là "
+                    "VỊ TRÍ trong mảng candidates, không phải số đoạn trong file Word."
+                )
+            level = o.get("level")
+            if not isinstance(level, int) or isinstance(level, bool) or level < 1:
+                raise ValueError(
+                    f"outline.json: ứng viên i={i} có `level` = {level!r} — phải là số "
+                    "nguyên ≥ 1."
+                )
+            out.append({"text": cands[i]["text"], "level": level})
+        return out
     res = detect_tier(docx)
     if res["tier"] == 3:
         pairs = toc_titles(docx)
@@ -255,7 +277,7 @@ def format_candidates(docx):
             continue
         bigger = body_size is not None and p["size"] is not None and p["size"] > body_size
         if p["bold"] or bigger:
-            out.append({"index": p["index"], "text": text,
+            out.append({"i": len(out), "text": text,
                         "bold": p["bold"], "size": p["size"]})
     return out
 

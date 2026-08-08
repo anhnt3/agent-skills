@@ -446,6 +446,11 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
                 errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — đó là phần đầu tài liệu "
                             f"(node gốc), node gốc không tính vào phủ coverage, hãy trỏ tới "
                             f"node BRD thật (màn/mục) mà mục này mô tả.")
+            elif (brd_dir / key).is_file():
+                errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — file có trên đĩa nhưng "
+                            f"manifest không khai node nào ở đó (BA thêm tay sau import). "
+                            f"Chạy lại brd-import để manifest biết file này, đừng trỏ "
+                            f"**Nguồn** vào file ngoài manifest.")
             else:
                 errs.append(f"{rid}: **Nguồn** trỏ tới {raw} — không có node BRD nào ở vị trí đó.")
             continue
@@ -454,6 +459,12 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
             covered.setdefault(nid, []).append(rid)
         if anchor:
             f = brd_dir / rel
+            if f.is_dir():
+                # Node `inline` không có file riêng -> `Nguồn` trỏ vào thư mục. Anchor ở
+                # đây chỉ để phân biệt nhiều item cùng trỏ một node, không có file nào để
+                # đối chiếu heading -> chấp nhận, không chấm. Không được báo lỗi: command
+                # bảo dùng `#<tiêu đề mục>` cho đúng trường hợp này.
+                continue
             if not f.is_file():
                 errs.append(f"{rid}: **Nguồn** có anchor nhưng {rel} không phải file.")
                 continue
@@ -497,6 +508,25 @@ def check_coverage(parsed, nodes, brd_dir, brd_rel, excluded):
         if nid in covered:
             warns.append(f"{nid} vừa bị loại trong decisions.json vừa được "
                          f"{', '.join(covered[nid])} trỏ tới — mâu thuẫn.")
+
+    # Loại node là cửa thoát rẻ nhất: `reason` không rỗng là qua. Hai cảnh báo dưới
+    # không chặn nhưng buộc con số lộ ra, để loại hàng loạt bằng một nhãn chung
+    # không trôi im lặng qua gate.
+    n_real = sum(1 for n in nodes if n["kind"] != "root")
+    if n_real and len(ex_ids) * 2 > n_real:
+        warns.append(f"Loại {len(ex_ids)}/{n_real} node BRD (quá nửa) — kiểm lại: loại "
+                     f"hàng loạt thường là dấu hiệu bỏ sót màn, không phải BRD toàn mục "
+                     f"phi chức năng.")
+    reason_count = {}
+    for e in excluded:
+        nid = e.get("node_id") if isinstance(e, dict) else None
+        if isinstance(nid, str) and nid.strip() in ex_ids:
+            r = " ".join((e.get("reason") or "").split()).lower()
+            reason_count[r] = reason_count.get(r, 0) + 1
+    for r, c in sorted(reason_count.items()):
+        if c >= 3:
+            warns.append(f"{c} node bị loại với cùng một lý do \"{r}\" — lý do phải gắn "
+                         f"vào nội dung từng node, không phải nhãn chung dán hàng loạt.")
 
     for n in nodes:
         if n["kind"] == "root" or n["id"] in covered or n["id"] in ex_ids:
@@ -605,6 +635,14 @@ def cmd_verify(args):
         excluded = dec_data.get("excluded", [])
     else:
         warns.append(f"Không thấy {dec} — coi như chưa loại node nào (decisions rỗng).")
+
+    # Roadmap do lệnh này sinh ra là roadmap mới -> mọi item phải ở `chưa`. Giá trị
+    # khác gần như luôn là model tự suy từ codebase, đúng thứ nguyên tắc lõi cấm.
+    for rid in parsed["row_order"]:
+        st = (parsed["rows"].get(rid, {}).get("trang_thai") or "").strip().lower()
+        if st and st != "chưa":
+            warns.append(f"{rid}: Trạng thái = \"{st}\" — roadmap mới sinh phải để "
+                         f"`chưa`; trạng thái không được suy từ codebase.")
 
     errs = check_ids(parsed) + check_placeholders(text) + check_deps(parsed)
     cov_errs, cov_warns, ex_ids = check_coverage(parsed, nodes, brd_dir, args.brd_rel, excluded)

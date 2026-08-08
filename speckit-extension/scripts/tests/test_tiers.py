@@ -115,7 +115,7 @@ def test_probe_voi_outline_do_llm_quyet_thi_cat_duoc(require_pandoc, tmp_path):
                     "--work", str(work)], capture_output=True, text=True)
     outline = work / "outline.json"
     outline.write_text(json.dumps(
-        [{"index": i, "level": 1 if i % 2 == 0 else 2} for i in range(5)]),
+        [{"i": i, "level": 1 if i % 2 == 0 else 2} for i in range(5)]),
         encoding="utf-8")
     proc = subprocess.run(
         [sys.executable, str(script), "probe", str(FIXTURES / "bold.docx"),
@@ -126,6 +126,45 @@ def test_probe_voi_outline_do_llm_quyet_thi_cat_duoc(require_pandoc, tmp_path):
     assert data["needs_llm"] is False
     assert data["tier"] == 6
     assert sum(lv["count"] for lv in data["levels"]) == 5
+
+
+def test_candidates_dung_vi_tri_mang_khong_phai_chi_so_doan():
+    cands = format_candidates(FIXTURES / "bold.docx")
+    assert [c["i"] for c in cands] == list(range(len(cands)))
+    assert all("index" not in c for c in cands)
+
+
+def test_outline_khoa_index_cu_bi_tu_choi():
+    with pytest.raises(ValueError, match="khoá `index` đã bỏ"):
+        promotions_for(FIXTURES / "bold.docx", outline=[{"index": 2, "level": 1}])
+
+
+def test_outline_i_ngoai_bien_la_loi_cung():
+    with pytest.raises(ValueError, match="VỊ TRÍ"):
+        promotions_for(FIXTURES / "bold.docx", outline=[{"i": 99, "level": 1}])
+
+
+def test_outline_thieu_level_la_loi_cung():
+    with pytest.raises(ValueError, match="level"):
+        promotions_for(FIXTURES / "bold.docx", outline=[{"i": 0}])
+
+
+def test_probe_chan_outline_dai_hon_so_ung_vien(tmp_path):
+    import json
+    import subprocess
+    import sys
+    script = Path(__file__).resolve().parents[1] / "brd_import.py"
+    work = tmp_path / "w"
+    work.mkdir()
+    outline = work / "outline.json"
+    outline.write_text(json.dumps([{"i": i, "level": 1} for i in range(9)]),
+                       encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(script), "probe", str(FIXTURES / "bold.docx"),
+         "--work", str(work), "--outline", str(outline)],
+        capture_output=True, text=True, encoding="utf-8")
+    assert proc.returncode == 2
+    assert "ứng viên" in proc.stderr
 
 
 def test_is_bold_khong_nham_val_0_va_bcs():

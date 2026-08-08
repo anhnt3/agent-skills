@@ -15,9 +15,15 @@ dùng để suy thứ tự; nó KHÔNG được thêm hay bớt item, KHÔNG đ�
 
 `$ARGUMENTS`
 
-Kỳ vọng: **đường dẫn thư mục BRD**, mặc định `docs/brd` khi để trống.
-Thư mục không tồn tại, hoặc không có `brd.manifest.yml` → **hỏi lại**, KHÔNG tự đi tìm
-thư mục khác trong repo.
+Kỳ vọng: **đường dẫn thư mục BRD tương đối từ gốc repo** (vd `docs/brd`), mặc định `docs/brd`
+khi để trống. Thư mục không tồn tại, hoặc không có `brd.manifest.yml` → **hỏi lại**, KHÔNG tự
+đi tìm thư mục khác trong repo.
+
+Đường dẫn **tuyệt đối** (`C:/proj/docs/brd`, `/home/…`) hoặc có `../` → quy đổi về tương đối
+gốc repo trước khi dùng; không quy đổi được (nằm ngoài repo) → **hỏi lại**, KHÔNG chạy tiếp.
+Lý do: `--brd-rel` ở bước 7 là **tiền tố chuỗi** của trường `Nguồn`, mà `Nguồn` luôn viết
+tương đối gốc repo — hai thứ lệch nhau thì mọi item báo "không có node BRD nào ở vị trí đó",
+thông điệp lỗi không lộ nguyên nhân thật.
 
 ## Quy trình (bắt buộc theo thứ tự)
 
@@ -29,6 +35,24 @@ Thư mục làm việc tạm: `.specify/tmp/roadmap-brd/`.
 `docs/roadmap.md` **đã tồn tại** → **DỪNG NGAY**. In đường dẫn file cũ và nói rõ: lệnh này
 KHÔNG merge vào roadmap có sẵn; muốn sinh lại thì người dùng tự đổi tên hoặc xoá file cũ.
 Không hỏi "có muốn ghi đè không" — không ghi đè là quyết định đã chốt.
+
+**Ngoại lệ duy nhất — nối lại phiên dở dang**: chỉ khi `.specify/tmp/roadmap-brd/decisions.json`
+tồn tại và thoả **cả ba**:
+
+1. `"brd_dir"` khớp thư mục BRD đang xử lý,
+2. `"interview2_confirmed": true`,
+3. **`"completed"` vắng mặt hoặc `false`** — đây là điều kiện phân biệt "bản nháp verify chưa
+   qua" với "roadmap đã hoàn tất từ lần trước". Bước 7 ghi `"completed": true` ngay khi verify
+   exit 0; thiếu điều kiện này thì mọi lần gọi lại sau một lần chạy thành công đều bị nhận nhầm
+   là nối phiên và **ghi đè roadmap sản xuất**, xoá `Trạng thái` + `Nợ phát sinh` team đã tích luỹ.
+
+Thiếu bất kỳ điều nào trong ba → áp luật dừng ở trên, KHÔNG tự suy diễn, KHÔNG "chắc là nháp".
+
+Khi ngoại lệ áp dụng: nói rõ đang nối lại phiên, **bỏ qua bước 1–5**, đọc `decisions.json` lấy
+phân loại + wave đã chốt, rồi **sửa tại chỗ `docs/roadmap.md` đang có** đúng các lỗi `verify`
+báo — **KHÔNG sinh lại file từ khung**, KHÔNG đụng dòng/khối đang đúng (chúng có thể đã được
+người dùng sửa tay giữa hai phiên). Chỉ dùng bước 6 làm **luật định dạng** cho phần đang sửa.
+KHÔNG hỏi lại người dùng những gì `decisions.json` đã ghi.
 
 ### 1. Trích outline
 
@@ -57,6 +81,10 @@ tóm tắt đã cho biết cả hai danh sách đều rỗng.
 Tìm trong codebase: auth/đăng nhập, phân quyền, entity/service dùng chung, module đã dựng.
 Ghi nhận cái gì **đã có** để biết cái gì chặn cái gì.
 
+Quét **có trần**: `Glob`/`Grep` theo tên (route, model/entity, `auth`, `permission`, `role`) và
+đọc tối đa vài file thật sự cần. Mục tiêu chỉ là biết cái gì đã tồn tại — KHÔNG đọc cả repo,
+đây là bước dễ vỡ context nhất của lệnh.
+
 - Không có codebase (repo mới, chỉ có `docs/`) → **bỏ qua bước này và nói thẳng**
   "chưa có codebase, phụ thuộc suy hoàn toàn từ BRD". KHÔNG hỏi vòng vo, KHÔNG dừng.
 - **CẤM** dùng codebase để thêm item, bớt item, hay đặt cột `Trạng thái`. Màn có trong code
@@ -68,11 +96,20 @@ Mỗi node trong `outline.json` (bỏ qua node `kind: root`) rơi vào đúng m�
 
 - **là màn** → một item roadmap
 - **chứa k màn** → tách thành k item, mỗi item trỏ về cùng file kèm `#heading` khác nhau
-- **không phải màn** → ghi vào `decisions.json` kèm **lý do cụ thể** (vd "từ điển thuật ngữ",
-  "yêu cầu phi chức năng", "mục giới thiệu phạm vi")
+- **không phải màn** → ghi vào `decisions.json` kèm **lý do cụ thể**
+
+**Lý do loại phải gắn vào nội dung node đó**, nêu bằng chứng đọc được từ outline (heading, `head`,
+`signals`) — vd "chỉ là bảng thuật ngữ 2 cột, `signals.action_words`=0, không nút thao tác".
+CẤM dán một nhãn chung ("không phải màn", "phi chức năng") cho nhiều node: `verify` cảnh báo khi
+≥3 node dùng cùng một lý do, và khi loại quá nửa số node — hai cảnh báo đó phải đọc là "đã phân
+loại ẩu", không phải nhiễu để bỏ qua.
 
 Căn cứ: `signals` (bảng trường, nút thao tác, phân quyền, ảnh), `headings`, `head`, `chars`.
 Outline chưa đủ để quyết một node → **`Read` thẳng file đó** theo `path`. CẤM đoán.
+
+Đã có `.specify/tmp/roadmap-brd/decisions.json` với `"brd_dir"` khớp (phiên trước đứt giữa
+Interview #1) → đọc lên làm **điểm xuất phát**, chỉ bổ sung/sửa phần khác, đừng phân loại lại
+từ đầu rồi bắt người dùng duyệt lại những gì đã duyệt.
 
 Ghi `.specify/tmp/roadmap-brd/decisions.json`:
 
@@ -87,7 +124,17 @@ Ghi `.specify/tmp/roadmap-brd/decisions.json`:
 
 ### 4. Interview #1 — chốt phân loại
 
-Trình cho người dùng **ĐẦY ĐỦ, không cắt bớt** hai bảng:
+Mở đầu bằng **dòng đối soát bắt buộc**, số lấy thẳng từ `outline.json` / `decisions.json`:
+
+```
+Tổng node (bỏ root): N — là màn: A — tách: B (→ C item) — loại: D
+```
+
+**A + B + D phải bằng N.** Không khớp → phân loại đang sót hoặc trùng: quay lại bước 3 sửa,
+**KHÔNG hỏi người dùng khi số chưa khớp**. Dòng này là mỏ neo để người dùng biết bảng dưới có
+bị cắt hay không — thiếu nó thì cả hai bảng đều không kiểm chứng được.
+
+Rồi trình **ĐẦY ĐỦ, không cắt bớt** hai bảng (số dòng bảng 1 phải đúng bằng D, bảng 2 đúng bằng B):
 
 1. **Node bị loại** — mỗi dòng: id, tiêu đề, lý do loại.
 2. **Node bị tách** — mỗi dòng: id, tiêu đề, tách thành mấy item, tên từng item.
@@ -109,15 +156,40 @@ Xếp build theo phụ thuộc:
 Trình bảng đề xuất kèm **lý do thứ tự** (cái gì chặn cái gì), nêu rõ căn cứ đến từ BRD hay từ
 codebase. Thứ tự tài liệu BRD chỉ dùng để phá hoà khi hai item không ràng buộc nhau.
 
-Rồi hỏi qua **AskUserQuestion**: **ranh giới wave** và **các cặp thứ tự có ràng buộc phụ thuộc**
-là quyết định trọng yếu — phải hỏi. Vị trí tương đối trong cùng một wave đã nằm trong bảng đề
-xuất — người dùng chỉnh trực tiếp, không tốn mỗi item một lượt hỏi.
+Rồi hỏi qua **AskUserQuestion**: **ranh giới wave** và **các cặp thứ tự có ràng buộc phụ thuộc
+mà bạn không chắc** là quyết định trọng yếu — phải hỏi. Cặp hiển nhiên (auth chặn mọi màn cần
+đăng nhập, danh mục chặn màn tham chiếu nó) đưa vào bảng đề xuất, KHÔNG tốn một lượt hỏi. Vị trí
+tương đối trong cùng một wave cũng vậy — người dùng chỉnh trực tiếp trên bảng.
+
+**Trần: tối đa 3 lượt AskUserQuestion ở bước này** (mỗi lượt tới 4 câu). Còn điểm chưa chắc sau
+3 lượt → ghi thẳng vào bảng đề xuất phương án của bạn kèm chữ "chưa chốt, sửa trực tiếp nếu sai",
+KHÔNG hỏi tiếp. Hỏi tràn lan gây fatigue, người dùng trả lời ẩu còn hại hơn.
 
 Mỗi câu 2–4 option kèm lý do + trade-off; `(Recommended)` CHỈ khi có căn cứ và nêu căn cứ ngay
 trong option. **Thứ tự là quyết định của người dùng** — chờ **phản hồi thật**; chưa có phản hồi
 → DỪNG, **KHÔNG ghi file**.
 
+Có phản hồi rồi → **ghi ngay `decisions.json` trước khi sang bước 6**, bổ sung hai khoá:
+
+```json
+{
+  "brd_dir": "docs/brd",
+  "excluded": [ … ],
+  "waves": [
+    {"rm_id": "RM-001", "man": "Đăng nhập", "wave": 0, "deps": [], "nguon": "docs/brd/01-chung/02-dang-nhap.md"}
+  ],
+  "interview2_confirmed": true
+}
+```
+
+Đây là **nơi bàn giao vật lý** duy nhất của lệnh: nếu bước 7 chấm không qua và phiên đứt, bước 0
+đọc đúng file này để nối lại mà không bắt người dùng trả lời lại hai vòng interview.
+
 ### 6. Ghi `docs/roadmap.md` theo khung CỐ ĐỊNH
+
+Bước này có hai nhánh: **chạy mới** → sinh file từ khung theo luật dưới. **Nối lại phiên**
+(ngoại lệ bước 0) → KHÔNG sinh lại, chỉ sửa tại chỗ file đang có; các luật dưới vẫn là chuẩn
+định dạng cho phần bạn sửa.
 
 **Dùng khung cố định, KHÔNG tự chế cấu trúc:**
 
@@ -127,10 +199,21 @@ trong option. **Thứ tự là quyết định của người dùng** — chờ 
 - Copy đúng cấu trúc khung (bảng tổng + khối chi tiết mỗi item), chỉ **điền** placeholder `[…]`,
   thay `[DATE]` bằng ngày hiện tại. Giữ nguyên tên cột, thứ tự mục, format.
 - **ID ổn định** `RM-001`, `RM-002`, … cấp tăng dần theo thứ tự trong bảng tổng, khớp giữa bảng
-  tổng và khối chi tiết.
+  tổng và khối chi tiết. Định dạng **cứng**: `RM-` + **đúng 3 chữ số**. `RM-1` hay `RM-0012`
+  không được `verify` nhận là item nào cả — dòng bị bỏ qua im lặng rồi gate đổ lỗi "node chưa có
+  item nào trỏ tới" cho toàn bộ BRD, che mất nguyên nhân thật. Quá 999 item thì dừng, báo người dùng.
+- **Cột `Trạng thái`** của MỌI item: `chưa`. Roadmap này mới sinh — không có item nào "đang"/"xong",
+  kể cả khi codebase đã có màn đó (`verify` cảnh báo nếu khác).
 - **Trường `Nguồn`** của mỗi item: đường dẫn tương đối từ gốc repo tới file BRD nguồn
   (`docs/brd/03-quan-ly/05-danh-sach.md`), thêm `#<tiêu đề mục>` khi nhiều item cùng trỏ về một
-  file. Node không có file riêng (`inline`) thì trỏ vào thư mục của nó (`docs/brd/03-quan-ly/`).
+  file. Node không có file riêng (`inline`) thì trỏ vào thư mục của nó (`docs/brd/03-quan-ly/`);
+  khi một node `inline` tách thành nhiều item, mỗi item vẫn trỏ vào thư mục đó nhưng thêm
+  `#<tiêu đề mục>` để phân biệt — `verify` chấp nhận anchor trên `Nguồn` thư mục và không đối
+  chiếu heading (không có file để đối chiếu), nên anchor ở đây chỉ là nhãn cho người đọc.
+  **Chỉ trỏ vào file/thư mục có trong `brd.manifest.yml`**: file BA thêm tay sau import
+  (`files_without_node` ở bước 1) không có node nào ứng với nó → `verify` báo lỗi. Muốn đưa vào
+  roadmap thì chạy lại `/speckit.dft-speckit.brd-import` cho manifest biết file đó, đừng cố trỏ
+  `Nguồn` vào nó rồi gỡ item khi gate đỏ.
   **Cẩn thận**: `verify` chấm phủ theo *vị trí* (file/thư mục), không theo từng node. Với cây
   BRD do `brd-import` sinh ra, mỗi thư mục `inline` chỉ ứng với đúng một node nên việc này
   thường không gây lệch — nhưng đừng dựa vào đó: nếu một thư mục chứa nhiều màn thật (vd sau khi
@@ -166,6 +249,12 @@ python .specify/extensions/dft-speckit/scripts/brd_roadmap.py verify docs/roadma
   danh sách lỗi còn lại nguyên văn, KHÔNG tự loop tiếp hay tự chế cách khác để né gate.
 - Exit 2 → lỗi thao tác (sai đường dẫn, JSON hỏng). In nguyên thông điệp, DỪNG.
 - **Liệt kê đầy đủ `warnings`** cho người dùng, kể cả khi `ok: true`.
+- Sửa lỗi `verify` **không được đổi wave/phụ thuộc người dùng đã chốt** trong `waves` của
+  `decisions.json`. Muốn sửa "Wave nghịch" mà buộc phải dời một cặp đã chốt → quay lại bước 5
+  hỏi người dùng, KHÔNG tự dời rồi im lặng: gate xanh nhưng quyết định của người dùng bị nuốt.
+
+Exit 0 rồi → **ghi `"completed": true` vào `decisions.json`** ngay. Đây là dấu đóng phiên; thiếu
+nó thì lần gọi lệnh sau sẽ tưởng roadmap đã hoàn tất là bản nháp và ghi đè.
 
 Kết thúc: báo số item, thứ tự wave, danh sách node đã loại kèm lý do, rồi nhắc
 `/speckit.dft-speckit.domain-design <module>` và `/speckit.specify <ID>` để bắt đầu từng mục.
@@ -185,6 +274,8 @@ chấm lại, xoá được khi đã hài lòng với `docs/roadmap.md`.
   placeholder chưa điền trong fence code / dòng `<!-- -->` cho biến mất khỏi lượt quét → che lỗi.
 - **Gộp nhiều màn thật vào chung một `Nguồn` thư mục rồi coi là đã phủ hết** → `verify` chấm
   phủ theo vị trí nên gate có thể vẫn xanh, nhưng những màn đó chưa có item riêng của mình.
+- **Loại hàng loạt node bằng một nhãn chung** ("không phải màn" dán cho 20 node) → gate vẫn xanh
+  vì `reason` không rỗng, nhưng hàng chục màn thật biến mất. Lý do phải gắn nội dung từng node.
 - **Nuốt `warnings` cho gọn báo cáo** → người dùng mất thông tin cần để quyết.
 - **Đọc toàn văn mọi file BRD** → vỡ context rồi bỏ sót mục cuối. Đọc `outline.json` trước,
   chỉ `Read` thêm file nào thật sự chưa quyết được.
