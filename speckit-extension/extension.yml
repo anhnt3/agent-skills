@@ -27,7 +27,7 @@ provides:
 
     - name: "speckit.dft-speckit.domain-design"
       file: "commands/domain-design.md"
-      description: "Thiết kế/cập nhật domain tổng thể cho một hoặc nhiều module trong roadmap (gom cả danh sách vào 1 doc) — rút entity/FK/enum/rule, ghi docs/domain/<module>.md làm nền cho /speckit.specify từng màn."
+      description: "Thiết kế/cập nhật domain tổng thể cho một CỤM CHỨC NĂNG chỉ định bằng danh sách RM-xxx trong roadmap (validate cứng: chỉ nhận RM-xxx hoặc khoảng RM-a..RM-b, KHÔNG nhận tên module và không tự nở module thành RM; 1 doc = 1 bounded context vì entity không map 1-1 với màn) — rút entity/FK/enum/rule từ BRD (docs/brd/, lần theo trường Nguồn của roadmap) và codebase, ghi docs/domain/<cụm>.md làm nền model cho /speckit.specify từng RM. RM đã design lần trước thì MỞ RỘNG doc đang phủ, không sinh doc trùng (registry `Phủ RM` + đối chiếu entity §1 của mọi doc); `Phủ module` khai rõ đầy đủ hay một phần. Mỏ neo N/E + luật không entity nào gánh quá 1/2 số RM chống doc rỗng ruột; no-clobber Câu hỏi mở + quyết định đã chốt. Cần roadmap làm đầu vào; chạy được cả khi chưa có dòng code nào."
 
     - name: "speckit.dft-speckit.init-agents"
       file: "commands/init-agents.md"

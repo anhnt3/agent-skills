@@ -18,7 +18,14 @@ Trước khi điền Technical Context / Structure Decision, khảo sát **codeb
   - **`data-model.md`** (Phase 1): ánh xạ mỗi field trong `## Thực thể & Từ điển dữ liệu` → kiểu cột + ràng buộc DB; entity/quan hệ rút từ đó (không mâu thuẫn giới hạn đã khai ở DD).
   Không có các mục DD/FR/màn trong spec (spec tạo bằng lệnh khác) → bỏ qua, không coi là lỗi.
 
-**Domain doc của module** (nếu có, nguồn làm giàu): xác định module — ưu tiên lấy cột `Module` từ item roadmap tương ứng feature nếu dự án có roadmap; không có roadmap/cột đó thì suy luận từ spec/tên feature hoặc đường dẫn codebase, không chắc thì hỏi người dùng. Có module rồi, đọc `docs/domain/<module>.md` (`/`→`-`). Không thấy → thử doc gom theo **prefix** (segment cha, vd `system/admins` → `docs/domain/system.md`). Dùng entity/FK/enum/rule ở đó làm **nguồn chuẩn** khi thiết kế data-model / điền Technical Context — KHÔNG mâu thuẫn doc, KHÔNG đẻ lại entity framework đã cung cấp (doc đã đánh dấu "dùng lại framework"). Thiết kế lòi ra thiếu/sai so với doc → cập nhật ngược `docs/domain/<module>.md` (living doc).
+**Domain doc** (nguồn làm giàu, **KHÔNG bắt buộc**): tìm bằng **quét nội dung `docs/domain/`, KHÔNG suy theo tên file** — tên file là tên cụm do người đặt, không suy được từ module/feature.
+
+1. Không có thư mục `docs/domain/` hoặc thư mục rỗng → **đi tiếp bình thường**, không hỏi, không coi là lỗi.
+2. Có → liệt kê mọi `*.md`, đọc **header + mục §1 (bảng thực thể)** của từng file. Chấm liên quan theo thứ tự tin cậy: (a) RM-ID của feature nằm trong dòng `Phủ RM` hoặc cột `Dùng ở (RM)` — **khớp chắc**; (b) module của item roadmap nằm trong dòng `Phủ module` — khớp khá; (c) entity/chủ đề trong doc trùng phạm vi feature — khớp yếu, chỉ dùng khi (a) và (b) đều rỗng. Nêu **bằng chứng** (dòng nào khớp), không kết luận bằng cảm giác.
+3. **Xác nhận với người dùng trước khi dùng** (AskUserQuestion, gộp cùng lượt hỏi khác nếu có): trình file đã chọn + bằng chứng, cho phép **chỉ định lại file khác** hoặc **nói không dùng**. Nhiều file cùng khớp → liệt kê hết, cho chọn (có thể chọn nhiều). Không file nào khớp hoặc không chắc → **hỏi thẳng** "dự án có domain doc cho phần này không, ở đâu?" — người dùng nói không có → đi tiếp, không hỏi lại.
+4. Đã xác nhận → dùng entity/FK/enum/rule ở đó làm **nguồn chuẩn** khi thiết kế data-model / điền Technical Context; KHÔNG mâu thuẫn doc, KHÔNG đẻ lại entity framework đã cung cấp (doc đánh dấu "dùng lại framework"). Thiết kế lòi ra thiếu/sai so với doc → cập nhật ngược **đúng file đó** (living doc).
+
+**CẤM**: đoán theo tên file; tự chọn khi có ≥2 ứng viên; coi việc không có domain doc là lỗi hay điều kiện chặn.
 
 Cổng Constitution Check của plan-template mặc định PHẢI pass trước Phase 0. Vi phạm chỉ được chấp nhận khi có biện minh ghi trong bảng Complexity Tracking (theo luật core); vi phạm không biện minh được → sửa thiết kế cho hết vi phạm, không đi tiếp.
 

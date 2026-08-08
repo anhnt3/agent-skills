@@ -304,7 +304,8 @@ Exit 0 rồi → **ghi `"completed": true` vào `decisions.json`** ngay. Đây l
 nó thì lần gọi lệnh sau sẽ tưởng roadmap đã hoàn tất là bản nháp và ghi đè.
 
 Kết thúc: báo số item, thứ tự wave, danh sách node đã loại kèm lý do, rồi nhắc
-`/speckit.dft-speckit.domain-design <module>` và `/speckit.specify <ID>` để bắt đầu từng mục.
+`/speckit.dft-speckit.domain-design <RM-ID hoặc danh sách RM>` (dựng model chung cho một cụm chức năng
+liên quan nhau trước) rồi `/speckit.specify <RM-ID>` cho từng màn.
 
 Nhắc dọn dẹp: `.specify/tmp/roadmap-brd/` giữ `outline.json` và `decisions.json` — cần cho lần
 chấm lại, xoá được khi đã hài lòng với `docs/roadmap.md`.

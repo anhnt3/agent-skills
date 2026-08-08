@@ -38,4 +38,4 @@ Hỏi cái đáng hỏi, không rải đều: **ranh giới wave, thứ tự có
 - File cũ: mọi item cũ giữ **nguyên giá trị `Trạng thái` trước đó** (kể cả `đang`/`xong` — không bị reset về `chưa` do copy khung) và mọi `Nợ phát sinh` cũ còn nguyên.
 - Không còn placeholder `[…]` sót lại.
 
-Kết thúc: báo số item, thứ tự wave, và nhắc `/speckit.dft-speckit.domain-design <module>` rồi `/speckit.specify <ID>` để bắt đầu từng mục.
+Kết thúc: báo số item, thứ tự wave, và nhắc `/speckit.dft-speckit.domain-design <RM-ID hoặc danh sách RM>` (dựng model chung cho một cụm chức năng liên quan nhau trước) rồi `/speckit.specify <RM-ID>` cho từng màn.
