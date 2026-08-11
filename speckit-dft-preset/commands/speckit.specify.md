@@ -20,16 +20,33 @@ Trước khi chạy quy trình specify core bên dưới, áp dụng preset **BA
    - *Trọng yếu* (PHẢI phỏng vấn từng câu, cấm đề xuất thay): mọi quyết định đụng **dữ liệu / quyền / luồng nghiệp vụ** — ai được tạo/sửa/xóa/duyệt, trạng thái + chuyển trạng thái, công thức/quy tắc tính, phạm vi use-case, chủ dữ liệu, danh sách màn khi chưa có màn nào.
    - *Thứ yếu* (đề xuất rồi duyệt gộp): chi tiết đổi được về sau mà không đụng dữ liệu/quyền/luồng — sắp xếp/lọc mặc định, nội dung empty-state, wording thông báo, bố cục hiển thị. Nhánh thứ yếu KHÔNG tốn lượt hỏi riêng: tự đề xuất giá trị kèm căn cứ, ghi vào sổ trạng thái `💡 đề xuất`; toàn bộ dòng `💡` được duyệt gộp trong recap cuối giai đoạn (Sổ theo dõi §8).
    - Không chắc thuộc tầng nào → coi là **trọng yếu**, hỏi.
-4. **`(Recommended)` phải có căn cứ**: chỉ đánh `(Recommended)` khi khảo sát GĐ1 / domain doc / roadmap cho căn cứ cụ thể, và nêu căn cứ đó ngay trong mô tả option. Quyết định thuần nghiệp vụ mà bạn không có căn cứ → KHÔNG đánh Recommended cho bất kỳ option nào — gợi ý không căn cứ là dẫn người dùng chốt ý của bạn thay vì ý của họ.
-5. **Nguồn làm giàu là tùy chọn, phỏng vấn thì không.** Roadmap, domain doc, hiến chương, `CLAUDE.md` — thiếu cái nào thì chỉ bỏ những bước gắn riêng với cái đó, mọi giai đoạn còn lại chạy đủ. CẤM lấy "thiếu tài liệu" làm lý do rút gọn phỏng vấn. (Luật này nêu một lần ở đây; các giai đoạn dưới không nhắc lại.)
+4. **`(Recommended)` phải có căn cứ**: chỉ đánh `(Recommended)` khi khảo sát GĐ1 / BRD / domain doc / roadmap cho căn cứ cụ thể, và nêu căn cứ đó ngay trong mô tả option. Quyết định thuần nghiệp vụ mà bạn không có căn cứ → KHÔNG đánh Recommended cho bất kỳ option nào — gợi ý không căn cứ là dẫn người dùng chốt ý của bạn thay vì ý của họ.
+5. **Nguồn làm giàu là tùy chọn, phỏng vấn thì không.** Roadmap, BRD, domain doc, hiến chương, `CLAUDE.md` — thiếu cái nào thì chỉ bỏ những bước gắn riêng với cái đó, mọi giai đoạn còn lại chạy đủ. CẤM lấy "thiếu tài liệu" làm lý do rút gọn phỏng vấn. (Luật này nêu một lần ở đây; các giai đoạn dưới không nhắc lại.)
 6. **Không tự phê duyệt.** Chỉ chuyển giai đoạn sau khi nhận tin nhắn xác nhận rõ ràng từ người dùng — KHÔNG tự suy diễn "người dùng đã đồng ý". Thứ đưa ra xin xác nhận là **nội dung** (recap quyết định + bảng đề xuất, theo Sổ theo dõi §8), không phải chỉ bảng trạng thái quy trình.
 7. **Không có người trả lời thật → HALT.** Lệnh này là phỏng vấn; chạy trong ngữ cảnh không có người trả lời trực tiếp (subagent/CI/autopilot, hoặc AskUserQuestion không khả dụng/không nhận được phản hồi thật) thì **CẤM** tự trả lời thay, tự đoán đáp án, hay tự vượt cổng xác nhận. Thay vào đó: ghi trạng thái hiện tại vào file sổ (Sổ theo dõi §7 — đang ở giai đoạn nào, các câu đang chờ hỏi; nếu còn ở GĐ1 chưa được phép tạo file sổ thì chỉ báo trạng thái, không ghi file) rồi **DỪNG**, báo rõ lệnh cần một phiên có người trả lời. Chạy lại sau (có người) → đọc file sổ, tiếp tục đúng từ điểm dừng.
 
 ## Giai đoạn 1 — Khảo sát (đọc, không đoán)
 
-Tự tìm trong repo, KHÔNG giả định đường dẫn cố định. Với **nguồn làm giàu** (roadmap, domain doc, hiến chương): tìm hợp lý không thấy → hỏi **một lần gộp** ("dự án có roadmap/domain doc/hiến chương không, ở đâu?"); người dùng xác nhận không có → áp Bất biến #5, không hỏi lại. Với thứ **bắt buộc định vị** (codebase liên quan chức năng): không tìm ra thì **hỏi lại** vị trí, đừng đoán. **GĐ1 chưa ghi/sửa bất kỳ file nào** — mọi mutation (roadmap, file sổ) chỉ xảy ra sau xác nhận cuối GĐ1, để phiên hủy giữa chừng không để lại vết bẩn.
+Tự tìm trong repo, KHÔNG giả định đường dẫn cố định. Với **nguồn làm giàu** (roadmap, BRD, domain doc, hiến chương): tìm hợp lý không thấy → hỏi **một lần gộp** ("dự án có roadmap/domain doc/hiến chương không, ở đâu?"); người dùng xác nhận không có → áp Bất biến #5, không hỏi lại. Với thứ **bắt buộc định vị** (codebase liên quan chức năng): không tìm ra thì **hỏi lại** vị trí, đừng đoán. **GĐ1 chưa ghi/sửa bất kỳ file nào** — mọi mutation (roadmap, file sổ) chỉ xảy ra sau xác nhận cuối GĐ1, để phiên hủy giữa chừng không để lại vết bẩn.
 
 - **Roadmap dự án** (vd `docs/roadmap.md`): định vị item ứng với `$ARGUMENTS`. Nếu `$ARGUMENTS` là một **ID roadmap** (vd `RM-001`): đọc đúng item đó, gồm cả mục **`Nợ phát sinh`** (dùng làm input phỏng vấn). CHƯA set trạng thái — việc đó làm sau xác nhận cuối GĐ1.
+- **BRD của chính item** (`docs/brd/…`) — nguồn nghiệp vụ gốc, đọc trước khi phỏng vấn, KHÔNG bắt buộc. Định vị DUY NHẤT qua trường **`Nguồn`** trong khối chi tiết của item roadmap (đường dẫn tương đối gốc repo). CẤM: đoán theo tên file; dùng link ô `ID` của bảng tổng (hệ quy chiếu khác — ghép `docs/` vào sẽ ra đường dẫn không tồn tại).
+  - `Nguồn` = `docs/brd/….md[#mục]` → Read đúng file/mục đó.
+  - `Nguồn` = thư mục → đọc các `.md` ngay trong đó, KHÔNG đệ quy thư mục con.
+  - `Nguồn` = `N/A`/đường dẫn code, hoặc không có roadmap / không có `docs/brd/` → bỏ bước này (Bất biến #5).
+  - `Nguồn` không tồn tại trên đĩa → hỏi lại đường dẫn (gộp lượt GĐ1); CẤM đoán file gần giống.
+  - Rút: bảng trường · trạng thái/giá trị hợp lệ · quy tắc · phân quyền · luồng use-case · thông báo. Mỗi thứ kèm cite `docs/brd/<đường-dẫn>.md#<mục>`; không cite được → không được làm căn cứ `✅` (§3(b)) hay `(Recommended)` (Bất biến #4).
+  - Có cả domain doc: model theo domain doc; use-case/thông báo/quyền chi tiết theo BRD; hai bên lệch → trình cả hai, người dùng chọn, CẤM tự chọn.
+
+  **Phân loại mọi điều BRD nói** — BRD rút ngắn *số lượt hỏi*, không rút ngắn *phạm vi hỏi*:
+
+  | Trạng thái BRD | Xử lý | Sau khi chốt |
+  |---|---|---|
+  | Rõ + không mâu thuẫn code/domain doc | fact (Bất biến #2) — vào bảng **`BRD đã chốt sẵn`** (nhánh · nội dung · cite), duyệt gộp một lượt ở recap GĐ1 → nhánh GĐ2/GĐ3 tương ứng `✅`, ghi chú `BRD <cite>` | — |
+  | Mơ hồ / thiếu / lệch | quyết định — hỏi ở GĐ2–GĐ3, nội dung BRD làm option `(Recommended)` kèm cite | append dòng `Cần ghi ngược BRD` |
+  | Im lặng | hỏi như thường — im lặng ≠ `N/A` | append dòng `Cần ghi ngược BRD` |
+
+  CẤM lấy "BRD đã mô tả rồi" làm cớ bỏ mục sàn GĐ2/GĐ3, bỏ neo `K`, hay cắt dòng sổ — BRD là văn bản BA viết trước, không phải quyết định người dùng đã chốt, và thường bỏ trống đúng các mục sàn GĐ3 (hệ quả, vi phạm, vòng đời, job nền).
 - **Domain doc** — **nguồn model chuẩn khi có, nhưng KHÔNG bắt buộc**. Tìm bằng **quét nội dung `docs/domain/`, KHÔNG suy theo tên file** (tên file là tên cụm do người đặt, không suy được từ module/chức năng):
   1. Không có thư mục `docs/domain/` hoặc rỗng → đi tiếp bình thường, không coi là thiếu sót. Có thể **gợi ý một lần** dựng domain doc trước cho đỡ vênh (`domain-design <RM-ID này + các RM liên quan chia sẻ entity>` nếu dự án cài extension — lệnh đó nhận danh sách RM, không nhận tên module), người dùng không muốn thì thôi, không nhắc lại.
   2. Có → liệt kê mọi `*.md`, đọc **header + §1 (bảng thực thể)** từng file. Chấm liên quan theo thứ tự tin cậy: (a) RM-ID đang specify nằm trong dòng `Phủ RM` hoặc cột `Dùng ở (RM)` — **khớp chắc**; (b) module của item roadmap nằm trong dòng `Phủ module` — khớp khá; (c) entity/chủ đề trùng phạm vi chức năng — khớp yếu, chỉ dùng khi (a) và (b) đều rỗng. Luôn nêu **bằng chứng** (dòng nào khớp).
@@ -52,7 +69,7 @@ Với mỗi liên hệ tìm thấy: đối chiếu item roadmap tương ứng; p
 
 **Nợ phát sinh sang chức năng khác**: trong suốt khảo sát/phỏng vấn, phát hiện việc thuộc **chức năng/màn khác** (sẽ làm sau) → ghi bullet vào mục `Nợ chờ ghi` của sổ. Toàn bộ `Nợ chờ ghi` được append vào `Nợ phát sinh` của item tương ứng trong `docs/roadmap.md` **một lượt** ở "Sau khi ghi spec" — không sửa roadmap rải rác giữa phỏng vấn.
 
-**Kết GĐ1 — xác nhận rồi mới mutation**: tóm tắt khảo sát kèm dấu nguồn `[từ khảo sát]`/`[suy luận]`/`[cần bạn quyết]` + kết quả ba câu ranh giới → **xin xác nhận tường minh**. Khi có xác nhận: (a) set `Trạng thái = đang` cho item roadmap (nếu định vị được), (b) tạo file sổ (Sổ theo dõi §7, gom cả `Nợ chờ ghi` phát hiện ở GĐ1), rồi vào GĐ2.
+**Kết GĐ1 — xác nhận rồi mới mutation**: tóm tắt khảo sát kèm dấu nguồn `[từ khảo sát]`/`[suy luận]`/`[cần bạn quyết]` + kết quả ba câu ranh giới + **bảng `BRD đã chốt sẵn`** (nếu item có BRD) → **xin xác nhận tường minh**. Khi có xác nhận: (a) set `Trạng thái = đang` cho item roadmap (nếu định vị được), (b) tạo file sổ (Sổ theo dõi §7, gom cả `Nợ chờ ghi` phát hiện ở GĐ1), rồi vào GĐ2.
 
 ## Sổ theo dõi vét cạn (BẮT BUỘC — áp cho GĐ2, GĐ3, GĐ4)
 
@@ -63,11 +80,11 @@ Cơ chế ép phủ hết bằng phép đếm + hồ sơ bền ngoài hội tho�
    - GĐ3: `Bước A có P dòng; bổ sung Q dòng từ sàn → bảng cuối có P+Q dòng`. P là danh sách tự sinh (không artifact nào liệt kê nghiệp vụ nền) nên KHÔNG mạnh như neo K/N — bù bằng cột `Nguồn` bắt buộc từng dòng (xem GĐ3).
    - GĐ4: `Hiến chương có N nguyên tắc → bảng GĐ4 phải có đúng N dòng` (N đếm thật trong file).
 2. **Bảng**: `| # | Nhánh | Tầng | Trạng thái | Ghi chú |`. Tầng ∈ `trọng yếu` · `thứ yếu` (theo Bất biến #3). Trạng thái ∈ `⏳ chờ` · `💡 đề xuất` (chỉ cho nhánh thứ yếu; Ghi chú chứa giá trị đề xuất + căn cứ) · `✅ đã chốt` · `N/A vì <lý do cụ thể gắn feature>`. (GĐ3 thêm cột `Nguồn`; GĐ4 dùng bộ trạng thái riêng, xem GĐ4.)
-3. **Điều kiện đánh `✅`**: (a) nhánh đã có ≥1 câu AskUserQuestion nhận được phản hồi; HOẶC (b) suy trực tiếp từ fact tra cứu (ghi rõ nguồn); HOẶC (c) dòng `💡` đã qua duyệt gộp ở recap cuối giai đoạn (§8). Cấm tự đánh `✅` ngoài ba đường này.
+3. **Điều kiện đánh `✅`**: (a) nhánh đã có ≥1 câu AskUserQuestion nhận được phản hồi; HOẶC (b) suy trực tiếp từ fact tra cứu (ghi rõ nguồn) — gồm dòng lấy từ BRD **đã** qua bảng `BRD đã chốt sẵn` ở GĐ1, Ghi chú phải mang cite `docs/brd/…md#<mục>`; HOẶC (c) dòng `💡` đã qua duyệt gộp ở recap cuối giai đoạn (§8). Cấm tự đánh `✅` ngoài ba đường này — đọc thấy trong BRD nhưng chưa qua bảng duyệt GĐ1 thì **chưa** được `✅`.
 4. **`N/A` phải kiểm chứng được**: lý do cụ thể gắn với chính feature này (vd "N/A vì màn chỉ hiển thị tĩnh, không ghi dữ liệu"). CẤM `N/A` trống, chung chung, hoặc `N/A vì đã hỏi ở giai đoạn khác` để né hỏi.
 5. **Sổ SỐNG — phát sinh phải append ngay**: một câu trả lời làm lộ ra nhánh mới thuộc **chính feature này** → thêm ngay một dòng `⏳` TRƯỚC khi đi tiếp. GATE luôn đọc **bảng hiện tại**, không đọc bản chụp đầu giai đoạn. Việc lộ ra thuộc màn/chức năng khác → ghi `Nợ chờ ghi` (theo luật GĐ1), KHÔNG thêm dòng vào sổ.
 6. **In bảng tiết chế**: bảng ĐẦY ĐỦ chỉ in hai chỗ — đầu giai đoạn (ngay sau dòng neo) và tại GATE. Giữa chừng, giải xong hoặc phát sinh nhánh → chỉ in dòng vừa đổi + một dòng đếm `còn X ⏳ · Y 💡 chưa duyệt`. In lại cả bảng sau mỗi câu là nhiễu chôn nội dung hỏi-đáp, không phải kỷ luật.
-7. **File sổ — hồ sơ bền ngoài hội thoại**: tạo `.specify/interviews/<slug>.md` (slug kebab-case không dấu sinh từ `$ARGUMENTS`) ngay sau xác nhận GĐ1. Cập nhật (ghi đè toàn bộ) **sau mỗi lượt AskUserQuestion có quyết định được chốt**, vào cuối mỗi giai đoạn, và ngay trước mỗi lần xin xác nhận — phiên dài chắc chắn bị tóm tắt context, file chỉ cập nhật cuối giai đoạn là hổng đúng đoạn dễ trôi nhất. Nội dung: neo đếm, bảng sổ đầy đủ, recap các quyết định đã chốt, ràng buộc `→ plan` (GĐ4), mục `Nợ chờ ghi`. Đây là **nguồn sự thật**: phiên dài bị tóm tắt context / bảng trôi mất → đọc lại file này, CẤM dựng lại bảng từ trí nhớ.
+7. **File sổ — hồ sơ bền ngoài hội thoại**: tạo `.specify/interviews/<slug>.md` (slug kebab-case không dấu sinh từ `$ARGUMENTS`) ngay sau xác nhận GĐ1. Cập nhật (ghi đè toàn bộ) **sau mỗi lượt AskUserQuestion có quyết định được chốt**, vào cuối mỗi giai đoạn, và ngay trước mỗi lần xin xác nhận — phiên dài chắc chắn bị tóm tắt context, file chỉ cập nhật cuối giai đoạn là hổng đúng đoạn dễ trôi nhất. Nội dung: neo đếm, bảng sổ đầy đủ, recap các quyết định đã chốt, ràng buộc `→ plan` (GĐ4), mục `Nợ chờ ghi`, mục `Cần ghi ngược BRD`. Đây là **nguồn sự thật**: phiên dài bị tóm tắt context / bảng trôi mất → đọc lại file này, CẤM dựng lại bảng từ trí nhớ.
 8. **Recap cuối giai đoạn — thứ người dùng duyệt là NỘI DUNG**: đạt GATE (§9) rồi mới in, theo thứ tự: (a) recap nội dung các quyết định đã chốt, gom theo màn/nhóm nhánh; (b) **bảng duyệt gộp** các dòng `💡` (nhánh + giá trị đề xuất + căn cứ) — người dùng chỉnh dòng nào thì chốt theo bản chỉnh, xác nhận đồng nghĩa duyệt các dòng còn lại; (c) bảng sổ cuối + dòng đối chiếu số đếm. Sau phản hồi của người dùng: chuyển các `💡` thành `✅` (theo giá trị đã chỉnh nếu có), cập nhật file sổ, rồi mới chuyển giai đoạn.
 9. **GATE (không cảm tính) — đủ cả hai mới được in recap xin xác nhận**: (a) **đối chiếu số đếm**: số dòng của bảng ≥ mọi neo đã chốt ở §1; thiếu dòng so với danh sách nguồn → bổ sung `⏳` rồi hỏi, coi như vi phạm gate; (b) **không còn `⏳`**: mọi dòng phải `✅`, `💡` hoặc `N/A`.
 
@@ -75,7 +92,9 @@ Cơ chế ép phủ hết bằng phép đếm + hồ sơ bền ngoài hội tho�
 
 Phỏng vấn hành vi nghiệp vụ của từng màn trong phạm vi. Ngôn ngữ nghiệp vụ, không ngôn ngữ kỹ thuật. Các câu độc lập của cùng một màn gom chung lượt AskUserQuestion (Bất biến #1).
 
-**Chốt `K` trước.** Màn đã tồn tại → đếm từ router/menu (fact). Chưa màn nào tồn tại → hỏi người dùng "chức năng này gồm những màn nào" (quyết định trọng yếu), chốt danh sách rồi mới đếm. **Chức năng không có giao diện** (API nội bộ, job nền, tích hợp, migration nghiệp vụ): xác nhận với người dùng rồi chốt `K = 0` → ghi vào sổ + file sổ, **bỏ GĐ2**, toàn bộ nghiệp vụ dồn về GĐ3 — CẤM nặn ra màn hình cho có. `K ≥ 1` → in dòng neo `K`, in bảng: **mỗi màn một dòng gốc + 4 dòng con `⏳`, mỗi mục sàn (1)–(4) dưới đây một dòng con RIÊNG** — dòng gốc chỉ là tiêu đề nhóm của màn, KHÔNG gộp các mục sàn vào nó; GATE §9 đối chiếu theo neo `≥ 5K` đã chốt ở §1.
+**Chốt `K` trước.** Màn đã tồn tại → đếm từ router/menu (fact). Chưa màn nào tồn tại → hỏi người dùng "chức năng này gồm những màn nào" (quyết định trọng yếu), chốt danh sách rồi mới đếm; item có BRD thì lấy danh sách màn BRD mô tả làm **đề xuất kèm cite** cho câu hỏi đó, **KHÔNG** tự chốt `K` theo BRD — BRD mô tả nghiệp vụ, không phản ánh màn thật trong code. **Chức năng không có giao diện** (API nội bộ, job nền, tích hợp, migration nghiệp vụ): xác nhận với người dùng rồi chốt `K = 0` → ghi vào sổ + file sổ, **bỏ GĐ2**, toàn bộ nghiệp vụ dồn về GĐ3 — CẤM nặn ra màn hình cho có. `K ≥ 1` → in dòng neo `K`, in bảng: **mỗi màn một dòng gốc + 4 dòng con `⏳`, mỗi mục sàn (1)–(4) dưới đây một dòng con RIÊNG** — dòng gốc chỉ là tiêu đề nhóm của màn, KHÔNG gộp các mục sàn vào nó; GATE §9 đối chiếu theo neo `≥ 5K` đã chốt ở §1.
+
+**Có BRD thì điền trước, đừng hỏi lại.** BRD use-case thường đã mô tả nút / trường / cột / luồng của màn: điền sẵn các dòng con theo BRD kèm cite, phân loại theo luật ở GĐ1, rồi chỉ hỏi phần BRD im lặng hoặc nói mơ hồ. Số dòng sổ giữ nguyên `≥ 5K` — điền trước là để **trả lời** dòng đó, không phải để xoá dòng đó.
 
 Với mỗi màn, sàn tối thiểu phải chốt (thêm nhánh khi phát sinh, theo Sổ SỐNG):
 
@@ -101,7 +120,7 @@ Chỉ điền mục con màn thực sự có (màn chỉ đọc → bỏ *Hành 
 
 Giao diện chỉ kể ra thứ **có pixel**. GĐ3 vét phần còn lại: những sự thật nghiệp vụ mà không màn hình nào nhắc bạn hỏi. Giữ ở mức WHAT/WHY — entity/DTO/transaction/migration để `/speckit.plan` lo. (Feature `K = 0`: GĐ3 là giai đoạn phỏng vấn chính, gánh toàn bộ nghiệp vụ.)
 
-**Bước A — tự liệt kê, từng dòng có nguồn gốc.** Từ kết quả GĐ1 (domain doc, ranh giới liên hệ, nợ kỹ thuật, roadmap), GĐ2, cộng với phán đoán BA của bạn, liệt kê **mọi** nhánh nghiệp vụ nền mà chức năng này cần chốt — không giới hạn số nhánh. Mỗi dòng ghi cột `Nguồn`: `domain doc` / `liên hệ GĐ1` / `nợ kỹ thuật` / `GĐ2` / `phán đoán BA`. Vì `P` không có neo ngoài, nguồn gốc từng dòng là thứ thay thế neo — dòng `phán đoán BA` hợp lệ nhưng phải ghi rõ là phán đoán. **In bảng Bước A (P dòng) trước, rồi mới đối chiếu Bước B.**
+**Bước A — tự liệt kê, từng dòng có nguồn gốc.** Từ kết quả GĐ1 (BRD của item, domain doc, ranh giới liên hệ, nợ kỹ thuật, roadmap), GĐ2, cộng với phán đoán BA của bạn, liệt kê **mọi** nhánh nghiệp vụ nền mà chức năng này cần chốt — không giới hạn số nhánh. Mỗi dòng ghi cột `Nguồn`: `BRD <cite>` / `domain doc` / `liên hệ GĐ1` / `nợ kỹ thuật` / `GĐ2` / `phán đoán BA`. Vì `P` không có neo ngoài, nguồn gốc từng dòng là thứ thay thế neo — dòng `phán đoán BA` hợp lệ nhưng phải ghi rõ là phán đoán. **In bảng Bước A (P dòng) trước, rồi mới đối chiếu Bước B.**
 
 **Bước B — lưới an toàn, đối chiếu sàn.** In **bảng đối chiếu đúng 9 dòng** (mỗi mục sàn 1–9 dưới đây một dòng): mỗi dòng hoặc trỏ `#` của dòng Bước A đã phủ mục đó, hoặc thêm dòng `⏳` mới vào sổ (Nguồn: `sàn`). Mục sàn không trỏ được dòng nào VÀ không thêm dòng mới = vi phạm gate; CẤM kết luận "Bước A đã phủ đủ" bằng một câu mà không có bảng 9 dòng này. Sàn là **mức tối thiểu để bắt thiếu, không phải trần**: mọi nhánh tự sinh ở Bước A giữ nguyên, không được cắt cho khớp sàn.
 
@@ -146,7 +165,7 @@ Phần core bên dưới có luật riêng — **preset ghi đè các luật sau
 
 - **Clarification**: Core "Make informed guesses / tối đa 3 [NEEDS CLARIFICATION] / hỏi gộp dạng bảng markdown" → **BỎ.** Đã phỏng vấn cạn kiệt ở GĐ2–GĐ4, nên tới bước Specification Quality Validation của core: vẫn **QUÉT spec thật** tìm marker `[NEEDS CLARIFICATION]` — mỗi marker còn sót → hỏi bằng AskUserQuestion (KHÔNG áp trần 3 marker của core, KHÔNG informed-guess những quyết định thuộc về người dùng theo ranh giới ở Bất biến #2), đưa về **0 marker thật** rồi mới tick mục "No [NEEDS CLARIFICATION] markers remain" — CẤM tick khi chưa quét. KHÔNG bày lại bảng clarification của core; quyết định chưa chốt = quay lại hỏi, không tự đoán. Bỏ luôn phần core "For AI Generation / reasonable defaults (don't ask about these)": các mục đó (auth, retention, performance...) nếu là **quyết định** của người dùng thì vẫn phải hỏi hoặc đề-xuất-rồi-duyệt theo Bất biến #3, không tự mặc định ngầm.
 - **Hook tạo branch — vá xung đột tường minh**: Khi tới mục **"Pre-Execution Checks"** của core bên dưới, với hook `before_specify` (git extension): **KHÔNG emit `EXECUTE_COMMAND`, KHÔNG invoke hook, KHÔNG tạo branch** — kể cả khi core ghi `optional: false`, "Automatic Pre-Hook" hay "MUST invoke". Coi như hook `before_specify` không tồn tại; giữ nguyên branch hiện tại của người dùng. Nếu môi trường bắt buộc chạy hook không bỏ được → dừng, báo người dùng tự tắt hook `before_specify` trong `.specify/extensions.yml`. Vẫn tạo `spec.md` + thư mục `specs/<...>/` + `feature.json` như thường (chúng do lệnh core tạo, không phải hook).
-- **Completion Report / "Done When" của core**: KHÔNG được báo hoàn tất khi chưa làm xong mục **"Sau khi ghi spec"** của preset (nằm DƯỚI phần core bên dưới) — coi các việc trong đó là các dòng bổ sung bắt buộc của "Done When": mục `## Đặc tả màn hình` đã điền đủ (mỗi màn trong phạm vi có một khối `### Màn` khai đủ theo khung, hoặc ghi "Không có màn" nếu `K = 0`), section `Ràng buộc kỹ thuật kế thừa` đã có trong `spec.md`, `interview-notes.md` đã chuyển, nợ roadmap đã ghi.
+- **Completion Report / "Done When" của core**: KHÔNG được báo hoàn tất khi chưa làm xong mục **"Sau khi ghi spec"** của preset (nằm DƯỚI phần core bên dưới) — coi các việc trong đó là các dòng bổ sung bắt buộc của "Done When": mục `## Đặc tả màn hình` đã điền đủ (mỗi màn trong phạm vi có một khối `### Màn` khai đủ theo khung, hoặc ghi "Không có màn" nếu `K = 0`), section `Ràng buộc kỹ thuật kế thừa` đã có trong `spec.md`, `interview-notes.md` đã chuyển, nợ roadmap đã ghi, và mục `Cần ghi ngược BRD` đã xử lý hết (mỗi dòng hoặc đã ghi vào BRD kèm nhật ký, hoặc đã nằm trong danh sách chờ BA duyệt và đã báo người dùng).
 - Mọi phần khác của core (tạo thư mục/feature.json, quality checklist, hooks khác) giữ nguyên.
 
 {CORE_TEMPLATE}
@@ -156,6 +175,61 @@ Phần core bên dưới có luật riêng — **preset ghi đè các luật sau
 - **Bàn giao cho plan (bắt buộc)**: thêm vào cuối `spec.md` section `## Ràng buộc kỹ thuật kế thừa (cho /speckit.plan)` liệt kê nguyên văn các ràng buộc `→ plan` thu được ở GĐ4 (không có ràng buộc nào thì ghi `Không có`). `/speckit.plan` đọc `spec.md` — ràng buộc chỉ nằm trong hội thoại thì phiên chạy plan sau sẽ không bao giờ thấy.
 - **Hồ sơ phỏng vấn**: chuyển file sổ `.specify/interviews/<slug>.md` thành `specs/<thư-mục-feature>/interview-notes.md` (audit trail nằm cạnh spec; xóa file gốc sau khi chuyển).
 - **Ghi nợ roadmap một lượt**: các bullet trong `Nợ chờ ghi` → append vào mục `Nợ phát sinh` của item roadmap tương ứng trong `docs/roadmap.md` (nếu dự án có roadmap); báo lại cho người dùng danh sách nợ đã ghi.
+- **Ghi ngược BRD một lượt**: chạy mục "Ghi ngược BRD" bên dưới (nếu mục `Cần ghi ngược BRD` của sổ không rỗng). Làm **sau** khi `spec.md` đã ghi xong, không làm sớm hơn.
 - Mỗi kết luận trong spec giữ dấu nguồn `[từ khảo sát]`/`[suy luận]`/`[cần bạn quyết]` khi phù hợp.
 - Quyết định wire UI/code hiện có → backend ghi vào requirements theo từng màn (nếu áp dụng).
 - Nội dung spec lấy từ kết quả phỏng vấn GĐ2–GĐ4 (gồm cả các đề xuất thứ yếu đã được duyệt gộp), không suy đoán mới.
+
+## Ghi ngược BRD (chạy sau khi đã ghi xong `spec.md`)
+
+BRD là tài sản của BA: mọi lần chạm phải có tên người chịu trách nhiệm trong log; thay đổi thực chất phải có BA duyệt.
+
+**BỎ QUA mục này** (ghi lý do vào `interview-notes.md`) khi thiếu một trong: (a) item có `Nguồn` trỏ `docs/brd/…`; (b) `Cần ghi ngược BRD` không rỗng; (c) có người trả lời thật (Bất biến #7 — không người = CẤM ghi, để phiên sau).
+
+### Thu thập (trong lúc phỏng vấn)
+
+- [ ] Nhánh loại *mơ hồ/thiếu/lệch* hoặc *im lặng* (bảng phân loại GĐ1) được chốt → append NGAY vào sổ, mục `Cần ghi ngược BRD`, mỗi dòng có ID `WB-<n>`: `WB-n · file BRD · mục · NGUYÊN VĂN đang có (hoặc "im lặng") · nội dung đã chốt · loại`.
+- [ ] CẤM sửa `docs/brd/` trước khi qua Cổng bên dưới (phiên hủy giữa chừng không được để lại vết; câu trả lời sau có thể lật câu trước).
+
+### Phân loại từng dòng
+
+- `bổ sung` = CHỈ thêm chữ, không xoá/sửa chữ đang có, không mâu thuẫn với câu nào đang có.
+- `thay đổi` = mọi trường hợp còn lại: xoá/sửa chữ đang có · thêm nội dung mâu thuẫn · thêm/bớt luồng, actor, quy tắc, trạng thái · đổi phạm vi use-case.
+- Không chắc → `thay đổi`. Dòng có xoá/sửa byte đang có mà gán `bổ sung` = vi phạm, kể cả khi nội dung mới "rõ ràng đúng hơn".
+
+### Cổng (đúng thứ tự; chưa qua đủ = KHÔNG chạm file)
+
+1. [ ] Trình bảng `Đề nghị ghi ngược BRD`: `| WB | File BRD | Mục | Loại | Đang có | Sẽ thành |` → chờ xác nhận tường minh (Bất biến #6). Dòng bị bỏ → không ghi; dòng bị sửa → ghi theo bản sửa.
+2. [ ] AskUserQuestion lượt 1 (câu độc lập, gom một lượt — Bất biến #1):
+   - Tên người cập nhật (bắt buộc mọi loại) — option `(Recommended)` = giá trị `git config user.name`, nêu thẳng giá trị đó trong mô tả.
+   - Nếu ≥1 dòng `thay đổi`: "BA đã duyệt các mục `thay đổi` chưa?" — `đã duyệt` · `chưa duyệt` · `tôi chính là BA, tự duyệt`.
+3. [ ] Lượt 2 (chỉ khi `đã duyệt` — phụ thuộc lượt 1 nên tách lượt): tên BA + ngày duyệt nếu có. `tôi chính là BA` → tên BA = tên người cập nhật, log ghi thêm `tự duyệt`.
+4. [ ] `chưa duyệt` → mọi dòng `thay đổi`: KHÔNG ghi, KHÔNG "ghi tạm xin duyệt sau", KHÔNG hạ cấp thành `bổ sung`. Chuyển nguyên vẹn (đủ `Đang có`/`Sẽ thành`) sang `## Đề nghị sửa BRD — chờ BA duyệt` trong `interview-notes.md`; báo người dùng: spec ↔ BRD đang lệch cho tới khi BA duyệt. Dòng `bổ sung` cùng bảng vẫn ghi bình thường.
+5. [ ] Tên ghi vào file = câu trả lời thật của người dùng. `git config`/email/commit history chỉ là gợi ý option — CẤM tự điền.
+
+### Ghi vào file BRD
+
+- [ ] Chỉ sửa đúng file + mục trong bảng đã duyệt; không đụng mục khác, không "làm đẹp" phần không liên quan.
+- [ ] CẤM đổi frontmatter (`brd_id`, `title`, `breadcrumb`) và văn bản mọi dòng heading — `verify` của `road-map-from-brd` kiểm anchor `Nguồn#heading` (đổi → exit ≠ 0, chặn cứng); manifest giữ `title` cũ → lệch im lặng. Buộc phải đổi heading = việc của BA → đưa vào danh sách chờ duyệt.
+- [ ] Viết cùng văn phong khối đang có (bảng → thêm dòng bảng; danh sách đánh số → thêm mục); không chèn khối markdown lạ giữa bảng HTML thô.
+- [ ] Append khối nhật ký vào mục `## Nhật ký cập nhật` ở CUỐI file (tạo nếu chưa có), mới nhất trên cùng — ghi file mà thiếu khối nhật ký = lỗi, bổ sung trước khi báo cáo:
+
+  ```
+  ### <YYYY-MM-DD> — <RM-ID> (/speckit.specify)
+  - **Người cập nhật**: <tên từ lượt hỏi 1>
+  - **Loại**: bổ sung | thay đổi | bổ sung + thay đổi
+  - **BA duyệt**: <tên BA>[, ngày <…>][, tự duyệt] — hoặc `không yêu cầu (chỉ bổ sung)`
+  - **Hồ sơ phỏng vấn**: specs/<thư-mục-feature>/interview-notes.md
+  - **Nội dung**:
+    - [bổ sung] WB-n <mục>: <nội dung đã thêm>
+    - [thay đổi] WB-n <mục>: "<đang có>" → "<sẽ thành>"
+  ```
+
+  Ngày = output `date +%F` (CẤM bịa/suy từ tài liệu). Dòng `[thay đổi]` bắt buộc đủ hai vế nguyên văn — thiếu vế = coi như chưa ghi log.
+
+### Sau khi ghi
+
+- [ ] Dự án có extension `dft-speckit` → chạy `python .specify/extensions/dft-speckit/scripts/brd_roadmap.py verify docs/roadmap.md --brd docs/brd --brd-rel docs/brd`; exit ≠ 0 → báo lỗi ngay kèm nguyên văn, không tự chữa.
+- [ ] KHÔNG đụng `brd.manifest.yml` — ghi ngược không làm gãy `verify` (manifest khoá theo path, không theo nội dung); trường `chars` lệch là vô hại, `manifest --write` cũng không cập nhật nó; CẤM sửa tay.
+- [ ] Nhắc người dùng: `docs/brd/` đã lệch `.docx` gốc; chạy lại `brd-import` sẽ xuất `docs/brd.new/` + bảng diff (không đè); BA gửi `.docx` mới → phần ghi ngược phải đối chiếu lại tay.
+- [ ] Báo cáo cuối: file đã sửa · số dòng `bổ sung`/`thay đổi` đã ghi (kèm tên người cập nhật, tên BA) · số dòng chờ BA duyệt — có dòng chờ thì nêu rõ dang dở, không báo "xong" trống trơn.
