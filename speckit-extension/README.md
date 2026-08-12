@@ -101,7 +101,7 @@ Sau khi release xong, cài bằng:
 
 ```bash
 specify extension add dft-speckit --force --from \
-  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v0.0.5/dft-speckit-0.0.5.zip
+  https://github.com/anhnt3/agent-skills/releases/download/dft-speckit-v0.0.8/dft-speckit-0.0.8.zip
 ```
 
 ### Build zip riêng lẻ (không release)
@@ -117,17 +117,31 @@ sha256 — trade-off đã chấp nhận của kênh phân phối này.
 
 ## Định dạng cố định (Pha 4 của `qa-spec-cycle`)
 
-CSV/JSON của testcase thủ công bắt buộc đúng **16 cột, đúng thứ tự** — script validate header cứng
+CSV/JSON của testcase thủ công bắt buộc đúng **17 cột, đúng thứ tự** — script validate header cứng
 (`EXPECTED_HEADER`) và raise lỗi nếu sai tên/thứ tự/số field:
 
 ```
-ID | Tiêu đề | Nhóm | Ưu tiên | Loại | Tiền điều kiện | Dữ liệu test | Các bước thực hiện | Kết quả mong đợi | Truy vết | Test tự động | Kết quả tự động | Kết quả thực tế | Trạng thái | Bug ID | Ghi chú
+ID | Tiêu đề | Nhóm | Ưu tiên | Loại | Tiền điều kiện | Dữ liệu test | Các bước thực hiện | Kết quả mong đợi | Truy vết | Test tự động | Kết quả tự động | Kết quả thực tế | Trạng thái | Bug ID | Ghi chú | Nguồn BRD
 ```
 
 Cột 1–11 = thiết kế (versioned); cột 12 (`Kết quả tự động`) = command/CI ghi (chỉ-đọc với tester);
-4 cột cuối (13–16) = thực thi (tester điền, để trống trong file nguồn). XLSX xuất ra **2 sheet**
-(Testcases + Ma trận truy vết): header nền xanh, tô màu ưu tiên P1/P2/P3, dropdown Trạng thái,
-freeze panes và auto-filter. Chi tiết đầy đủ: [`references/manual-xlsx-format.md`](references/manual-xlsx-format.md).
+cột 13–16 = thực thi (tester điền, để trống trong file nguồn); **cột 17 `Nguồn BRD`** = một trong ba:
+`docs/brd/…md#<mục>` (truy về BRD — command lần theo trường `Nguồn` của item roadmap, không đoán tên
+file) · `QUCTHT §<n>` (case sinh từ đối chiếu quy ước chung) · `N/A`. Script từ chối cột 17 trống. Cột 17 nằm **sau** vùng tester là cố ý: cột 13–16 giữ nguyên
+vị trí nên merge dữ liệu tester không đổi và file xlsx cũ 16 cột vẫn đọc đúng.
+
+XLSX xuất ra **2 sheet** (Testcases + Ma trận truy vết): header nền xanh, tô màu ưu tiên P1/P2/P3,
+dropdown Trạng thái, freeze panes và auto-filter.
+
+**Chống hỏng dữ liệu tester** — `ID` là khóa merge, hai cổng đều **không ghi file** và thoát ≠ 0:
+
+| Exit | Ca | Cờ mở (chỉ người dùng bật) |
+|---|---|---|
+| `2` | ID cũ có dữ liệu tester **biến mất** khỏi input mới | `--allow-id-loss` |
+| `3` | ID **giữ nguyên** nhưng Tiêu đề đổi trong khi tester đã chấm → kết quả bị gắn sang case khác, im lặng | `--allow-content-shift` |
+
+Quy tắc tránh cả hai: case mới **cấp số ở cuối**, không chèn vào giữa rồi đánh số lại; bỏ case thì để
+trống số đó. Chi tiết đầy đủ: [`references/manual-xlsx-format.md`](references/manual-xlsx-format.md).
 
 ## Nguồn gốc
 

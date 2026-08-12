@@ -15,6 +15,7 @@ Pha 1). Đổi stack = đổi qa-context, không đổi command.
 Các file hỗ trợ được bundle trong extension:
 - Script: `.specify/extensions/dft-speckit/scripts/csv_to_xlsx.py`
 - Tài liệu chi tiết từng pha: `.specify/extensions/dft-speckit/references/<tên>.md`
+- **LUẬT quy ước chung**: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (QUCTHT) — xem Pha 4b.
 
 ## User Input
 
@@ -44,11 +45,29 @@ Ghi trạng thái pha vào `<thư mục spec>/qa-run.md` ngay sau khi hoàn thà
 `qa-run.md` đã tồn tại khi bắt đầu → đọc ledger, tiếp tục từ pha dở dang, không làm lại từ đầu.
 
 - [ ] **Pha 0 — Intake.** Xác định file spec (từ `$ARGUMENTS` hoặc hỏi), rút feature-id + PREFIX (vd `DEV`) dùng cho ID testcase. **Trích nguyên văn danh sách id FR/AC từ chính file spec** (không từ trí nhớ), đếm `N`, ghi cả danh sách + `N` vào `qa-run.md` — đây là mỏ neo đối chiếu của Pha 3/9/Done-when. Tạo `qa-run.md` nếu chưa có, hoặc đọc ledger nếu đã có (đã có ID testcase trong xlsx → tái dùng nguyên văn, cấm renumber, xem Pha 4). → chi tiết (format ledger chuẩn + quy tắc resume): `.specify/extensions/dft-speckit/references/traceability.md` §2–§3 — ledger free-form không theo format là phiên sau không resume được.
+  - **Định vị BRD nguồn (cho cột 17 `Nguồn BRD`).** Chỉ lần theo trường **`Nguồn`** của item roadmap ứng với feature (RM-ID trong tên thư mục spec / tiêu đề spec / hỏi) — **CẤM đoán theo tên file**. Ghi kết quả vào ledger, dòng `BRD_ROOT:`:
+    - `Nguồn` = `docs/brd/….md[#mục]` → `BRD_ROOT` = **phần path, BỎ anchor** (anchor của `Nguồn` chỉ là gợi ý mục mặc định — cột 17 tự ghép `#<mục>` riêng, giữ anchor sẽ ra `…md#a#b`).
+    - `Nguồn` = thư mục (node inline) → `BRD_ROOT` = thư mục; cột 17 ghi `<thư-mục>/<file>.md#<mục>` của file thực sự dùng.
+    - `Nguồn` = `N/A` / trỏ code / không roadmap / không `docs/brd/` → `BRD_ROOT = N/A`.
+    - Không định vị được item + **non-interactive** → `BRD_ROOT = N/A` + ghi lý do vào ledger, KHÔNG đoán RM-ID, KHÔNG HALT (nguồn làm giàu, không phải cổng).
   - **Phát hiện cấu trúc spec (graceful).** Spec theo kỷ luật một-nhà (preset DFT) tách nguồn: hằng số field ở `## Thực thể & Từ điển dữ liệu`, hành vi + business rule ở `### Functional Requirements` (rule giờ là FR → **đã** nằm trong neo `N` FR/AC), trình bày ở `## Đặc tả màn hình` (chỉ trỏ FR/field). Ghi vào ledger spec có hai mục `Thực thể & Từ điển dữ liệu` / `Đặc tả màn hình` hay không. **Có** → Pha 3/4 đọc thêm hai mục để phủ **biên** + **trạng thái UI** (bên dưới). **Không có** (spec plain spec-kit / lệnh khác) → chạy đúng như cũ, không coi là thiếu.
 - [ ] **Pha 1 — Context.** Có `.agents/qa-context.md` → load. Thiếu → scan + phỏng vấn tạo mới theo template slim. → chi tiết: `.specify/extensions/dft-speckit/references/qa-context-template.md`
 - [ ] **Pha 2 — Scan & baseline.** Dò framework/thư mục test hiện có (điền vào qa-context những field còn thiếu), test đã có cho spec này chưa, môi trường sẵn sàng chưa → **thông báo phát hiện**, không hỏi lại cái đã dò được. → chi tiết: `.specify/extensions/dft-speckit/references/qa-context-template.md`
 - [ ] **Pha 3 — Coverage matrix.** Từ mỗi FR/AC + mức risk → chọn tầng test (unit/integration/E2E/manual-only) + lý do. **Cổng đếm: ma trận phải phủ đủ `N` id đã chốt ở Pha 0** — id nào không có dòng nào → ghi tường minh là `GAP` kèm lý do, cấm bỏ trắng. → chi tiết: `.specify/extensions/dft-speckit/references/coverage-matrix.md`
-- [ ] **Pha 4 — Manual TC → xlsx.** Mỗi acceptance scenario/rule → 1 testcase. **Nếu spec có cấu trúc một-nhà (phát hiện ở Pha 0), làm giàu thêm — case bổ sung, vẫn gắn vào FR/AC hoặc màn tương ứng trong ma trận, không làm giảm neo `N`:** (a) **Biên từ Từ điển dữ liệu** — mỗi field có `Giới hạn`/`Giá trị hợp lệ` → sinh case tại-biên và ngoài-biên (vd `≤ 255` → 255 pass, 256 fail; `0 ≤ x` → 0 pass, -1 fail; tập giá trị → trong/ngoài tập). Số biên lấy từ Từ điển dữ liệu, KHÔNG bịa. (b) **Trạng thái UI từ Đặc tả màn hình** — mỗi `### Màn` → case cho: 4 trạng thái (đang tải/rỗng+tổng số/lỗi mất mạng-timeout/có dữ liệu), từng cột (hiển thị + định dạng + khi rỗng), lọc/sắp/tìm (gồm lọc rỗng→empty, reset, đổi filter→trang 1, giữ/mất filter), ẩn/khóa hành động theo quyền, xác nhận + hệ quả lan truyền cho hành động phá hủy. Bám tên field / số FR mà màn trỏ, không suy diễn ngoài spec. Output cố định tại `<thư mục spec>/testcases-manual.xlsx` (Pha 8/11 đọc/ghi lại đúng file này qua chạy lại script, script tự merge nên giữ nguyên cột tester đã điền). **`ID` là khóa merge**: case đã tồn tại trong xlsx phải giữ nguyên văn ID cũ; script in `WARNING: ... ID ... sẽ mất` khi lệch → dừng, sửa ID, chạy lại. Cách ưu tiên (ít lỗi hơn): viết `testcases-manual.json` (16 khóa/case) rồi convert; CSV 16-cột cũng được chấp nhận. Chạy `.specify/extensions/dft-speckit/scripts/csv_to_xlsx.py` để dựng file `.xlsx` 2 sheet (Testcases + Ma trận truy vết); 4 cột thực thi để trống cho tester. Báo số case đã sinh. Script chỉ cần `python3`; lần chạy đầu tự tạo venv + cài `openpyxl` (cần mạng lần đầu đó). → chi tiết: `.specify/extensions/dft-speckit/references/manual-xlsx-format.md`
+- [ ] **Pha 4 — Manual TC → xlsx.** Mỗi acceptance scenario/rule → 1 case. Spec một-nhà (Pha 0) → làm giàu thêm, case bổ sung vẫn gắn FR/AC hoặc màn trong ma trận, không giảm neo `N`:
+  - [ ] **Biên từ Từ điển dữ liệu**: mỗi field có `Giới hạn`/`Giá trị hợp lệ` → case tại-biên + ngoài-biên (`≤ 255` → 255 pass, 256 fail; tập giá trị → trong/ngoài). Số biên lấy từ Từ điển dữ liệu, CẤM bịa.
+  - [ ] **Trạng thái UI từ Đặc tả màn hình**: mỗi `### Màn` → case cho 4 trạng thái (tải/rỗng+tổng số/lỗi mạng/có dữ liệu) · từng cột (hiển thị/định dạng/khi rỗng) · lọc-sắp-tìm (rỗng→empty, reset, đổi filter→trang 1, giữ/mất filter) · ẩn-khóa theo quyền · xác nhận + hệ quả lan truyền của hành động phá hủy. Bám tên field/số FR màn trỏ, CẤM suy diễn ngoài spec.
+  - [ ] **Input**: `testcases-manual.json` (17 khóa/case — ưu tiên) hoặc CSV 17 cột. **Cột 17 `Nguồn BRD`** — đúng một trong ba: `<BRD_ROOT>#<mục>` (case truy được về mục BRD cụ thể) · `QUCTHT §<n>` (case sinh từ Pha 4b, không truy về BRD) · `N/A` (BRD_ROOT=N/A và không từ QUCTHT). CẤM để trống, CẤM gán `BRD_ROOT` cho case BRD không nói tới.
+  - [ ] **ID**: tái dùng NGUYÊN VĂN ID đã có trong xlsx; case mới cấp số ở CUỐI; bỏ case → để trống số, CẤM dồn số/renumber/đổi PREFIX.
+  - [ ] **Chạy** `.specify/extensions/dft-speckit/scripts/csv_to_xlsx.py <input> <thư mục spec>/testcases-manual.xlsx` → 2 sheet, 4 cột thực thi để trống. Exit `2` (ID có dữ liệu tester biến mất) / `3` (ID giữ nguyên nhưng Tiêu đề đổi khi tester đã chấm) → **file KHÔNG được ghi**: đọc lại ID+thứ tự từ chính xlsx, sửa input, chạy lại. CẤM tự thêm `--allow-id-loss`/`--allow-content-shift` (chỉ người dùng bật). Báo số case đã sinh.
+  - → chi tiết (schema, merge, mã thoát): `.specify/extensions/dft-speckit/references/manual-xlsx-format.md`
+- [ ] **Pha 4b — Đối chiếu LUẬT quy ước chung (QUCTHT).** Nguồn: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` — luật mặc định toàn công ty, spec thường không nhắc lại; dev build theo nó (`agents/*.md`), QA phải test theo nó.
+  - [ ] **Neo đếm**: `S` = số section `## <n>.` đếm từ CHÍNH FILE (V1.0: 21), không từ trí nhớ. Ghi vào `qa-run.md` bảng **đúng `S` dòng**: `| § | Trigger | Áp/Bỏ | Case ID hoặc lý do bỏ |`. Thiếu dòng = vi phạm gate.
+  - [ ] **Trigger từng §** (feature CÓ thành phần → `Áp`, không có → `Bỏ` + lý do gắn feature; CẤM lý do trống/chung chung): §1 kiểu dữ liệu ← có field số/tiền/ngày/ID · §2+§3+§11 ← có trường nhập · §4 ← có tải tệp · §5 ← có nút/nhãn hành động · §6 ← có UI · §7 ← có bảng danh sách · §8 ← có form tạo/sửa · §9 ← có hành động xóa · §10 ← có thao tác sinh thông báo · §12 ← có hiển thị ngày giờ · §13 ← có nhập/xuất (gồm ca chống công thức Excel §13 đã viết sẵn) · §14 ← có tải trang/submit/breadcrumb · §15 ← có bản ghi DB (soft-delete, UUID) · §16 ← có trạng thái bản ghi · §17 ← có ràng buộc duy nhất · §18 ← đụng phiên/xác thực · §19 ← có phân quyền/phạm vi dữ liệu · §20 ← mọi feature có UI (tiếng Việt có dấu) · §21 ← có mutation.
+  - [ ] **Bằng chứng đã đọc**: mỗi dòng `Áp` phải kèm ≥1 chuỗi trích NGUYÊN VĂN từ § đó trong case tương ứng — không trích được = chưa đọc, không được đánh `Áp`.
+  - [ ] **Chuỗi trong `" "` chép nguyên văn** vào `Kết quả mong đợi`; **chỉ** placeholder `{…}`/`[…]` được thay, và chỉ bằng giá trị lấy từ Từ điển dữ liệu / §2 / tên thực thể trong spec (vd `"Vượt quá {max} ký tự."` + Tên ≤255 → `"Vượt quá 255 ký tự."`). Không có nguồn cho placeholder → ghi `[NEEDS: <tên>]`, CẤM bịa số.
+  - [ ] **Xung đột spec/BRD ↔ QUCTHT** (hai bên phát biểu khác nhau về cùng một điểm): KHÔNG tự chọn bên, KHÔNG sinh case cho điểm đó. Ghi `qa-run.md` mục `Xung đột QUCTHT` (trích nguyên văn hai bên + §). Có người → hỏi ngay; **non-interactive → ghi blocker, bỏ đúng điểm xung đột, CHẠY TIẾP phần còn lại, đánh Pha 4b `blocked` (không `done`)**. **Sau phân xử** (phiên nào cũng vậy): sinh các case còn thiếu cho điểm vừa chốt → chạy lại Pha 4 (regenerate xlsx) → Pha 5/8/11 làm phần bù **cho case mới** — coi như input đổi, luật "không chạy lại pha đã done" không áp — rồi mới đánh Pha 4b `done`.
+  - [ ] Case Pha 4b: `Truy vết` gắn FR/AC có sẵn (CẤM đẻ mã mới) · cột 17 = `QUCTHT §<n>` · không giảm neo `N`.
 - [ ] **Pha 5 — Author auto test.** Sinh test theo tầng đã chọn ở coverage matrix (không map 1:1 từ manual TC), dùng framework khai báo trong qa-context; comment truy vết FR + TC trong mỗi test; requirement manual-only ghi rõ lý do trong ma trận. → chi tiết: `.specify/extensions/dft-speckit/references/test-generation.md`, `.specify/extensions/dft-speckit/references/coverage-matrix.md`
 - [ ] **Pha 6 — Quality gate.** Chạy compile/type-check của project (lệnh lấy từ qa-context); grep xác nhận selector/endpoint được assert thật sự tồn tại trong source; chặn assert tầm thường/rỗng. → chi tiết: `.specify/extensions/dft-speckit/references/quality-gate.md`
 - [ ] **Pha 7 — Readiness (no-defer).** Tự dựng môi trường (services → migrate/seed → start backend/frontend background → cài deps test → poll tới ready) rồi gỡ blocker (auth, selector thiếu, seed). Lệnh phá hoại (migrate/seed/reset/khởi tạo có trạng thái) chỉ chạy vào **test target dùng-một-lần** đã khai báo trong qa-context; thiếu khai báo → dừng, hỏi (Recommended trước). **Cổng cứng khi cần người quyết** — escalate đúng phần không tự làm được, nêu rõ thiếu gì + lệnh gợi ý, chờ người dùng xử lý rồi tiếp tục, không bỏ ngang. → chi tiết: `.specify/extensions/dft-speckit/references/environment-bringup.md`, `.specify/extensions/dft-speckit/references/blocker-playbook.md`
@@ -62,15 +81,20 @@ Ghi trạng thái pha vào `<thư mục spec>/qa-run.md` ngay sau khi hoàn thà
 
 - **Pha 7**: khi môi trường có phần không tự dựng được (thiếu engine, secret, quyền mạng) → escalate và **dừng chờ người dùng**, không tiếp tục giả định đã xong.
 - **Pha 7 (env-safety)**: lệnh phá hoại (migrate/seed/reset/khởi tạo có trạng thái) chỉ chạy khi có **test target dùng-một-lần** khai báo trong qa-context; không có → dừng, hỏi, không đoán bừa vào DB/service thật. → chi tiết: `.specify/extensions/dft-speckit/references/environment-bringup.md`.
+- **Pha 4 (dữ liệu tester)**: `csv_to_xlsx.py` thoát **2** (ID biến mất) hoặc **3** (ID giữ nguyên nhưng nội dung case đổi) → **dừng, sửa ID/thứ tự cho khớp, chạy lại**. CẤM thêm `--allow-id-loss` / `--allow-content-shift` để cho qua; hai cờ đó chỉ người dùng bật.
+- **Pha 4b (xung đột QUCTHT)**: spec/BRD nghịch với `quy-uoc-chung.md` → không tự chọn bên, không sinh case cho điểm đó; có người thì hỏi, non-interactive thì blocker + bỏ điểm đó + chạy tiếp (Pha 4b = `blocked`).
 - **Pha 9**: luôn present đầy đủ trước khi bước sang triage/fix — không được nhảy thẳng từ chạy suite sang sửa code.
 - **Pha 10**: mọi fail loại product-bug phải được **duyệt từng cái** trước khi fix; không tự ý sửa logic sản phẩm mà không có xác nhận.
 
 ## Chế độ non-interactive
 
 Khi command chạy không có người trực tiếp (subagent/CI/autopilot) và gặp 1 trong các cổng cứng ở trên
-(escalate Pha 7, product-bug Pha 10, **xác nhận ghi CLAUDE.md/AGENTS.md ở Pha 12**) → **KHÔNG được** tự
-bỏ qua cổng, tự ý duyệt fix code sản phẩm, hay ghi test chưa chạy thành "pass". Thay vào đó: ghi 1 bản
-ghi blocker vào `qa-run.md` (đang ở pha nào, cần gì, vì sao dừng) rồi **HALT**. Riêng Pha 12: KHÔNG ghi
+(**dữ liệu tester Pha 4** — exit 2 hoặc 3, escalate Pha 7, product-bug Pha 10, **xác nhận ghi
+CLAUDE.md/AGENTS.md ở Pha 12**) → **KHÔNG được** tự bỏ qua cổng, tự thêm `--allow-id-loss` hay
+`--allow-content-shift`, tự ý duyệt fix code sản phẩm, hay ghi test chưa chạy thành "pass". Thay vào đó:
+ghi 1 bản ghi blocker vào `qa-run.md` (đang ở pha nào, cần gì, vì sao dừng) rồi **HALT**. Riêng
+**xung đột QUCTHT Pha 4b**: KHÔNG HALT cả run — blocker + bỏ đúng điểm xung đột + chạy tiếp, Pha 4b
+đánh `blocked` (thiệt hại đã khu trú ở điểm đó; Done-when chặn báo xong giả). Riêng Pha 12: KHÔNG ghi
 `CLAUDE.md`/`AGENTS.md` khi không có người duyệt — ghi diff đề xuất vào `qa-run.md`, đánh dấu Pha 12
 `blocked`, rồi HALT. Chạy lại sau (có người) → đọc `qa-run.md`, tiếp tục đúng từ điểm blocker.
 
@@ -110,8 +134,9 @@ cha vẫn HALT + ghi blocker như bình thường, bất kể pha nào chạy tr
 
 ## Done-when
 
-- `qa-run.md` log đủ 13 pha.
-- xlsx tồn tại với 2 sheet (Testcases + Ma trận truy vết); 4 cột thực thi để trống; cột auto có kết quả (hoặc "chưa chạy" trung thực, không giả pass).
+- `qa-run.md` log đủ **14 hàng** (pha 0–12 + hàng `4b` riêng, `done`|`blocked` — để resume không nhảy qua xung đột đang treo).
+- xlsx tồn tại với 2 sheet (Testcases + Ma trận truy vết); 4 cột thực thi để trống; cột auto có kết quả (hoặc "chưa chạy" trung thực, không giả pass); **cột 17 `Nguồn BRD` điền đủ mọi dòng** — `<BRD_ROOT>#<mục>` / `QUCTHT §<n>` / `N/A`, không để trống.
+- **Đã đối chiếu QUCTHT (Pha 4b)**: `qa-run.md` có bảng **đúng `S` dòng** (`S` đếm từ chính `quy-uoc-chung.md`), mỗi dòng `Áp` trỏ Case ID + trích dẫn, mỗi dòng `Bỏ` có lý do gắn feature; mục `Xung đột QUCTHT` đã được phân xử hoặc đang là blocker tường minh (Pha 4b `blocked`).
 - Test tự động tồn tại, truy vết được về FR/AC, **đã chạy thật** (không skip/defer); quality gate pass.
 - Môi trường được command tự dựng, hoặc phần không tự làm được đã escalate đúng và được xử lý tiếp sau khi người dùng can thiệp.
 - Suite xanh, hoặc mọi gap/fail còn lại được liệt kê tường minh trong ma trận truy vết và trong phần present.

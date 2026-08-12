@@ -67,18 +67,20 @@ dựng ở Pha 3–5 và kết quả chạy thật ở Pha 8/10.
 # QA run — <feature-id> (PREFIX: <PREFIX>)
 
 Spec: <đường dẫn spec.md>
+BRD_ROOT: <docs/brd/….md | N/A> (từ trường `Nguồn` của item roadmap — Pha 0)
 Bắt đầu: <ngày giờ>
 Cập nhật lần cuối: <ngày giờ>
 
-## Phase checklist (0–12)
+## Phase checklist (0–12 + 4b — 14 hàng)
 
 | # | Pha | Trạng thái | Ghi chú |
 |---|-----|-----------|---------|
-| 0 | Intake | done | feature-id + PREFIX xác định |
+| 0 | Intake | done | feature-id + PREFIX + BRD_ROOT xác định |
 | 1 | Context | done | qa-context.md đã có/tạo mới |
 | 2 | Scan & baseline | done | framework: <...>, test đã có: <có/không> |
 | 3 | Coverage matrix | done | N FR/AC → tầng đã chọn |
 | 4 | Manual TC → xlsx | done | N case, xlsx tại <path> |
+| 4b | Đối chiếu QUCTHT | done | S § đối chiếu; <n> xung đột (`blocked` nếu còn xung đột chưa phân xử) |
 | 5 | Author auto test | done | N test tự động sinh |
 | 6 | Quality gate | done | compile/type-check: pass |
 | 7 | Readiness (no-defer) | in-progress | blocker đang gỡ: <mô tả> |
@@ -89,6 +91,19 @@ Cập nhật lần cuối: <ngày giờ>
 | 12 | Update CLAUDE.md | pending | — |
 
 Trạng thái hợp lệ: `pending` \| `in-progress` \| `blocked` \| `done`.
+
+## Đối chiếu QUCTHT (Pha 4b — đúng S dòng, S đếm từ quy-uoc-chung.md)
+
+| § | Trigger | Áp/Bỏ | Case ID hoặc lý do bỏ |
+|---|---------|-------|------------------------|
+| §2 | có trường nhập | Áp | TC-<PREFIX>-017…020 |
+| §7 | có bảng danh sách | Bỏ | màn là dialog nhập liệu, không phải danh sách |
+
+## Xung đột QUCTHT (Pha 4b — mỗi xung đột một dòng, chưa phân xử thì Pha 4b = blocked)
+
+| § | Spec/BRD nói (nguyên văn) | QUCTHT nói (nguyên văn) | Phân xử |
+|---|---------------------------|--------------------------|---------|
+| §8 | tiêu đề "Tạo dự án mới" | `"Tạo [tên thực thể]"` → "Tạo dự án" | chờ người dùng |
 
 ## Blockers log
 
