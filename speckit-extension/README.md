@@ -133,9 +133,15 @@ vị trí nên merge dữ liệu tester không đổi và file xlsx cũ 16 cột
 XLSX xuất ra **2 sheet** (Testcases + Ma trận truy vết): header nền xanh, tô màu ưu tiên P1/P2/P3,
 dropdown Trạng thái, freeze panes và auto-filter.
 
-**Chống mất dữ liệu tester**: `ID` là khóa merge. Nếu ID cũ có dữ liệu tester mà biến mất khỏi input
-mới, script **không ghi file** và thoát ≠ 0 (cờ `--allow-id-loss` chỉ dành cho người dùng bật tường
-minh). Chi tiết đầy đủ: [`references/manual-xlsx-format.md`](references/manual-xlsx-format.md).
+**Chống hỏng dữ liệu tester** — `ID` là khóa merge, hai cổng đều **không ghi file** và thoát ≠ 0:
+
+| Exit | Ca | Cờ mở (chỉ người dùng bật) |
+|---|---|---|
+| `2` | ID cũ có dữ liệu tester **biến mất** khỏi input mới | `--allow-id-loss` |
+| `3` | ID **giữ nguyên** nhưng Tiêu đề đổi trong khi tester đã chấm → kết quả bị gắn sang case khác, im lặng | `--allow-content-shift` |
+
+Quy tắc tránh cả hai: case mới **cấp số ở cuối**, không chèn vào giữa rồi đánh số lại; bỏ case thì để
+trống số đó. Chi tiết đầy đủ: [`references/manual-xlsx-format.md`](references/manual-xlsx-format.md).
 
 ## Nguồn gốc
 

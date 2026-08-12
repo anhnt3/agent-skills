@@ -44,6 +44,28 @@ class IdLossError(Exception):
         )
 
 
+class ContentShiftError(Exception):
+    """ID giữ nguyên nhưng NỘI DUNG case đổi, trong khi tester đã ghi kết quả.
+
+    Nguy hiểm hơn IdLossError vì không mất dữ liệu — nó **gắn dữ liệu tester vào
+    case khác**, im lặng. Xảy ra khi bỏ/chèn một case ở giữa rồi đánh số lại: ID
+    vẫn đủ nên cổng IdLoss không bắt được, nhưng `TC-...-002` giờ là kịch bản của
+    case cũ `...-003`, còn cột 13-16 vẫn là kết quả tester chấm cho kịch bản cũ.
+    """
+
+    def __init__(self, shifted):
+        self.shifted = list(shifted)
+        detail = "; ".join(f"{i}: \"{old}\" → \"{new}\"" for i, old, new in self.shifted)
+        super().__init__(
+            f"{len(self.shifted)} ID giữ nguyên nhưng Tiêu đề đổi, trong khi đã có "
+            f"dữ liệu tester: {detail}"
+        )
+
+
+def _norm_title(v):
+    return " ".join(str(v or "").split())
+
+
 def read_cases(csv_path):
     with open(csv_path, newline="", encoding="utf-8-sig") as f:
         rows = list(csv.reader(f))
@@ -184,8 +206,10 @@ def _safe_sheet(name):
 
 
 def _read_existing_exec(out_path, sheet_name="Testcases"):
-    """Đọc cột 13-16 (thực thi của tester) từ file xlsx đã có, keyed theo ID (cột 1).
-    Trả về {} nếu file chưa tồn tại hoặc sheet không tồn tại. Import openpyxl lazily."""
+    """Đọc cột 13-16 (thực thi của tester) + Tiêu đề từ file xlsx đã có, keyed theo
+    ID (cột 1). Tiêu đề dùng để phát hiện case bị đổi nội dung dưới cùng một ID
+    (ContentShiftError) — không cần file ledger riêng vì bản xlsx cũ CHÍNH LÀ bản
+    ghi nội dung cũ. Trả về {} nếu file chưa tồn tại hoặc sheet không tồn tại."""
     if not Path(out_path).exists():
         return {}
     from openpyxl import load_workbook
@@ -212,12 +236,12 @@ def _read_existing_exec(out_path, sheet_name="Testcases"):
         for idx in EXEC_COL_IDX:
             v = row[idx] if idx < len(row) else None
             vals.append("" if v is None else v)
-        result[id_] = vals
+        result[id_] = {"exec": vals, "title": _norm_title(row[1] if len(row) > 1 else "")}
     return result
 
 
 def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases",
-               allow_id_loss=False):
+               allow_id_loss=False, allow_content_shift=False):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.worksheet.datavalidation import DataValidation
@@ -229,10 +253,13 @@ def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases",
     # ID là khóa merge cột 13-16 (dữ liệu tester). ID cũ không còn trong input mới
     # = dữ liệu tester của case đó bị xoá trắng. DỪNG trước khi ghi, không cảnh báo
     # rồi ghi tiếp — dữ liệu tester nhập tay không tái tạo được.
+    def _has_exec(p):
+        return any(str(v).strip() for v in p["exec"])
+
     new_ids = {str(r[0] or "").strip() for r in rows}
     lost = sorted(
-        i for i, vals in preserved.items()
-        if i not in new_ids and any(str(v).strip() for v in vals)
+        i for i, p in preserved.items()
+        if i not in new_ids and _has_exec(p)
     )
     if lost and not allow_id_loss:
         raise IdLossError(lost)
@@ -240,6 +267,26 @@ def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases",
         print(
             f"WARNING: --allow-id-loss được bật; xoá dữ liệu tester của {len(lost)} "
             f"ID: {', '.join(lost)}",
+            file=sys.stderr,
+        )
+
+    # ID còn nguyên nhưng Tiêu đề đổi + tester đã chấm = dữ liệu tester đang bị gắn
+    # sang case khác. Cổng IdLoss KHÔNG bắt được ca này (số ID vẫn đủ).
+    shifted = []
+    for r in rows:
+        id_ = str(r[COL_ID] or "").strip()
+        p = preserved.get(id_)
+        if not p or not _has_exec(p):
+            continue
+        new_title = _norm_title(r[1] if len(r) > 1 else "")
+        if p["title"] and new_title and p["title"] != new_title:
+            shifted.append((id_, p["title"], new_title))
+    if shifted and not allow_content_shift:
+        raise ContentShiftError(shifted)
+    if shifted:
+        print(
+            f"WARNING: --allow-content-shift được bật; {len(shifted)} ID đổi Tiêu đề "
+            f"mà vẫn giữ dữ liệu tester cũ: {', '.join(i for i, _, _ in shifted)}",
             file=sys.stderr,
         )
 
@@ -268,7 +315,7 @@ def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases",
             for offset, col_idx in enumerate(EXEC_COL_IDX):
                 incoming = r[col_idx] if col_idx < len(r) else ""
                 if not (incoming and str(incoming).strip()):
-                    r[col_idx] = pres[offset]
+                    r[col_idx] = pres["exec"][offset]
         ws.append(r)
     widths = [12, 34, 16, 8, 14, 26, 22, 34, 34, 14, 30, 16, 24, 14, 12, 22, 40]
     for c, w in enumerate(widths, start=1):
@@ -328,6 +375,10 @@ def main(argv=None):
         "--allow-id-loss", action="store_true",
         help="Cho phép ghi đè dù mất dữ liệu tester của ID không còn trong input. "
              "CHỈ người dùng bật tường minh — agent KHÔNG được tự thêm cờ này.")
+    p.add_argument(
+        "--allow-content-shift", action="store_true",
+        help="Cho phép ghi đè dù case đổi Tiêu đề trong khi vẫn giữ dữ liệu tester cũ "
+             "(dữ liệu sẽ gắn sang case khác). CHỈ người dùng bật tường minh.")
     a = p.parse_args(argv)
     if a.csv_path.lower().endswith(".json"):
         header, rows = read_cases_json(a.csv_path)
@@ -338,7 +389,8 @@ def main(argv=None):
     matrix = build_matrix(rows)
     try:
         write_xlsx(header, rows, matrix, a.xlsx_path, a.sheet,
-                   allow_id_loss=a.allow_id_loss)
+                   allow_id_loss=a.allow_id_loss,
+                   allow_content_shift=a.allow_content_shift)
     except IdLossError as e:
         print(
             f"LỖI: {e}\n"
@@ -350,6 +402,20 @@ def main(argv=None):
             file=sys.stderr,
         )
         return 2
+    except ContentShiftError as e:
+        print(
+            f"LỖI: {e}\n"
+            f"KHÔNG ghi file — các ID trên giữ nguyên nhưng nội dung case đã đổi, nên "
+            f"kết quả tester đã chấm sẽ bị gắn sang case KHÁC (mất im lặng, không hiện "
+            f"ra ở đâu cả).\n"
+            f"Nguyên nhân thường gặp: bỏ/chèn một case ở giữa rồi đánh số lại toàn bộ.\n"
+            f"Sửa: giữ ID gắn với ĐÚNG case cũ (đọc lại thứ tự từ {a.xlsx_path}); case "
+            f"mới thì cấp ID mới ở cuối, không chèn vào giữa.\n"
+            f"Chỉ khi bạn CHỦ ĐÍCH đổi nội dung case mà vẫn muốn giữ kết quả tester cũ "
+            f"mới chạy lại với --allow-content-shift.",
+            file=sys.stderr,
+        )
+        return 3
     print(f"OK: {len(rows)} case, {len(matrix)} FR/AC → {a.xlsx_path}")
     return 0
 

@@ -176,6 +176,25 @@ Cờ `--allow-id-loss` bỏ qua cổng này (vẫn in WARNING liệt kê ID bị
 này, và chỉ khi CHỦ ĐÍCH bỏ hẳn các case đó** — agent **KHÔNG** được tự thêm cờ để cho lệnh chạy qua.
 Thêm cờ để né lỗi = xoá công tester đã nhập tay, không khôi phục được.
 
+**Cổng thứ hai: ID giữ nguyên nhưng nội dung đổi.** Cổng trên chỉ bắt ID *biến mất*. Ca nguy hiểm hơn là
+**ID vẫn đủ nhưng nội dung trượt chỗ**: bỏ (hoặc chèn) một case ở giữa rồi đánh số lại toàn bộ → `TC-…-002`
+bây giờ là kịch bản của case `…-003` cũ, trong khi cột 13–16 vẫn là kết quả tester đã chấm cho kịch bản
+cũ. Không mất dữ liệu, nhưng **gắn dữ liệu sang case khác, im lặng** — tệ hơn mất, vì không hiện ra ở đâu.
+
+Script so **Tiêu đề** (cột 2) của cùng một `ID` giữa input mới và xlsx cũ. Khác nhau **và** case đó đã có
+dữ liệu tester → in lỗi, **KHÔNG ghi file**, thoát mã **3**. So sánh bỏ qua khoảng trắng thừa, và **không**
+chặn khi tester chưa chấm gì (sửa case theo spec mới là việc bình thường). Cờ `--allow-content-shift` bỏ
+qua cổng này — cũng chỉ người dùng bật.
+
+**Cách cấp ID cho case mới, để không bao giờ chạm hai cổng trên**: case mới **cấp số tiếp theo ở cuối**,
+không chèn vào giữa rồi đánh số lại. Bỏ case thì **để trống số đó**, đừng dồn số lên.
+
+| Mã thoát | Nghĩa |
+|---|---|
+| `0` | ghi thành công |
+| `2` | ID có dữ liệu tester biến mất khỏi input (`IdLossError`) |
+| `3` | ID giữ nguyên nhưng Tiêu đề đổi trong khi đã có dữ liệu tester (`ContentShiftError`) |
+
 <!-- Trước đây script chỉ print WARNING rồi vẫn ghi đè (exit 0), nên luật "gặp WARNING thì dừng"
      hoàn toàn phụ thuộc agent tự giác. Nay cưỡng chế bằng exit code; xem
      scripts/tests/test_csv_to_xlsx.py::test_doi_id_lam_mat_du_lieu_tester_thi_dung_va_khong_ghi -->

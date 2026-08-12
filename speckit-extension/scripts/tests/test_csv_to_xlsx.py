@@ -151,6 +151,68 @@ def test_id_bien_mat_nhung_tester_chua_dien_thi_khong_chan(tmp_path):
     assert mod.main([str(p2), str(out)]) == 0
 
 
+# --- cổng chống gắn dữ liệu tester sang case khác ---------------------------
+
+def test_doi_noi_dung_duoi_cung_id_thi_dung_va_khong_ghi(tmp_path):
+    """Tái hiện lỗi phát hiện khi chạy thật trên mstem: bỏ 1 case ở giữa rồi đánh
+    số lại -> số ID vẫn đủ nên cổng IdLoss im, nhưng TC-002 giờ là kịch bản của
+    TC-003 cũ mà vẫn mang kết quả tester chấm cho kịch bản cũ."""
+    out = tmp_path / "out.xlsx"
+    p1 = write_json(tmp_path, [case("TC-A-001"), case("TC-A-002")], "in1.json")
+    assert mod.main([str(p1), str(out)]) == 0
+    fill_as_tester(out, "TC-A-002", "Đúng như kịch bản cũ", "Pass")
+    before = out.read_bytes()
+
+    # cùng 2 ID, nhưng nội dung TC-A-002 đã đổi
+    shifted = [case("TC-A-001"), case("TC-A-002", **{"Tiêu đề": "Kịch bản hoàn toàn khác"})]
+    p2 = write_json(tmp_path, shifted, "in2.json")
+    assert mod.main([str(p2), str(out)]) == 3
+    assert out.read_bytes() == before, "file phải KHÔNG bị chạm khi cổng chặn"
+
+
+def test_allow_content_shift_cho_phep_ghi_de(tmp_path):
+    out = tmp_path / "out.xlsx"
+    p1 = write_json(tmp_path, [case("TC-A-001")], "in1.json")
+    mod.main([str(p1), str(out)])
+    fill_as_tester(out, "TC-A-001", "Kết quả cũ", "Pass")
+
+    p2 = write_json(tmp_path, [case("TC-A-001", **{"Tiêu đề": "Tiêu đề mới"})], "in2.json")
+    assert mod.main([str(p2), str(out), "--allow-content-shift"]) == 0
+    assert read_col(out, "TC-A-001", 1) == "Tiêu đề mới"
+    assert read_col(out, "TC-A-001", 12) == "Kết quả cũ"
+
+
+def test_doi_noi_dung_khi_tester_chua_cham_thi_khong_chan(tmp_path):
+    """Chưa có gì để gắn sai thì không được cản trở việc sửa case theo spec mới."""
+    out = tmp_path / "out.xlsx"
+    p1 = write_json(tmp_path, [case("TC-A-001")], "in1.json")
+    mod.main([str(p1), str(out)])
+    p2 = write_json(tmp_path, [case("TC-A-001", **{"Tiêu đề": "Sửa theo spec mới"})], "in2.json")
+    assert mod.main([str(p2), str(out)]) == 0
+    assert read_col(out, "TC-A-001", 1) == "Sửa theo spec mới"
+
+
+def test_giu_nguyen_tieu_de_thi_khong_chan(tmp_path):
+    """Pha 8 chạy lại để cập nhật cột 12 không được dính cổng này."""
+    out = tmp_path / "out.xlsx"
+    p1 = write_json(tmp_path, [case("TC-A-001")], "in1.json")
+    mod.main([str(p1), str(out)])
+    fill_as_tester(out, "TC-A-001")
+    p2 = write_json(
+        tmp_path, [case("TC-A-001", **{"Kết quả tự động": "Pass @ a1b2c3d"})], "in2.json")
+    assert mod.main([str(p2), str(out)]) == 0
+
+
+def test_khoang_trang_thua_trong_tieu_de_khong_tinh_la_doi(tmp_path):
+    out = tmp_path / "out.xlsx"
+    p1 = write_json(tmp_path, [case("TC-A-001")], "in1.json")
+    mod.main([str(p1), str(out)])
+    fill_as_tester(out, "TC-A-001")
+    same = case("TC-A-001", **{"Tiêu đề": "  Case   TC-A-001  "})
+    p2 = write_json(tmp_path, [same], "in2.json")
+    assert mod.main([str(p2), str(out)]) == 0
+
+
 def test_doc_duoc_file_cu_16_cot(tmp_path):
     """File xlsx sinh trước khi thêm cột 17 vẫn phải merge đúng, không mất dữ liệu."""
     out = tmp_path / "old.xlsx"
