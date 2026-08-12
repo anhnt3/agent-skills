@@ -213,6 +213,25 @@ def test_khoang_trang_thua_trong_tieu_de_khong_tinh_la_doi(tmp_path):
     assert mod.main([str(p2), str(out)]) == 0
 
 
+def test_xoa_trang_tieu_de_cung_bi_chan(tmp_path):
+    """Đường thoát: xoá trắng Tiêu đề để né phép so nội dung — phải chặn như đổi."""
+    out = tmp_path / "out.xlsx"
+    p1 = write_json(tmp_path, [case("TC-A-001")], "in1.json")
+    mod.main([str(p1), str(out)])
+    fill_as_tester(out, "TC-A-001")
+    p2 = write_json(tmp_path, [case("TC-A-001", **{"Tiêu đề": ""})], "in2.json")
+    assert mod.main([str(p2), str(out)]) == 3
+
+
+def test_cot_17_trong_bi_tu_choi(tmp_path):
+    """Hợp đồng 'không để trống' của cột 17 phải được máy cưỡng chế, không tin prompt."""
+    out = tmp_path / "out.xlsx"
+    p = write_json(tmp_path, [case("TC-A-001", **{"Nguồn BRD": "  "})])
+    with pytest.raises(ValueError, match="Nguồn BRD"):
+        mod.main([str(p), str(out)])
+    assert not out.exists()
+
+
 def test_doc_duoc_file_cu_16_cot(tmp_path):
     """File xlsx sinh trước khi thêm cột 17 vẫn phải merge đúng, không mất dữ liệu."""
     out = tmp_path / "old.xlsx"

@@ -116,8 +116,13 @@ def validate_rows(header, rows):
         if len(r) != n:
             id_ = f" (ID={r[0]!r})" if r else ""
             bad.append(f"Dòng {i}: {len(r)} field, cần {n}{id_}")
+        # Cột 17 (Nguồn BRD) là hợp đồng bắt buộc: đường dẫn BRD, `QUCTHT §n`,
+        # hoặc literal `N/A` — để trống là mất truy vết, chặn ở đây thay vì tin prompt.
+        elif not str(r[COL_BRD] or "").strip():
+            bad.append(f"Dòng {i} (ID={r[COL_ID]!r}): cột 17 'Nguồn BRD' trống — "
+                       f"điền đường dẫn BRD, 'QUCTHT §<n>', hoặc 'N/A'")
     if bad:
-        raise ValueError("Có dòng sai số cột:\n" + "\n".join(bad))
+        raise ValueError("Có dòng sai:\n" + "\n".join(bad))
 
 
 def parse_traceability(cell):
@@ -279,7 +284,9 @@ def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases",
         if not p or not _has_exec(p):
             continue
         new_title = _norm_title(r[1] if len(r) > 1 else "")
-        if p["title"] and new_title and p["title"] != new_title:
+        # Chặn cả ca new_title RỖNG (xoá trắng Tiêu đề là đường thoát khỏi phép so).
+        # Chỉ bỏ qua khi bản cũ không có Tiêu đề (file cũ/legacy) — điền vào không phải shift.
+        if p["title"] and p["title"] != new_title:
             shifted.append((id_, p["title"], new_title))
     if shifted and not allow_content_shift:
         raise ContentShiftError(shifted)

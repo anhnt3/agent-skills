@@ -43,8 +43,8 @@ Tự tìm trong repo, KHÔNG giả định đường dẫn cố định. Với *
   | Trạng thái BRD | Xử lý | Sau khi chốt |
   |---|---|---|
   | Rõ + không mâu thuẫn code/domain doc | fact (Bất biến #2) — vào bảng **`BRD đã chốt sẵn`** (nhánh · nội dung · cite), duyệt gộp một lượt ở recap GĐ1 → nhánh GĐ2/GĐ3 tương ứng `✅`, ghi chú `BRD <cite>` | — |
-  | Mơ hồ / thiếu / lệch | quyết định — hỏi ở GĐ2–GĐ3, nội dung BRD làm option `(Recommended)` kèm cite | append dòng `Cần ghi ngược BRD` |
-  | Im lặng | hỏi như thường — im lặng ≠ `N/A` | append dòng `Cần ghi ngược BRD` |
+  | Mơ hồ / thiếu / lệch | quyết định — hỏi ở GĐ2–GĐ3, nội dung BRD làm option `(Recommended)` kèm cite | append `Cần ghi ngược BRD` (chỉ nhánh trọng yếu) |
+  | Im lặng | hỏi như thường — im lặng ≠ `N/A` | append `Cần ghi ngược BRD` (chỉ nhánh trọng yếu) |
 
   CẤM lấy "BRD đã mô tả rồi" làm cớ bỏ mục sàn GĐ2/GĐ3, bỏ neo `K`, hay cắt dòng sổ — BRD là văn bản BA viết trước, không phải quyết định người dùng đã chốt, và thường bỏ trống đúng các mục sàn GĐ3 (hệ quả, vi phạm, vòng đời, job nền).
 - **Domain doc** — **nguồn model chuẩn khi có, nhưng KHÔNG bắt buộc**. Tìm bằng **quét nội dung `docs/domain/`, KHÔNG suy theo tên file** (tên file là tên cụm do người đặt, không suy được từ module/chức năng):
@@ -188,7 +188,8 @@ BRD là tài sản của BA: mọi lần chạm phải có tên người chịu 
 
 ### Thu thập (trong lúc phỏng vấn)
 
-- [ ] Nhánh loại *mơ hồ/thiếu/lệch* hoặc *im lặng* (bảng phân loại GĐ1) được chốt → append NGAY vào sổ, mục `Cần ghi ngược BRD`, mỗi dòng có ID `WB-<n>`: `WB-n · file BRD · mục · NGUYÊN VĂN đang có (hoặc "im lặng") · nội dung đã chốt · loại`.
+- [ ] Nhánh loại *mơ hồ/thiếu/lệch* hoặc *im lặng* (bảng phân loại GĐ1) được chốt **VÀ thuộc tầng trọng yếu** (dữ liệu/quyền/luồng — Bất biến #3) → append NGAY vào sổ, mục `Cần ghi ngược BRD`, mỗi dòng có ID `WB-<n>`: `WB-n · file BRD · mục · NGUYÊN VĂN đang có (hoặc "im lặng") · nội dung đã chốt · loại`. Nhánh **thứ yếu** (sort mặc định, wording, empty-state) KHÔNG ghi ngược BRD — bảng đề nghị 40 dòng toàn chi tiết vặt biến duyệt thành đóng dấu.
+- [ ] Trích "NGUYÊN VĂN đang có": so khớp và ghi sổ ở dạng **đã gộp mọi khoảng trắng/xuống dòng thành 1 space** — BRD là HTML thô, câu thường bị ngắt dòng giữa chừng. Chuỗi khớp **>1 vị trí** trong file → không tự chọn, hỏi người dùng vị trí nào.
 - [ ] CẤM sửa `docs/brd/` trước khi qua Cổng bên dưới (phiên hủy giữa chừng không được để lại vết; câu trả lời sau có thể lật câu trước).
 
 ### Phân loại từng dòng
@@ -229,6 +230,7 @@ BRD là tài sản của BA: mọi lần chạm phải có tên người chịu 
 
 ### Sau khi ghi
 
+- [ ] Chạy `git diff -- <file BRD đã sửa>`, trình diff cho người dùng trước khi báo cáo — người duyệt bảng đề nghị phải thấy được thứ thực sự đã ghi.
 - [ ] Dự án có extension `dft-speckit` → chạy `python .specify/extensions/dft-speckit/scripts/brd_roadmap.py verify docs/roadmap.md --brd docs/brd --brd-rel docs/brd`; exit ≠ 0 → báo lỗi ngay kèm nguyên văn, không tự chữa.
 - [ ] KHÔNG đụng `brd.manifest.yml` — ghi ngược không làm gãy `verify` (manifest khoá theo path, không theo nội dung); trường `chars` lệch là vô hại, `manifest --write` cũng không cập nhật nó; CẤM sửa tay.
 - [ ] Nhắc người dùng: `docs/brd/` đã lệch `.docx` gốc; chạy lại `brd-import` sẽ xuất `docs/brd.new/` + bảng diff (không đè); BA gửi `.docx` mới → phần ghi ngược phải đối chiếu lại tay.

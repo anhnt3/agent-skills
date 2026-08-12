@@ -125,9 +125,9 @@ ID | Tiêu đề | Nhóm | Ưu tiên | Loại | Tiền điều kiện | Dữ li�
 ```
 
 Cột 1–11 = thiết kế (versioned); cột 12 (`Kết quả tự động`) = command/CI ghi (chỉ-đọc với tester);
-cột 13–16 = thực thi (tester điền, để trống trong file nguồn); **cột 17 `Nguồn BRD`** = vị trí trong
-`docs/brd/` mà case truy về (`…md#<mục>`, hoặc `N/A`) — command lần theo trường `Nguồn` của item
-roadmap để dựng, không đoán theo tên file. Cột 17 nằm **sau** vùng tester là cố ý: cột 13–16 giữ nguyên
+cột 13–16 = thực thi (tester điền, để trống trong file nguồn); **cột 17 `Nguồn BRD`** = một trong ba:
+`docs/brd/…md#<mục>` (truy về BRD — command lần theo trường `Nguồn` của item roadmap, không đoán tên
+file) · `QUCTHT §<n>` (case sinh từ đối chiếu quy ước chung) · `N/A`. Script từ chối cột 17 trống. Cột 17 nằm **sau** vùng tester là cố ý: cột 13–16 giữ nguyên
 vị trí nên merge dữ liệu tester không đổi và file xlsx cũ 16 cột vẫn đọc đúng.
 
 XLSX xuất ra **2 sheet** (Testcases + Ma trận truy vết): header nền xanh, tô màu ưu tiên P1/P2/P3,

@@ -34,7 +34,7 @@ lượng field trên bất kỳ dòng nào.
 | 14 | `Trạng thái` | **Tester** | Để trống. Trong xlsx cột này có dropdown: `Pass`, `Fail`, `Blocked`, `N/A`, `Chưa chạy`. |
 | 15 | `Bug ID` | **Tester** | Để trống. Tester điền mã bug nếu Trạng thái = Fail/Blocked. |
 | 16 | `Ghi chú` | **Tester** | Để trống. Ghi chú thêm của tester. |
-| 17 | `Nguồn BRD` | Command | Vị trí trong BRD mà case này truy về: `docs/brd/<đường-dẫn>.md#<tiêu đề mục>`, tương đối **gốc repo**. Nhiều mục → phân tách bằng ` · `. Feature không có BRD (roadmap ghi `Nguồn: N/A`, hoặc dự án không có `docs/brd/`) → điền `N/A`. **Không** để trống. |
+| 17 | `Nguồn BRD` | Command | Đúng MỘT trong ba giá trị, **không để trống**: (a) `docs/brd/<đường-dẫn>.md#<anchor>` — case truy về mục BRD, đường dẫn tương đối **gốc repo**, anchor = slug của heading (chữ thường, giữ dấu tiếng Việt, khoảng trắng → `-`, bỏ ký tự không phải chữ/số — cùng luật `slugify_anchor()` của `brd_roadmap.py`); (b) `QUCTHT §<n>` — case sinh từ đối chiếu quy ước chung, không truy về BRD; (c) `N/A` — feature không có BRD và case không từ QUCTHT. Nhiều mục → phân tách bằng ` · ` (CẤM `,`/`;` — tránh nhầm với cú pháp cột 10). |
 
 <!-- Cột 17 được thêm sau cột tester (không chèn vào giữa) là CỐ Ý: cột 13-16 giữ
      nguyên vị trí nên logic merge dữ liệu tester không đổi, và file xlsx cũ 16 cột
@@ -85,8 +85,8 @@ python3 .specify/extensions/dft-speckit/scripts/csv_to_xlsx.py <input.csv-hoặc
 - **Runtime prereq**: chỉ cần có sẵn `python3` trên máy. Lần chạy đầu tiên script tự dựng `.venv` cục bộ
   trong thư mục `scripts/` và tự `pip install openpyxl` — cần mạng ở lần chạy đầu đó; các lần sau chạy
   offline vì đã có venv.
-- Script validate header phải khớp **chính xác** `EXPECTED_HEADER` (đúng 16 tên cột, đúng thứ tự, đúng
-  dấu tiếng Việt) và mỗi dòng dữ liệu phải có đủ 16 field — sai sẽ raise lỗi và dừng, không sinh file lỗi.
+- Script validate header phải khớp **chính xác** `EXPECTED_HEADER` (đúng 17 tên cột, đúng thứ tự, đúng
+  dấu tiếng Việt) và mỗi dòng dữ liệu phải có đủ 17 field — sai sẽ raise lỗi và dừng, không sinh file lỗi.
 - `--sheet` đặt tên sheet đầu tiên (mặc định `"Testcases"`). Tên sheet **không được chứa** các ký tự:
   `: \ / ? * [ ]` (giới hạn của Excel). Nếu bạn lỡ truyền tên chứa các ký tự này, script sẽ tự thay bằng
   khoảng trắng và cắt còn tối đa 31 ký tự — nhưng nên tránh, đặt tên sạch ngay từ đầu.
@@ -94,7 +94,7 @@ python3 .specify/extensions/dft-speckit/scripts/csv_to_xlsx.py <input.csv-hoặc
 ### JSON authoring (khuyến nghị)
 
 Thay vì tự tay quote/escape CSV, **khuyến nghị author input dạng JSON** — một mảng object, mỗi object
-đủ đúng 16 key trùng tên với `EXPECTED_HEADER` (kể cả các cột thực thi 13–16, để giá trị `""`):
+đủ đúng **17 key** trùng tên với `EXPECTED_HEADER` (kể cả các cột thực thi 13–16, để giá trị `""`):
 
 ```json
 [
@@ -115,7 +115,7 @@ Thay vì tự tay quote/escape CSV, **khuyến nghị author input dạng JSON**
     "Trạng thái": "",
     "Bug ID": "",
     "Ghi chú": "",
-    "Nguồn BRD": "docs/brd/02-quan-ly-chung/01-dang-nhap.md#mo-ta-dieu-khien"
+    "Nguồn BRD": "docs/brd/02-quan-ly-chung/01-dang-nhap.md#mô-tả-điều-khiển"
   }
 ]
 ```
@@ -164,40 +164,26 @@ tester, khớp theo `ID` ở cột 1) từ file cũ và giữ nguyên các ô đ
 chạy lại script để cập nhật cột 12 **không xóa mất** `Kết quả thực tế`/`Trạng thái`/`Bug ID`/`Ghi chú`
 mà tester đã điền tay trước đó. Chỉ ghi đè cột 13–16 nếu input mới có giá trị khác trống ở cột đó.
 
-**`ID` là khóa merge — cấm đổi.** Khi regenerate input để cập nhật cột 12 (hoặc thêm case mới), PHẢI
-tái dùng **nguyên văn** ID của mọi case đã tồn tại trong xlsx (đọc lại từ file cũ nếu cần); cấm
-renumber, cấm đổi PREFIX. ID lệch = merge không khớp = mất trắng cột 13–16 của case đó.
+**Hai cổng bảo vệ dữ liệu tester** — vi phạm → script **KHÔNG ghi file** (xlsx cũ nguyên vẹn), thoát ≠ 0:
 
-**Script chặn cứng, không chỉ cảnh báo.** Phát hiện ID cũ **có dữ liệu tester** mà không còn trong
-input mới → script in lỗi ra stderr, **KHÔNG ghi file**, và thoát với mã **≠ 0**. File xlsx cũ nguyên
-vẹn. Cách xử lý: đọc lại ID từ chính file xlsx đó, sửa input cho khớp, chạy lại.
+| Mã thoát | Ca | Cờ mở (CHỈ người dùng bật) | Cách sửa |
+|---|---|---|---|
+| `0` | ghi thành công | — | — |
+| `2` | ID có dữ liệu tester **biến mất** khỏi input (`IdLossError`) | `--allow-id-loss` — chỉ khi CHỦ ĐÍCH bỏ hẳn case | đọc lại ID từ chính xlsx, tái dùng nguyên văn, chạy lại |
+| `3` | ID giữ nguyên nhưng **Tiêu đề đổi** trong khi đã có dữ liệu tester (`ContentShiftError`) | `--allow-content-shift` — chỉ khi CHỦ ĐÍCH đổi nội dung mà giữ kết quả cũ | gắn lại ID với ĐÚNG case cũ theo thứ tự trong xlsx, chạy lại |
 
-Cờ `--allow-id-loss` bỏ qua cổng này (vẫn in WARNING liệt kê ID bị mất). **Chỉ người dùng được bật cờ
-này, và chỉ khi CHỦ ĐÍCH bỏ hẳn các case đó** — agent **KHÔNG** được tự thêm cờ để cho lệnh chạy qua.
-Thêm cờ để né lỗi = xoá công tester đã nhập tay, không khôi phục được.
+Luật đi kèm:
 
-**Cổng thứ hai: ID giữ nguyên nhưng nội dung đổi.** Cổng trên chỉ bắt ID *biến mất*. Ca nguy hiểm hơn là
-**ID vẫn đủ nhưng nội dung trượt chỗ**: bỏ (hoặc chèn) một case ở giữa rồi đánh số lại toàn bộ → `TC-…-002`
-bây giờ là kịch bản của case `…-003` cũ, trong khi cột 13–16 vẫn là kết quả tester đã chấm cho kịch bản
-cũ. Không mất dữ liệu, nhưng **gắn dữ liệu sang case khác, im lặng** — tệ hơn mất, vì không hiện ra ở đâu.
+- `ID` là khóa merge: tái dùng NGUYÊN VĂN; CẤM renumber, CẤM đổi PREFIX.
+- Case mới → cấp số tiếp theo **ở cuối**; bỏ case → **để trống số đó**, không dồn số. Theo luật này thì không bao giờ chạm cổng nào.
+- Agent CẤM tự thêm 2 cờ trên để né lỗi.
+- Cổng `3` bỏ qua khác biệt khoảng trắng thừa, và KHÔNG chặn khi tester chưa chấm gì (sửa case theo spec mới là bình thường).
+- Khi cả hai điều kiện cùng dính: cổng `2` kiểm trước → exit 2; sửa xong chạy lại có thể gặp tiếp exit 3 — không phải cờ "không ăn".
+- Cần đổi ID thật (vd đổi PREFIX toàn bộ): sửa cột `ID` **trong chính file xlsx** trước (dữ liệu tester đi theo ID mới), rồi regenerate input — không dùng cờ.
 
-Script so **Tiêu đề** (cột 2) của cùng một `ID` giữa input mới và xlsx cũ. Khác nhau **và** case đó đã có
-dữ liệu tester → in lỗi, **KHÔNG ghi file**, thoát mã **3**. So sánh bỏ qua khoảng trắng thừa, và **không**
-chặn khi tester chưa chấm gì (sửa case theo spec mới là việc bình thường). Cờ `--allow-content-shift` bỏ
-qua cổng này — cũng chỉ người dùng bật.
+<!-- Rationale: exit 3 tồn tại vì ca "bỏ/chèn case ở giữa rồi đánh số lại" — số ID vẫn đủ nên cổng 2 im
+     lặng, nhưng TC-002 giờ là kịch bản của case 003 cũ mà vẫn mang kết quả tester chấm cho kịch bản cũ:
+     không mất dữ liệu mà GẮN SANG CASE KHÁC, tệ hơn mất vì không hiện ra ở đâu. Trước đây script chỉ
+     print WARNING rồi vẫn ghi đè (exit 0) — luật "gặp WARNING thì dừng" phụ thuộc agent tự giác.
+     Test: scripts/tests/test_csv_to_xlsx.py -->
 
-**Cách cấp ID cho case mới, để không bao giờ chạm hai cổng trên**: case mới **cấp số tiếp theo ở cuối**,
-không chèn vào giữa rồi đánh số lại. Bỏ case thì **để trống số đó**, đừng dồn số lên.
-
-| Mã thoát | Nghĩa |
-|---|---|
-| `0` | ghi thành công |
-| `2` | ID có dữ liệu tester biến mất khỏi input (`IdLossError`) |
-| `3` | ID giữ nguyên nhưng Tiêu đề đổi trong khi đã có dữ liệu tester (`ContentShiftError`) |
-
-<!-- Trước đây script chỉ print WARNING rồi vẫn ghi đè (exit 0), nên luật "gặp WARNING thì dừng"
-     hoàn toàn phụ thuộc agent tự giác. Nay cưỡng chế bằng exit code; xem
-     scripts/tests/test_csv_to_xlsx.py::test_doi_id_lam_mat_du_lieu_tester_thi_dung_va_khong_ghi -->
-
-Đường thoát khi thực sự cần đổi ID (vd đổi PREFIX toàn bộ): sửa cột `ID` **trong chính file xlsx** trước
-(để dữ liệu tester đi theo ID mới), rồi mới regenerate input với ID mới — không dùng `--allow-id-loss`.
