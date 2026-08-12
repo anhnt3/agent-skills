@@ -117,17 +117,25 @@ sha256 — trade-off đã chấp nhận của kênh phân phối này.
 
 ## Định dạng cố định (Pha 4 của `qa-spec-cycle`)
 
-CSV/JSON của testcase thủ công bắt buộc đúng **16 cột, đúng thứ tự** — script validate header cứng
+CSV/JSON của testcase thủ công bắt buộc đúng **17 cột, đúng thứ tự** — script validate header cứng
 (`EXPECTED_HEADER`) và raise lỗi nếu sai tên/thứ tự/số field:
 
 ```
-ID | Tiêu đề | Nhóm | Ưu tiên | Loại | Tiền điều kiện | Dữ liệu test | Các bước thực hiện | Kết quả mong đợi | Truy vết | Test tự động | Kết quả tự động | Kết quả thực tế | Trạng thái | Bug ID | Ghi chú
+ID | Tiêu đề | Nhóm | Ưu tiên | Loại | Tiền điều kiện | Dữ liệu test | Các bước thực hiện | Kết quả mong đợi | Truy vết | Test tự động | Kết quả tự động | Kết quả thực tế | Trạng thái | Bug ID | Ghi chú | Nguồn BRD
 ```
 
 Cột 1–11 = thiết kế (versioned); cột 12 (`Kết quả tự động`) = command/CI ghi (chỉ-đọc với tester);
-4 cột cuối (13–16) = thực thi (tester điền, để trống trong file nguồn). XLSX xuất ra **2 sheet**
-(Testcases + Ma trận truy vết): header nền xanh, tô màu ưu tiên P1/P2/P3, dropdown Trạng thái,
-freeze panes và auto-filter. Chi tiết đầy đủ: [`references/manual-xlsx-format.md`](references/manual-xlsx-format.md).
+cột 13–16 = thực thi (tester điền, để trống trong file nguồn); **cột 17 `Nguồn BRD`** = vị trí trong
+`docs/brd/` mà case truy về (`…md#<mục>`, hoặc `N/A`) — command lần theo trường `Nguồn` của item
+roadmap để dựng, không đoán theo tên file. Cột 17 nằm **sau** vùng tester là cố ý: cột 13–16 giữ nguyên
+vị trí nên merge dữ liệu tester không đổi và file xlsx cũ 16 cột vẫn đọc đúng.
+
+XLSX xuất ra **2 sheet** (Testcases + Ma trận truy vết): header nền xanh, tô màu ưu tiên P1/P2/P3,
+dropdown Trạng thái, freeze panes và auto-filter.
+
+**Chống mất dữ liệu tester**: `ID` là khóa merge. Nếu ID cũ có dữ liệu tester mà biến mất khỏi input
+mới, script **không ghi file** và thoát ≠ 0 (cờ `--allow-id-loss` chỉ dành cho người dùng bật tường
+minh). Chi tiết đầy đủ: [`references/manual-xlsx-format.md`](references/manual-xlsx-format.md).
 
 ## Nguồn gốc
 

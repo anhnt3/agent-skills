@@ -1,20 +1,20 @@
 # Định dạng CSV → xlsx cho testcase thủ công
 
 Tài liệu này là hợp đồng dữ liệu cho Pha 4 (author testcase thủ công) của command `qa-spec-cycle`.
-CSV bạn tạo ra PHẢI đúng 16 cột theo đúng thứ tự bên dưới — script `scripts/csv_to_xlsx.py`
+CSV bạn tạo ra PHẢI đúng 17 cột theo đúng thứ tự bên dưới — script `scripts/csv_to_xlsx.py`
 validate header cứng (`EXPECTED_HEADER`) và sẽ **raise lỗi, không tự sửa**, nếu sai tên cột/thứ tự/số
 lượng field trên bất kỳ dòng nào.
 
 ## Nội dung
 
-1. [Bảng 16 cột (đúng thứ tự)](#1-bảng-16-cột-đúng-thứ-tự)
+1. [Bảng 17 cột (đúng thứ tự)](#1-bảng-17-cột-đúng-thứ-tự)
 2. [Ai sở hữu cột nào](#2-ai-sở-hữu-cột-nào-và-vì-sao-tester-cần-nhìn-thấy-cả-3-nhóm)
 3. [Quy tắc chất lượng nội dung](#3-quy-tắc-chất-lượng-nội-dung)
 4. [Chạy script sinh xlsx](#4-chạy-script-sinh-xlsx)
 5. [Output: 2 sheet](#5-output-2-sheet)
 6. [Cập nhật `Kết quả tự động` (cột 12) ở Pha 8](#6-cập-nhật-kết-quả-tự-động-cột-12-ở-pha-8--không-mất-dữ-liệu-tester)
 
-## 1. Bảng 16 cột (đúng thứ tự)
+## 1. Bảng 17 cột (đúng thứ tự)
 
 | # | Cột | Ai điền | Quy tắc |
 |---|-----|---------|---------|
@@ -34,14 +34,25 @@ lượng field trên bất kỳ dòng nào.
 | 14 | `Trạng thái` | **Tester** | Để trống. Trong xlsx cột này có dropdown: `Pass`, `Fail`, `Blocked`, `N/A`, `Chưa chạy`. |
 | 15 | `Bug ID` | **Tester** | Để trống. Tester điền mã bug nếu Trạng thái = Fail/Blocked. |
 | 16 | `Ghi chú` | **Tester** | Để trống. Ghi chú thêm của tester. |
+| 17 | `Nguồn BRD` | Command | Vị trí trong BRD mà case này truy về: `docs/brd/<đường-dẫn>.md#<tiêu đề mục>`, tương đối **gốc repo**. Nhiều mục → phân tách bằng ` · `. Feature không có BRD (roadmap ghi `Nguồn: N/A`, hoặc dự án không có `docs/brd/`) → điền `N/A`. **Không** để trống. |
+
+<!-- Cột 17 được thêm sau cột tester (không chèn vào giữa) là CỐ Ý: cột 13-16 giữ
+     nguyên vị trí nên logic merge dữ liệu tester không đổi, và file xlsx cũ 16 cột
+     vẫn merge đúng. Chèn vào giữa sẽ dịch chỉ số cột thực thi = mất dữ liệu tester. -->
 
 ## 2. Ai sở hữu cột nào (và vì sao tester cần nhìn thấy cả 3 nhóm)
 
-- **Cột 1–11 (thiết kế)** — command author toàn bộ khi viết CSV testcase. Đây là "kịch bản" cố định, không
-  đổi giữa các lần chạy trừ khi spec đổi.
+- **Cột 1–11 + 17 (thiết kế)** — command author toàn bộ khi viết CSV testcase. Đây là "kịch bản" cố định,
+  không đổi giữa các lần chạy trừ khi spec/BRD đổi.
 - **Cột 12 (auto, chỉ-đọc)** — command/CI điền, KHÔNG phải chỗ tester gõ tay. Trong xlsx cột này được tô
   màu xanh nhạt (khác màu cột thực thi) để phân biệt trực quan.
 - **Cột 13–16 (thực thi)** — để trống hoàn toàn cho tester, tô màu vàng nhạt trong xlsx.
+
+**Cột 17 `Nguồn BRD` khác cột 10 `Truy vết` thế nào**: cột 10 trỏ **yêu cầu trong spec** (FR/AC) và
+được script **parse** để dựng sheet Ma trận truy vết — nên nó chỉ nhận token mã, dấu phẩy trong đó sẽ
+tách thành nhiều dòng ma trận. Cột 17 trỏ **văn bản nghiệp vụ gốc** (BRD của BA), chỉ để người đọc lần
+ngược về tài liệu — script KHÔNG parse nó, nên tiêu đề mục có dấu phẩy vẫn an toàn. Hai cột trả lời hai
+câu khác nhau: *"case này phủ yêu cầu nào"* và *"yêu cầu này BA viết ở đâu"*.
 
 **Vì sao tester cần thấy cả cột 11–12 chứ không chỉ cột thực thi**: mở file lên, tester phải biết ngay
 *case nào đã có test tự động phủ rồi* (cột 11 là `file::tên_test`) và *test tự động đó đang pass hay
@@ -103,7 +114,8 @@ Thay vì tự tay quote/escape CSV, **khuyến nghị author input dạng JSON**
     "Kết quả thực tế": "",
     "Trạng thái": "",
     "Bug ID": "",
-    "Ghi chú": ""
+    "Ghi chú": "",
+    "Nguồn BRD": "docs/brd/02-quan-ly-chung/01-dang-nhap.md#mo-ta-dieu-khien"
   }
 ]
 ```
@@ -125,6 +137,8 @@ sửa lỗi quoting sai.
 - Header tô xanh đậm chữ trắng, đóng băng dòng 1 (`freeze_panes = A2`).
 - Cột 11–12 (`Test tự động`, `Kết quả tự động`) tô nền xanh nhạt = vùng máy điền, chỉ-đọc.
 - Cột 13–16 (`Kết quả thực tế`, `Trạng thái`, `Bug ID`, `Ghi chú`) tô nền vàng nhạt = vùng tester điền.
+- Cột 17 (`Nguồn BRD`) không tô nền = vùng thiết kế, cùng nhóm với cột 1–11 (nó nằm sau vùng vàng vì
+  cột tester phải giữ nguyên vị trí 13–16, xem chú thích ở §1).
 - Cột `Trạng thái` có dropdown validation với các giá trị: `Pass`, `Fail`, `Blocked`, `N/A`, `Chưa chạy`.
 - Có dòng chú thích (legend) ngay dưới bảng giải thích ý nghĩa 2 màu tô.
 
@@ -152,6 +166,19 @@ mà tester đã điền tay trước đó. Chỉ ghi đè cột 13–16 nếu in
 
 **`ID` là khóa merge — cấm đổi.** Khi regenerate input để cập nhật cột 12 (hoặc thêm case mới), PHẢI
 tái dùng **nguyên văn** ID của mọi case đã tồn tại trong xlsx (đọc lại từ file cũ nếu cần); cấm
-renumber, cấm đổi PREFIX. ID lệch = merge không khớp = mất trắng cột 13–16 của case đó. Script in
-`WARNING: <n> ID có dữ liệu tester ... sẽ mất` ra stderr khi phát hiện; gặp WARNING này → **dừng, sửa
-lại ID cho khớp rồi chạy lại**, không được bỏ qua.
+renumber, cấm đổi PREFIX. ID lệch = merge không khớp = mất trắng cột 13–16 của case đó.
+
+**Script chặn cứng, không chỉ cảnh báo.** Phát hiện ID cũ **có dữ liệu tester** mà không còn trong
+input mới → script in lỗi ra stderr, **KHÔNG ghi file**, và thoát với mã **≠ 0**. File xlsx cũ nguyên
+vẹn. Cách xử lý: đọc lại ID từ chính file xlsx đó, sửa input cho khớp, chạy lại.
+
+Cờ `--allow-id-loss` bỏ qua cổng này (vẫn in WARNING liệt kê ID bị mất). **Chỉ người dùng được bật cờ
+này, và chỉ khi CHỦ ĐÍCH bỏ hẳn các case đó** — agent **KHÔNG** được tự thêm cờ để cho lệnh chạy qua.
+Thêm cờ để né lỗi = xoá công tester đã nhập tay, không khôi phục được.
+
+<!-- Trước đây script chỉ print WARNING rồi vẫn ghi đè (exit 0), nên luật "gặp WARNING thì dừng"
+     hoàn toàn phụ thuộc agent tự giác. Nay cưỡng chế bằng exit code; xem
+     scripts/tests/test_csv_to_xlsx.py::test_doi_id_lam_mat_du_lieu_tester_thi_dung_va_khong_ghi -->
+
+Đường thoát khi thực sự cần đổi ID (vd đổi PREFIX toàn bộ): sửa cột `ID` **trong chính file xlsx** trước
+(để dữ liệu tester đi theo ID mới), rồi mới regenerate input với ID mới — không dùng `--allow-id-loss`.

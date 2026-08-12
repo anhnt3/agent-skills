@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """CSV → XLSX cho testcase QA (2 sheet: Testcases + Ma trận truy vết).
-Agnostic: chỉ format CSV theo hợp đồng 16 cột. Tự dựng venv + openpyxl lần đầu.
+Agnostic: chỉ format CSV theo hợp đồng 17 cột. Tự dựng venv + openpyxl lần đầu.
 Chỉ cần python3."""
 from __future__ import annotations
 import csv
@@ -15,13 +15,33 @@ EXPECTED_HEADER = [
     "Dữ liệu test", "Các bước thực hiện", "Kết quả mong đợi", "Truy vết",
     "Test tự động", "Kết quả tự động",
     "Kết quả thực tế", "Trạng thái", "Bug ID", "Ghi chú",
+    "Nguồn BRD",
 ]
 COL_ID = 0
 COL_TRACE = 9
 COL_AUTO_TEST = 10
 COL_AUTO_STATUS = 11
+# Cột 13-16 (index 12-15) = vùng tester. Giữ NGUYÊN vị trí khi thêm cột mới:
+# merge dữ liệu tester khoá theo các index này, và file xlsx cũ 16 cột vẫn khớp.
+EXEC_COL_IDX = (12, 13, 14, 15)
+COL_BRD = 16
 STATUS_CHOICES = ["Pass", "Fail", "Blocked", "N/A", "Chưa chạy"]
 MANUAL_ONLY_SENTINEL = "manual-only"
+
+
+class IdLossError(Exception):
+    """ID có dữ liệu tester trong xlsx cũ nhưng biến mất khỏi input mới.
+
+    Ghi tiếp = xoá trắng cột 13-16 của những case đó. Mặc định script DỪNG và
+    KHÔNG ghi file; chỉ `--allow-id-loss` (người dùng bật tường minh) mới cho qua.
+    """
+
+    def __init__(self, lost):
+        self.lost = list(lost)
+        super().__init__(
+            f"{len(self.lost)} ID có dữ liệu tester trong xlsx cũ nhưng không có "
+            f"trong input mới: {', '.join(self.lost)}"
+        )
 
 
 def read_cases(csv_path):
@@ -33,10 +53,11 @@ def read_cases(csv_path):
 
 
 def read_cases_json(json_path):
-    """Đọc testcase từ JSON (mảng object, mỗi object đủ 16 key = EXPECTED_HEADER).
+    """Đọc testcase từ JSON (mảng object, mỗi object đủ 17 key = EXPECTED_HEADER).
     Ưu điểm so với CSV: không cần tự quote/escape newline, dấu phẩy trong tiếng Việt.
     Các cột thực thi (13-16: Kết quả thực tế, Trạng thái, Bug ID, Ghi chú) vẫn phải
-    có mặt như key nhưng giá trị nên để chuỗi rỗng "" (tester điền sau khi chạy tay)."""
+    có mặt như key nhưng giá trị nên để chuỗi rỗng "" (tester điền sau khi chạy tay).
+    Cột 17 `Nguồn BRD` do command điền; feature không có BRD thì để "N/A"."""
     with open(json_path, encoding="utf-8-sig") as f:
         cases = json.load(f)
     if not isinstance(cases, list):
@@ -177,7 +198,10 @@ def _read_existing_exec(out_path, sheet_name="Testcases"):
         return {}
     ws = wb[sheet_name]
     result = {}
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=16, values_only=True):
+    # max_col theo header hiện tại; file cũ 16 cột vẫn đọc đúng vì EXEC_COL_IDX
+    # (12-15) không đổi vị trí — cột thiếu chỉ trả None.
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1,
+                            max_col=len(EXPECTED_HEADER), values_only=True):
         if not row:
             continue
         id_ = row[0]
@@ -185,14 +209,15 @@ def _read_existing_exec(out_path, sheet_name="Testcases"):
             continue
         id_ = str(id_).strip()
         vals = []
-        for idx in (12, 13, 14, 15):
+        for idx in EXEC_COL_IDX:
             v = row[idx] if idx < len(row) else None
             vals.append("" if v is None else v)
         result[id_] = vals
     return result
 
 
-def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases"):
+def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases",
+               allow_id_loss=False):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.worksheet.datavalidation import DataValidation
@@ -202,16 +227,19 @@ def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases"):
     preserved = _read_existing_exec(out_path, safe_sheet_name)
 
     # ID là khóa merge cột 13-16 (dữ liệu tester). ID cũ không còn trong input mới
-    # = dữ liệu tester của case đó bị bỏ. Cảnh báo thay vì mất im lặng.
+    # = dữ liệu tester của case đó bị xoá trắng. DỪNG trước khi ghi, không cảnh báo
+    # rồi ghi tiếp — dữ liệu tester nhập tay không tái tạo được.
     new_ids = {str(r[0] or "").strip() for r in rows}
     lost = sorted(
         i for i, vals in preserved.items()
         if i not in new_ids and any(str(v).strip() for v in vals)
     )
+    if lost and not allow_id_loss:
+        raise IdLossError(lost)
     if lost:
         print(
-            f"WARNING: {len(lost)} ID có dữ liệu tester trong xlsx cũ nhưng không có "
-            f"trong input mới, các ô thực thi sẽ mất: {', '.join(lost)}",
+            f"WARNING: --allow-id-loss được bật; xoá dữ liệu tester của {len(lost)} "
+            f"ID: {', '.join(lost)}",
             file=sys.stderr,
         )
 
@@ -237,12 +265,12 @@ def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases"):
         id_ = r[COL_ID].strip() if r[COL_ID] else ""
         pres = preserved.get(id_)
         if pres is not None:
-            for offset, col_idx in enumerate((12, 13, 14, 15)):
+            for offset, col_idx in enumerate(EXEC_COL_IDX):
                 incoming = r[col_idx] if col_idx < len(r) else ""
                 if not (incoming and str(incoming).strip()):
                     r[col_idx] = pres[offset]
         ws.append(r)
-    widths = [12, 34, 16, 8, 14, 26, 22, 34, 34, 14, 30, 16, 24, 14, 12, 22]
+    widths = [12, 34, 16, 8, 14, 26, 22, 34, 34, 14, 30, 16, 24, 14, 12, 22, 40]
     for c, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(c)].width = w
     last = ws.max_row
@@ -293,9 +321,13 @@ def main(argv=None):
     import argparse
     argv = list(sys.argv[1:] if argv is None else argv)
     p = argparse.ArgumentParser(description="CSV/JSON → XLSX testcase (2 sheet)")
-    p.add_argument("csv_path", help="File CSV (16 cột) hoặc JSON (mảng object 16 key)")
+    p.add_argument("csv_path", help="File CSV (17 cột) hoặc JSON (mảng object 17 key)")
     p.add_argument("xlsx_path")
     p.add_argument("--sheet", default="Testcases")
+    p.add_argument(
+        "--allow-id-loss", action="store_true",
+        help="Cho phép ghi đè dù mất dữ liệu tester của ID không còn trong input. "
+             "CHỈ người dùng bật tường minh — agent KHÔNG được tự thêm cờ này.")
     a = p.parse_args(argv)
     if a.csv_path.lower().endswith(".json"):
         header, rows = read_cases_json(a.csv_path)
@@ -304,8 +336,22 @@ def main(argv=None):
     validate_header(header)
     validate_rows(header, rows)
     matrix = build_matrix(rows)
-    write_xlsx(header, rows, matrix, a.xlsx_path, a.sheet)
+    try:
+        write_xlsx(header, rows, matrix, a.xlsx_path, a.sheet,
+                   allow_id_loss=a.allow_id_loss)
+    except IdLossError as e:
+        print(
+            f"LỖI: {e}\n"
+            f"KHÔNG ghi file — dữ liệu tester (Kết quả thực tế/Trạng thái/Bug ID/"
+            f"Ghi chú) của các ID trên sẽ bị xoá trắng.\n"
+            f"Sửa: tái dùng NGUYÊN VĂN ID cũ trong input (đọc lại từ {a.xlsx_path}), "
+            f"rồi chạy lại.\n"
+            f"Chỉ khi bạn CHỦ ĐÍCH bỏ các case đó mới chạy lại với --allow-id-loss.",
+            file=sys.stderr,
+        )
+        return 2
     print(f"OK: {len(rows)} case, {len(matrix)} FR/AC → {a.xlsx_path}")
+    return 0
 
 
 def _has_openpyxl():
@@ -330,4 +376,4 @@ def _bootstrap_and_reexec():
 if __name__ == "__main__":
     if not _has_openpyxl() and os.environ.get("QA_XLSX_NO_BOOTSTRAP") != "1":
         _bootstrap_and_reexec()
-    main()
+    sys.exit(main() or 0)
