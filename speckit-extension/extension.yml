@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "dft-speckit"
   name: "DFT Spec Kit Extension"
-  version: "0.4.9"
+  version: "0.5.2"
   description: "Bộ command dùng chung của DFT cho Spec Kit — tập hợp các command hỗ trợ quy trình spec-driven development của công ty. Sẽ mở rộng dần nhiều command."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/anhnt3/agent-skills"
@@ -51,7 +51,7 @@ provides:
 
     - name: "speckit.dft-speckit.srs-from-code"
       file: "commands/srs-from-code.md"
-      description: "Sinh .specify/docs/<đường-dẫn-cây>/srs.md theo đúng cấu trúc 4 cấp của tài liệu ban hành thật (Nhóm→Chức năng→Sơ đồ/Mục đích/Mô tả chức năng→Màn hình→a.-h.) từ intel.md và functions.json — nhận một FN-ID gốc (trống = toàn dự án), tái dùng intel_tree.py để đề xuất/xác nhận unit rồi sinh SRS theo batch (song song/tuần tự), chỉ ghi nội dung phản ánh đúng những gì code thật sự làm, thông tin hành chính thiếu thì ghi 'Chưa có thông tin', và tổng hợp một lượt cuối cùng những phát hiện logic/bảo mật đáng chú ý để hỏi người dùng. Chốt bằng cổng srs_verify.py (comment ẩn <!-- FN: ... --> thay cho ma trận truy vết cũ); không còn cờ --template, khung cố định theo đúng một cấu trúc tài liệu ban hành."
+      description: "Sinh .specify/docs/<đường-dẫn-cây>/srs.md theo cấu trúc 4 cấp của tài liệu ban hành thật (Nhóm→Chức năng→Sơ đồ/Mục đích/Mô tả chức năng→khối leaf 1-1 với FN-ID function list→a.-g.) từ intel.md và functions.json — nhận một FN-ID gốc (trống = toàn dự án), tái dùng intel_tree.py để đề xuất/xác nhận unit rồi sinh SRS theo batch (song song/tuần tự), chỉ ghi nội dung phản ánh đúng những gì code thật sự làm, thông tin hành chính thiếu thì ghi 'Chưa có thông tin', và tổng hợp một lượt cuối cùng những phát hiện logic/bảo mật đáng chú ý để hỏi người dùng. Chốt bằng cổng srs_verify.py (comment ẩn <!-- FN: ... --> thay cho ma trận truy vết cũ); không còn cờ --template, khung cố định theo đúng một cấu trúc tài liệu ban hành."
 
   templates:
     - name: "roadmap-template"
@@ -64,7 +64,7 @@ provides:
 
     - name: "srs-template"
       file: "templates/srs-template.md"
-      description: "Khung mẫu cho .specify/docs/<đường-dẫn-cây>/srs.md, mô phỏng đúng cấu trúc 4 cấp cố định của tài liệu ban hành thật (Nhóm → Chức năng → Sơ đồ/Mục đích/Mô tả chức năng → Màn hình khi ≥2 → a.-h., luôn ở cấp heading 6) — không còn khung I-VI tuỳ biến hay ma trận truy vết cũ, FN-ID được kiểm qua comment ẩn <!-- FN: ... -->. Không còn khái niệm khung riêng theo khách qua --template."
+      description: "Khung mẫu cho .specify/docs/<đường-dẫn-cây>/srs.md, mô phỏng cấu trúc 4 cấp cố định của tài liệu ban hành thật (Nhóm → Chức năng → Sơ đồ/Mục đích/Mô tả chức năng → một khối cho MỖI leaf FN-ID của function list → a.-g., luôn ở cấp heading 6). Hai điểm cố ý lệch docx gốc: khối cấp 5 chia theo leaf FN-ID (không nhóm theo màn hình) để đối chiếu 1-1 với function list, và mục 'Thiết kế UX/UI' + 'Mô tả điều khiển' gộp làm một mục f. để ảnh và bảng điều khiển của cùng một màn nằm cạnh nhau ('Yêu cầu nghiệp vụ' vì vậy là g., tổng bảy mục). Không còn khung I-VI tuỳ biến hay ma trận truy vết cũ; FN-ID kiểm qua comment ẩn <!-- FN: ... --> cấp Chức năng và <!-- FN-leaf: ... --> từng khối. Không còn khung riêng theo khách qua --template."
 
     - name: "intel-template"
       file: "templates/intel-template.md"

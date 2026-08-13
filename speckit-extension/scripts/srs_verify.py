@@ -8,7 +8,7 @@ Hai mức:
                       trông giống đường dẫn code, mục rỗng. In ra để người soát.
 
 Tài liệu mô phỏng đúng cấu trúc 4 cấp của bản ban hành thật (Nhóm > Chức năng >
-Sơ đồ/Mục đích/Mô tả chức năng > Màn hình khi ≥2 > a.-h.) — không còn khuôn I-VI
+Sơ đồ/Mục đích/Mô tả chức năng > khối leaf theo FN-ID > a.-g.) — không còn khuôn I-VI
 tự đặt trước đây, nên không còn "ma trận truy vết" hay "--template" khách hàng để
 đối chiếu. FN-ID được kiểm qua comment ẩn <!-- FN: ... --> thay cho ma trận.
 
@@ -58,15 +58,20 @@ NUM_PREFIX_RE = re.compile(r"^[\d.]+\s*")
 def _strip_num_prefix(title: str) -> str:
     """Bỏ tiền tố số vị trí kiểu `2.1.3. ` khỏi tiêu đề đã parse trước khi so
     khớp tên mục cố định. `#### Sơ đồ chức năng`/`Mục đích chức năng`/`Mô tả
-    chức năng` và `###### a.`-`h.` là mục CỐ ĐỊNH, TÊN CỐ ĐỊNH — không đánh số vị
+    chức năng` và `###### a.`-`g.` là mục CỐ ĐỊNH, TÊN CỐ ĐỊNH — không đánh số vị
     trí — nhưng đây là phòng vệ chiều sâu (defense-in-depth) phòng khi agent lỡ
     đánh số nhầm, để cổng kiểm cấu trúc không âm thầm tắt hẳn."""
     return NUM_PREFIX_RE.sub("", title).strip()
 
+# BẢY mục (không phải tám): khuôn CỐ Ý gộp hai mục "f. Thiết kế UX/UI" và
+# "g. Mô tả điều khiển" của docx ban hành làm một, để ảnh màn và bảng điều
+# khiển của CÙNG một màn nằm cạnh nhau (tách rời thì phải xem hết ảnh của mọi
+# use case rồi mới tới bảng điều khiển — phản ánh thật từ người đọc tài liệu).
+# "Yêu cầu nghiệp vụ" vì vậy lùi từ `h.` xuống `g.`.
 LETTER_ITEMS = [
     "a. Đối tượng tham gia", "b. Điều kiện thực hiện", "c. Mô hình Usecase",
     "d. Kịch bản trường hợp sử dụng", "e. Thiết kế mô hình nghiệp vụ",
-    "f. Thiết kế UX/UI", "g. Mô tả điều khiển", "h. Yêu cầu nghiệp vụ",
+    "f. Thiết kế UX/UI và Mô tả điều khiển", "g. Yêu cầu nghiệp vụ",
 ]
 CHUC_NANG_MUC = ["Sơ đồ chức năng", "Mục đích chức năng", "Mô tả chức năng"]
 
@@ -95,6 +100,17 @@ def _preserve_inline_code(text: str) -> str:
     return text
 
 
+def _strip_fences_keep_comments(text: str) -> str:
+    """Bỏ khối code rào (```` ``` ````) nhưng GIỮ NGUYÊN HTML comment — dùng
+    cho các hàm phải đọc `<!-- FN: ... -->`/`<!-- FN-leaf: ... -->` trên text
+    gốc (không thể dùng `strip_noise`, nó xoá cả comment) nhưng vẫn cần loại
+    bỏ heading giả (`### `, `##### `) nằm trong ví dụ minh hoạ bọc trong khối
+    rào — một khối ```` ```markdown ```` minh hoạ khung có dòng `### ...`/
+    `##### ...` sẽ bị hàm quét heading thô coi là heading thật nếu không lọc
+    trước, làm lệch ranh giới Chức năng/khối leaf."""
+    return FENCE_RE.sub(lambda m: "\n" * m.group(0).count("\n"), text)
+
+
 def find_placeholders(text: str) -> list[dict]:
     out = []
     for i, line in enumerate(strip_noise(text).splitlines(), start=1):
@@ -121,7 +137,7 @@ def _sections_at_level(text: str, level: int) -> list[tuple[str, str]]:
     """[(tiêu đề, nội dung)] cho mọi heading đúng `level` dấu `#`, nội dung tới
     trước heading cùng cấp hoặc cao hơn (ít dấu `#` hơn) kế tiếp. Hàm tổng quát
     thay cho các parser ad-hoc theo số mục "## N." cũ — khuôn mới đặt tên mục
-    bằng chữ (Chức năng, Màn hình, a.-h.), không còn đánh số cố định để bám vào."""
+    bằng chữ (Chức năng, Màn hình, a.-g.), không còn đánh số cố định để bám vào."""
     src = strip_noise(text)
     lines = src.splitlines()
     marks = []
@@ -190,7 +206,7 @@ def check_chuc_nang_structure(text: str) -> list[dict]:
 
 
 def check_man_hinh_structure(text: str) -> list[dict]:
-    """Trong mỗi 'Mô tả chức năng' của một Chức năng, cả 8 mục a.-h. phải có mặt
+    """Trong mỗi 'Mô tả chức năng' của một Chức năng, cả 7 mục a.-g. phải có mặt
     Ở ĐÂU ĐÓ trong toàn bộ mục đó — kiểm gộp theo Chức năng, KHÔNG tách riêng
     từng khối `#####` (một Chức năng có nhiều khối `#####`, mỗi khối ứng với một
     leaf FN-ID; tách đúng theo từng khối đòi một parser phức tạp hơn nhiều cho
@@ -230,7 +246,9 @@ def _fence_sentinel(text: str) -> str:
 
 
 _EMPTY_ITEM_RE = re.compile(
-    r"^-?\s*(chưa có thông tin|không có|_\(cần chèn ảnh — không tự sinh\)_)\.?$", re.I)
+    r"^(?:[-*+]|\d+[.)])?\s*\**"
+    r"(chưa có thông tin|không có|_\(cần chèn ảnh — không tự sinh\)_)"
+    r"\.?\**$", re.I)
 
 
 def _all_headings(text: str) -> list[tuple[int, int, str]]:
@@ -245,31 +263,93 @@ def _all_headings(text: str) -> list[tuple[int, int, str]]:
     return marks
 
 
-def check_content_density(text: str) -> list[dict]:
-    """Chức năng mà TẤT CẢ mục a.-h. (gộp mọi màn hình) đều rỗng hoặc chỉ ghi
-    "Chưa có thông tin"/"Không có" → BLOCKING. `check_fn_coverage` một mình
-    không bắt được ca này: comment `<!-- FN: ... -->` đủ FN nhưng tài liệu rỗng
-    ruột vẫn qua được gate FN. Dùng bản giữ nguyên khối mermaid (`_fence_sentinel`)
-    để không tính oan một mục chỉ có sơ đồ (không văn xuôi) là rỗng — cùng lý do
-    `_empty_sections` đã phải xử lý riêng ca này."""
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+_STRUCTURED_ITEM_LABEL_RE = re.compile(
+    r"(tên use case|mức quan trọng|người dùng|loại uc|"
+    r"người sử dụng và yêu cầu|mô tả tóm tắt|thời điểm sử dụng|"
+    r"luồng sự kiện chuẩn|luồng sự kiện nhỏ|tên điều khiển|mô tả điều khiển)\s*:?",
+    re.I,
+)
+_STRUCTURED_ITEMS = {"d. Kịch bản trường hợp sử dụng",
+                     "f. Thiết kế UX/UI và Mô tả điều khiển"}
+_TEN_USE_CASE_FIELD_RE = re.compile(r"<b>\s*tên use case\s*:?\s*</b>[^<]*", re.I)
+
+
+def _structured_item_is_empty(body: str) -> bool:
+    """`d.`/`f.` LUÔN có khung bảng (HTML thô cho `d.`, markdown + placeholder
+    ảnh cho `f.`) ngay cả khi rỗng nội dung —
+    `_EMPTY_ITEM_RE` (khớp toàn chuỗi) không bao giờ khớp
+    cả khối vì thẻ HTML/cú pháp bảng/nhãn field không phải "Chưa có thông tin"
+    nhưng cũng không phải nội dung thật, khiến check_content_density coi nhầm
+    MỌI Chức năng có `d.`/`f.` là không rỗng dù các mục còn lại rỗng thật (bị bắt
+    quả tang: EMPTY_CHUC_NANG dùng khung `d.` mới vẫn `blocking: []`). Bóc hết
+    boilerplate (thẻ HTML, nhãn field cố định, cú pháp bảng `|`/`---`), phần
+    còn lại phải CHỈ là chuỗi rỗng cố định lặp lại (hoặc trắng hẳn) mới coi là
+    mục thật sự rỗng.
+
+    Field `Tên Use Case` được XOÁ CẢ LABEL LẪN VALUE (không chỉ label như các
+    field khác) — value của nó suy thẳng từ tên khối `#####`/`Tên Use Case`
+    (bước 5 của srs-from-code.md), tự nó không mang thông tin gì mới, nên nếu
+    coi value đó là "nội dung thật" thì một `d.` chỉ điền mỗi field này (7
+    field còn lại "Chưa có thông tin") vẫn cứu cả Chức năng khỏi bị chặn dù
+    thực chất chưa đặc tả gì (đã xác nhận bằng agent chạy thật).
+
+    Cùng lý do đó, placeholder ảnh cố định `_(cần chèn ảnh — không tự sinh)_`
+    của mục `f.` cũng bị bóc: mục `f.` (sau khi gộp UX/UI + Mô tả điều khiển)
+    LUÔN mang chuỗi này dù chưa có gì, nên coi nó là "nội dung thật" thì mọi
+    `f.` đều tự cứu chính nó khỏi gate rỗng — đúng lỗi mà fix `Tên Use Case`
+    vừa vá ở `d.`."""
+    s = _TEN_USE_CASE_FIELD_RE.sub(" ", body)
+    s = _HTML_TAG_RE.sub(" ", s)
+    s = _STRUCTURED_ITEM_LABEL_RE.sub(" ", s)
+    s = re.sub(r"^\s*\|[\s|:-]*\|?\s*$", " ", s, flags=re.M)
+    s = s.replace("|", " ")
+    s = s.replace("_(cần chèn ảnh — không tự sinh)_", " ")
+    # Bỏ mọi cụm in đậm `**...**`: ở `f.` đó là tên use case (suy từ mục `d.`,
+    # không mang thông tin mới — cùng lý do với `Tên Use Case`) và tên điều
+    # khiển; phần MÔ TẢ điều khiển là văn xuôi thường nên vẫn sống sót, một
+    # bảng có dòng dữ liệu thật vẫn được tính là có nội dung.
+    s = re.sub(r"\*\*[^*]*\*\*", " ", s)
+    s = re.sub(r"-?\s*(chưa có thông tin|không có)\.?", " ", s, flags=re.I)
+    return not s.strip(" \t\r\n.:-")
+
+
+def _heading_body(marks: list, fill_lines: list, idx: int) -> str:
+    """Thân (đã fence-sentinel hoá) của heading `marks[idx]`, tới heading cùng
+    cấp hoặc cao hơn kế tiếp. Dùng chung cho mọi gate soát theo cấp heading."""
+    end = len(fill_lines)
+    for j in range(idx + 1, len(marks)):
+        if marks[j][1] <= marks[idx][1]:
+            end = marks[j][0]
+            break
+    return "".join(x.strip() for x in fill_lines[marks[idx][0] + 1:end])
+
+
+def _item_has_content(title: str, body: str) -> bool:
+    """Một mục a.-g. có "nội dung thật" không — `d.`/`f.` dùng
+    `_structured_item_is_empty` (bảng/HTML luôn có boilerplate dù rỗng), các
+    mục còn lại so khớp `_EMPTY_ITEM_RE` toàn chuỗi."""
+    if not body:
+        return False
+    if _strip_num_prefix(title) in _STRUCTURED_ITEMS:
+        return not _structured_item_is_empty(body)
+    return not _EMPTY_ITEM_RE.match(body)
+
+
+def _empty_letter_blocks(text: str, level: int) -> list[str]:
+    """Tiêu đề của mọi heading cấp `level` mà TẤT CẢ mục a.-g. bên trong đều
+    rỗng/"Chưa có thông tin" — hàm dùng chung cho `check_content_density`
+    (cấp 3, gộp theo Chức năng) và `check_leaf_content_density` (cấp 5, theo
+    từng khối `#####`)."""
     marks = _all_headings(text)
     fill_lines = _fence_sentinel(text).splitlines()
-
-    def body_of(idx: int) -> str:
-        end = len(fill_lines)
-        for j in range(idx + 1, len(marks)):
-            if marks[j][1] <= marks[idx][1]:
-                end = marks[j][0]
-                break
-        return "".join(x.strip() for x in fill_lines[marks[idx][0] + 1:end])
-
     out = []
     for idx, (i, lvl, title) in enumerate(marks):
-        if lvl != 3:
+        if lvl != level:
             continue
         end = len(marks)
         for j in range(idx + 1, len(marks)):
-            if marks[j][1] <= 3:
+            if marks[j][1] <= level:
                 end = j
                 break
         item_idx = [j for j in range(idx + 1, end)
@@ -277,20 +357,151 @@ def check_content_density(text: str) -> list[dict]:
         if not item_idx:
             continue
         has_content = any(
-            body_of(j) and not _EMPTY_ITEM_RE.match(body_of(j)) for j in item_idx
+            _item_has_content(marks[j][2], _heading_body(marks, fill_lines, j))
+            for j in item_idx
         )
         if not has_content:
-            out.append({
-                "loai": "chuc-nang-rong-ruot",
-                "thong_diep": f"Chức năng '{title}': mọi mục a.-h. đều rỗng hoặc "
-                              "'Chưa có thông tin' — tài liệu chưa thật sự đặc tả.",
-                "goi_y": "Rót lại từ intel.md; nếu unit này thật sự không có căn cứ "
-                         "nào thì kiểm tra lại phạm vi FN đã chọn có đúng không.",
-            })
+            out.append(title)
     return out
 
 
+def check_content_density(text: str) -> list[dict]:
+    """Chức năng mà TẤT CẢ mục a.-g. (gộp mọi khối `#####`) đều rỗng hoặc chỉ
+    ghi "Chưa có thông tin"/"Không có" → BLOCKING. `check_fn_coverage` một mình
+    không bắt được ca này: comment `<!-- FN: ... -->` đủ FN nhưng tài liệu rỗng
+    ruột vẫn qua được gate FN. Dùng bản giữ nguyên khối mermaid (`_fence_sentinel`)
+    để không tính oan một mục chỉ có sơ đồ (không văn xuôi) là rỗng — cùng lý do
+    `_empty_sections` đã phải xử lý riêng ca này. Mục `d.`/`f.` dùng
+    `_structured_item_is_empty` thay vì so khớp toàn chuỗi thẳng (xem docstring
+    của hàm đó). GỘP theo Chức năng (`###`) — một khối `#####` rỗng riêng lẻ
+    trong khi khối khác cùng Chức năng có nội dung KHÔNG bị gate này bắt, xem
+    `check_leaf_content_density` cho gate theo từng khối `#####`."""
+    return [{
+        "loai": "chuc-nang-rong-ruot",
+        "thong_diep": f"Chức năng '{title}': mọi mục a.-g. đều rỗng hoặc "
+                      "'Chưa có thông tin' — tài liệu chưa thật sự đặc tả.",
+        "goi_y": "Rót lại từ intel.md; nếu unit này thật sự không có căn cứ "
+                 "nào thì kiểm tra lại phạm vi FN đã chọn có đúng không.",
+    } for title in _empty_letter_blocks(text, 3)]
+
+
+def check_leaf_content_density(text: str) -> list[dict]:
+    """Cùng luật với `check_content_density` nhưng soát RIÊNG từng khối
+    `#####` (một leaf FN-ID) thay vì gộp cả Chức năng. Không có gate này thì
+    thiết kế "mỗi leaf một khối, lặp nguyên vẹn a.-g. khi chung màn hình" (xem
+    srs-from-code.md bước 8) có đường thoát rẻ nhất: `check_leaf_blocks` chỉ
+    ép đủ SỐ khối, không ép khối nào cũng có NỘI DUNG — N-1 khối có thể là
+    stub trống (chỉ heading + comment FN-leaf) mà `check_content_density` gộp
+    ở cấp Chức năng không bắt được (khối 1 có nội dung là đủ để cả Chức năng
+    "sạch"). Đã xác nhận bằng agent chạy thật: stub 2/3 khối rỗng vẫn
+    `blocking: []` nếu chỉ có gate cấp Chức năng."""
+    return [{
+        "loai": "khoi-leaf-rong-ruot",
+        "thong_diep": f"Khối ##### '{title}': mọi mục a.-g. đều rỗng hoặc "
+                      "'Chưa có thông tin' — leaf này chưa thật sự được đặc tả "
+                      "(dù Chức năng cha có thể đã đủ điều kiện qua "
+                      "chuc-nang-rong-ruot nhờ khối leaf khác).",
+        "goi_y": "Rót nội dung thật cho khối leaf này, hoặc nếu nó dùng chung "
+                 "màn hình với một leaf khác đã viết đủ thì LẶP NGUYÊN VẸN "
+                 "a.-g. của leaf đó sang đây (đúng luật bước 8).",
+    } for title in _empty_letter_blocks(text, 5)]
+
+
 _CHUC_NANG_HEADING_RE = re.compile(r"^###\s+(.+)$", re.M)
+_MUC_HEADING_RE = re.compile(r"^#####\s+(.+)$", re.M)
+LEAF_COMMENT_RE = re.compile(r"<!--\s*FN-leaf:\s*(.*?)\s*-->", re.S)
+
+
+def check_leaf_blocks(text: str) -> list[dict]:
+    """Thiết kế leaf-based (đợt "5 đầu mục khớp function list"): mỗi Chức năng
+    (`###`) phải có MỘT khối `##### ` cho MỖI FN-ID lá nó phủ — không còn nhóm
+    theo màn hình. Không có gate này thì `check_fn_coverage` một mình không
+    bắt được việc model lặng lẽ quay lại gộp-theo-màn-hình (ít khối `#####`
+    hơn số leaf thật) hay bỏ sót/làm sai comment `<!-- FN-leaf: ... -->` — cả
+    hai đều KHÔNG ảnh hưởng tới comment `<!-- FN: ... -->` cấp Chức năng nên
+    lọt qua mọi gate khác. Đọc trên TEXT ĐÃ GỠ FENCE nhưng GIỮ COMMENT (không
+    `strip_noise` — nó xoá cả `<!-- FN: ... -->` lẫn `<!-- FN-leaf: ... -->`),
+    để một khối ```` ``` ```` minh hoạ khung có dòng `### `/`##### ` mẫu không
+    bị coi là heading thật và làm lệch ranh giới Chức năng/khối leaf."""
+    text = _strip_fences_keep_comments(text)
+    out = []
+    # Scan mọi heading cấp <=3 (`#`, `##`, `###`) để ranh giới cuối một khối
+    # `###` dừng đúng chỗ (không dừng nhầm ở `####`/`#####` con) — GIỮ cả mốc
+    # cấp 1/2 để tính ranh giới, chỉ LẶP qua các mốc cấp 3 bên dưới.
+    all_marks = [(mm.start(), mm.end(), len(mm.group(1)), mm.group(2).strip())
+                 for mm in re.finditer(r"^(#{1,3})\s+(.+)$", text, re.M)]
+    for i, (start, body_start, lvl, raw_title) in enumerate(all_marks):
+        if lvl != 3:
+            continue
+        body_end = len(text)
+        for j in range(i + 1, len(all_marks)):
+            if all_marks[j][2] <= 3:
+                body_end = all_marks[j][0]
+                break
+        cn_body = text[body_start:body_end]
+        cn_title = _strip_num_prefix(raw_title)
+        wanted_ids = parse_fn_comments(cn_body)
+        if not wanted_ids:
+            continue  # check_fn_coverage lo ca thiếu hẳn <!-- FN: ... -->
+
+        leaf_marks = list(_MUC_HEADING_RE.finditer(cn_body))
+        seen_ids: list[str] = []
+        blocks_missing = []
+        for k, lm in enumerate(leaf_marks):
+            lend = leaf_marks[k + 1].start() if k + 1 < len(leaf_marks) else len(cn_body)
+            leaf_body = cn_body[lm.end():lend]
+            ids = LEAF_COMMENT_RE.findall(leaf_body)
+            if len(ids) != 1:
+                blocks_missing.append(lm.group(1).strip())
+            else:
+                seen_ids.append(ids[0].strip())
+
+        if blocks_missing:
+            out.append({
+                "loai": "thieu-fn-leaf",
+                "thong_diep": f"Chức năng '{cn_title}': khối ##### "
+                              + ", ".join(blocks_missing)
+                              + " thiếu hoặc sai comment <!-- FN-leaf: ... --> "
+                                "(phải có đúng một).",
+                "goi_y": "Thêm đúng một comment <!-- FN-leaf: <FN-ID> --> ngay "
+                         "dưới heading của khối này.",
+            })
+
+        dup = sorted({x for x in seen_ids if seen_ids.count(x) > 1})
+        if dup:
+            out.append({
+                "loai": "trung-fn-leaf",
+                "thong_diep": f"Chức năng '{cn_title}': FN-leaf trùng lặp "
+                              "giữa nhiều khối #####: " + ", ".join(dup),
+                "goi_y": "Mỗi leaf FN-ID chỉ được có ĐÚNG MỘT khối ##### .",
+            })
+
+        seen_set = set(seen_ids)
+        missing_blocks = sorted(wanted_ids - seen_set)
+        if missing_blocks:
+            out.append({
+                "loai": "thieu-khoi-leaf",
+                "thong_diep": f"Chức năng '{cn_title}': FN-ID "
+                              + ", ".join(missing_blocks)
+                              + " có trong <!-- FN: ... --> nhưng không có khối "
+                                "##### FN-leaf tương ứng.",
+                "goi_y": "Thêm khối ##### riêng cho từng FN-ID còn thiếu — "
+                         "leaf-based nghĩa là MỖI leaf một khối, kể cả khi "
+                         "trùng màn hình với leaf khác (lặp nguyên vẹn a.-g.).",
+            })
+
+        extra_blocks = sorted(seen_set - wanted_ids)
+        if extra_blocks:
+            out.append({
+                "loai": "fn-leaf-la",
+                "thong_diep": f"Chức năng '{cn_title}': khối ##### có "
+                              "FN-leaf " + ", ".join(extra_blocks)
+                              + " không nằm trong <!-- FN: ... --> của chính "
+                                "Chức năng này.",
+                "goi_y": "Kiểm lại FN-leaf có gõ đúng ID không, hoặc FN-ID đó "
+                         "có bị bỏ sót khỏi comment <!-- FN: ... --> không.",
+            })
+    return out
 
 
 def _chuc_nang_fn_list(text: str) -> list[tuple[str, frozenset]]:
@@ -299,8 +510,11 @@ def _chuc_nang_fn_list(text: str) -> list[tuple[str, frozenset]]:
     có thể trùng tên hiển thị, vd cả hai đều tên "Danh sách"). Trả `list`,
     KHÔNG phải `dict` theo tên: gom vào dict sẽ để khối trùng tên sau đè mất
     FN-ID của khối trùng tên trước, tự tạo lại đúng loại lỗi no-clobber này
-    được viết ra để bắt. Đọc trên TEXT GỐC (không strip_noise, để giữ được
-    `<!-- FN: ... -->` — strip_noise xoá sạch mọi HTML comment)."""
+    được viết ra để bắt. Đọc trên text đã gỡ fence nhưng GIỮ comment (không
+    `strip_noise` — xoá sạch mọi HTML comment, kể cả `<!-- FN: ... -->` cần
+    giữ; nhưng một khối rào minh hoạ có dòng `### ` mẫu vẫn phải bị gỡ, không
+    thì bị coi là heading Chức năng thật)."""
+    text = _strip_fences_keep_comments(text)
     out: list[tuple[str, frozenset]] = []
     marks = list(_CHUC_NANG_HEADING_RE.finditer(text))
     for i, m in enumerate(marks):
@@ -374,12 +588,76 @@ def _empty_sections(text: str) -> list[dict]:
     return out
 
 
+_HTML_TABLE_BLOCK_RE = re.compile(r"<table>(.*?)</table>", re.S)
+_HTML_TABLE_INNER_TAGS = ("tr", "td", "ol", "li", "div")
+
+
+def check_html_table_integrity(text: str) -> list[dict]:
+    """Mục `d.` bắt buộc một khối `<table>...</table>` HTML thô liền mạch —
+    một dòng trống ở giữa làm nhiều bộ render (kể cả nhiều đường xuất Word)
+    coi khối HTML đã kết thúc sớm, phần còn lại rơi ra ngoài bảng thành văn
+    bản thô lộ thiên (srs-from-code.md bước 8 đã cảnh báo hậu quả này, nhưng
+    trước đây không cổng nào kiểm — BLOCKING vì tất định 100%, đọc y nguyên
+    text gốc, không phụ thuộc phán đoán). Cũng bắt thẻ mở/đóng lệch cặp trong
+    cùng khối (dấu hiệu HTML viết tay bị gõ thiếu)."""
+    out = []
+
+    # Cặp <table>/</table> ở CẢ VĂN BẢN trước, vì _HTML_TABLE_BLOCK_RE (đòi có
+    # đủ cả mở lẫn đóng để match) im lặng bỏ qua ca lệch nặng nhất — 1 thẻ
+    # <table> không bao giờ đóng (hoặc 1 </table> mồ côi) — chính là ca gây
+    # hỏng cấu trúc nặng nhất khi xuất Word (nuốt toàn bộ phần sau vào bảng
+    # hoặc ngược lại), đã bị bắt quả tang lọt qua bản đếm theo-từng-khối.
+    open_positions = [mm.start() for mm in re.finditer(r"<table>", text)]
+    close_positions = [mm.start() for mm in re.finditer(r"</table>", text)]
+    if len(open_positions) != len(close_positions):
+        extra_opens = len(open_positions) - len(close_positions)
+        if extra_opens > 0:
+            bad_line = text.count("\n", 0, open_positions[-1]) + 1
+            detail = f"thừa {extra_opens} <table> chưa đóng (thẻ cuối ở dòng {bad_line})"
+        else:
+            bad_line = text.count("\n", 0, close_positions[-1]) + 1
+            detail = f"thừa {-extra_opens} </table> mồ côi (thẻ cuối ở dòng {bad_line})"
+        out.append({
+            "loai": "html-bang-hong",
+            "thong_diep": f"Số thẻ <table> ({len(open_positions)}) và </table> "
+                          f"({len(close_positions)}) trong toàn văn bản không khớp — {detail}.",
+            "goi_y": "Mỗi <table> phải có đúng một </table> đóng — kiểm lại toàn bộ "
+                     "mục d. trong tài liệu, không chỉ khối gần vị trí báo lỗi.",
+        })
+
+    for m in _HTML_TABLE_BLOCK_RE.finditer(text):
+        block, inner = m.group(0), m.group(1)
+        line_no = text.count("\n", 0, m.start()) + 1
+        if re.search(r"\n[ \t]*\n", inner):
+            out.append({
+                "loai": "html-bang-hong",
+                "thong_diep": f"Bảng <table> ở dòng {line_no}: có dòng trống bên trong "
+                              "— làm hỏng parser HTML thô, phần sau dòng trống có thể "
+                              "rơi ra ngoài bảng thành văn bản thô khi xuất Word.",
+                "goi_y": "Xoá mọi dòng trống bên trong khối <table>...</table>.",
+            })
+        for tag in _HTML_TABLE_INNER_TAGS:
+            opens = len(re.findall(rf"<{tag}(?:\s[^>]*)?>", block))
+            closes = len(re.findall(rf"</{tag}>", block))
+            if opens != closes:
+                out.append({
+                    "loai": "html-bang-hong",
+                    "thong_diep": f"Bảng <table> ở dòng {line_no}: thẻ <{tag}> không "
+                                  f"cân ({opens} mở, {closes} đóng).",
+                    "goi_y": f"Kiểm lại mọi <{tag}> đều có </{tag}> đóng tương ứng.",
+                })
+    return out
+
+
 def verify(srs_text: str, wanted: list[str], before: str | None = None) -> dict:
     blocking, warnings = [], []
 
     blocking.extend(check_fn_coverage(srs_text, wanted))
     blocking.extend(check_content_density(srs_text))
+    blocking.extend(check_leaf_content_density(srs_text))
     blocking.extend(check_no_clobber_chuc_nang(srs_text, before))
+    blocking.extend(check_leaf_blocks(srs_text))
+    blocking.extend(check_html_table_integrity(srs_text))
 
     if not wanted:
         warnings.append({

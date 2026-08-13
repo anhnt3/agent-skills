@@ -194,7 +194,7 @@ xuống §8.
 **§4 tách riêng cột "Độ chắc chắn"** (`chắc` / `suy đoán`) — mức tự tin nội bộ để người
 soát tay đọc trực tiếp `intel.md`. Khuôn `srs.md` hiện tại (đợt 3B-3) không còn mục
 "Đặc tả dữ liệu" riêng; mọi quy tắc (kể cả đánh dấu `suy đoán`) rót chung vào mục
-`h. Yêu cầu nghiệp vụ`, không đánh dấu lại mức tự tin trong tài liệu giao khách.
+`g. Yêu cầu nghiệp vụ`, không đánh dấu lại mức tự tin trong tài liệu giao khách.
 
 **Điều khiển giao diện (§11)** — sau khi §2 đã có đủ tên màn hình + cite điểm vào, với
 mỗi màn hình đó: mở file component/template/view mà cột `Nguồn` của §2 trỏ tới (lần theo

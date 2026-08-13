@@ -1,5 +1,5 @@
 ---
-description: Sinh .specify/docs/<đường-dẫn-cây>/srs.md theo đúng cấu trúc 4 cấp của tài liệu ban hành thật (Nhóm→Chức năng→Sơ đồ/Mục đích/Mô tả chức năng→Màn hình→a.-h.) từ intel.md và functions.json — nhận một FN-ID gốc (trống = toàn dự án), tái dùng intel_tree.py để đề xuất/xác nhận unit rồi sinh SRS theo batch (song song/tuần tự), chỉ ghi nội dung phản ánh đúng những gì code thật sự làm, thông tin hành chính thiếu thì ghi "Chưa có thông tin", và tổng hợp một lượt cuối cùng những phát hiện logic/bảo mật đáng chú ý để hỏi người dùng.
+description: Sinh .specify/docs/<đường-dẫn-cây>/srs.md theo đúng cấu trúc 4 cấp của tài liệu ban hành thật (Nhóm→Chức năng→Sơ đồ/Mục đích/Mô tả chức năng→Màn hình→a.-g.) từ intel.md và functions.json — nhận một FN-ID gốc (trống = toàn dự án), tái dùng intel_tree.py để đề xuất/xác nhận unit rồi sinh SRS theo batch (song song/tuần tự), chỉ ghi nội dung phản ánh đúng những gì code thật sự làm, thông tin hành chính thiếu thì ghi "Chưa có thông tin", và tổng hợp một lượt cuối cùng những phát hiện logic/bảo mật đáng chú ý để hỏi người dùng.
 ---
 
 # SRS từ code intel theo cây functions.json
@@ -7,7 +7,7 @@ description: Sinh .specify/docs/<đường-dẫn-cây>/srs.md theo đúng cấu 
 Rót `.specify/docs/<đường-dẫn-cây>/intel.md` (tài liệu nội bộ, kèm nguồn `file:dòng`)
 thành **`.specify/docs/<đường-dẫn-cây>/srs.md`** — tài liệu **giao khách**, đúng cấu trúc
 4 cấp của tài liệu ban hành thật (`Nhóm → Chức năng → Sơ đồ/Mục đích/Mô tả chức năng →
-Màn hình → a.-h.`), không lộ đường dẫn mã nguồn. Toàn bộ tiếng Việt. Dùng `python3` nếu
+Màn hình → a.-g.`), không lộ đường dẫn mã nguồn. Toàn bộ tiếng Việt. Dùng `python3` nếu
 `python` không có.
 
 **Tài liệu này tập trung vào source code** — mô tả đúng những gì hệ thống *thật sự làm*
@@ -206,14 +206,14 @@ trong `intel.md` không có thì mục `srs.md` tương ứng cũng không có g
 | Nguồn (`intel.md`) | Đích (`srs.md`) |
 | --- | --- |
 | §1 Phủ chức năng | `<!-- FN: ... -->` dưới mỗi Chức năng |
-| §2 Màn hình / điểm vào | xác định MÀN HÌNH THẬT hiện thực từng leaf FN-ID (dùng để lấy nội dung a.-h. rót vào mỗi khối `#####`, xem quy ước leaf-based ở bước 8); câu mở đầu "Mô tả chức năng" |
-| §3 Thực thể và trường dữ liệu | rải vào mục `h. Yêu cầu nghiệp vụ` |
-| §4 Kiểm tra hợp lệ và quy tắc nghiệp vụ | rải vào mục `h. Yêu cầu nghiệp vụ` |
+| §2 Màn hình / điểm vào | xác định MÀN HÌNH THẬT hiện thực từng leaf FN-ID (dùng để lấy nội dung a.-g. rót vào mỗi khối `#####`, xem quy ước leaf-based ở bước 8); câu mở đầu "Mô tả chức năng" |
+| §3 Thực thể và trường dữ liệu | rải vào mục `g. Yêu cầu nghiệp vụ` |
+| §4 Kiểm tra hợp lệ và quy tắc nghiệp vụ | rải vào mục `g. Yêu cầu nghiệp vụ` |
 | §5 Luồng nghiệp vụ | mermaid `sequenceDiagram` ở `###### e. Thiết kế mô hình nghiệp vụ` (chi tiết từng màn hình, có swimlane) — KHÔNG dùng cho `#### Sơ đồ chức năng` (mục đó dựng từ `functions.json`, xem bước 8) |
 | §6 Phân quyền | mục `a. Đối tượng tham gia`, `b. Điều kiện thực hiện` |
-| §7 Tích hợp ngoài, tác vụ nền, sự kiện | rải vào mục `h. Yêu cầu nghiệp vụ` |
-| §9 Thông báo hiển thị | rải vào mục `h. Yêu cầu nghiệp vụ` |
-| §11 Điều khiển giao diện | mục `g. Mô tả điều khiển` (bảng Tên điều khiển/Mô tả điều khiển, khớp cột `Màn hình` của §11 với tên Màn hình đang viết) |
+| §7 Tích hợp ngoài, tác vụ nền, sự kiện | rải vào mục `g. Yêu cầu nghiệp vụ` |
+| §9 Thông báo hiển thị | rải vào mục `g. Yêu cầu nghiệp vụ` |
+| §11 Điều khiển giao diện | phần BẢNG của mục `f. Thiết kế UX/UI và Mô tả điều khiển` (bảng Tên điều khiển/Mô tả điều khiển, khớp cột `Màn hình` của §11 với màn hình hiện thực leaf đang viết) |
 | §12 Kịch bản Use Case | mục `d. Kịch bản trường hợp sử dụng` (rót nguyên văn 9 field docx thật vào MỘT bảng HTML thô — Tên Use Case là tên khối `###`, 8 field còn lại là hàng bảng, xem quy ước bảng HTML ở bước 8; field `Màn hình` của §12 CHỈ dùng để chọn đúng khối §12 khớp màn hình đang viết, KHÔNG copy vào `d.`) + mục `c. Mô hình Usecase` (mermaid, dựng từ Tên Use Case + Người dùng của §12) |
 | §10 Phát hiện logic/bảo mật | **Không rót vào `srs.md`** — chỉ dùng ở bước 11 để hỏi người dùng |
 
@@ -252,32 +252,57 @@ Không tự suy nội dung cho ba mục này từ bất kỳ nguồn nào — kh
 
 **Sơ đồ mermaid — ba loại, ba quy ước riêng, đều tuân kỷ luật "không sơ đồ bịa"**:
 
-- **`#### Sơ đồ chức năng`**: KHÔNG phải sơ đồ luồng nghiệp vụ — là CÂY TÊN chức năng con,
-  dựng thẳng từ `functions.json`, KHÔNG dùng `intel §5`. `flowchart TD` với node gốc = tên
-  Chức năng (khối `###` đang viết), node con = tên từng leaf/nhóm con trực tiếp trong
-  subtree `functions.json` của Chức năng này, đệ quy đúng số cấp đang có trong cây (lấy
-  trường `name`, bỏ dấu gạch đầu dòng `- `/`+ ` và dấu chấm cuối câu). Chỉ nối TÊN với TÊN
-  bằng mũi tên xuống — không thêm bước xử lý, điều kiện, hay node hình thoi quyết định nào
-  (đó là việc của `e.`, không phải của mục này). Luôn dựng được vì nguồn là
-  `functions.json` (dữ liệu cục bộ, không phụ thuộc `intel.md` có luồng hay không) — không
-  còn case "không có dữ liệu, xoá khối mermaid" cho mục này.
-- **`###### e. Thiết kế mô hình nghiệp vụ`**: `sequenceDiagram` (KHÔNG phải `flowchart`)
-  chi tiết CHỈ riêng màn hình đang viết, mô phỏng UML sequence diagram có swimlane của
-  tài liệu ban hành thật — `actor` cho vai trò người dùng thực hiện, `participant` cho
-  từng thành phần xử lý bước. Participant lấy đúng tên thành phần `§5` đã nêu cho luồng
-  này (vd Web UI/Backend/Database/dịch vụ ngoài…); `§5` không nêu tên thành phần nào cho
-  bước đó thì được tự suy hợp lý theo đúng bước xử lý `§5` đã mô tả (không bịa thêm
-  thành phần `§5` không hề nhắc tới ở bất kỳ đâu trong luồng). Nhánh điều kiện (§5 ghi
-  "nếu…"/"trường hợp…") thể hiện bằng `alt`/`else`. `§5` không có luồng cho màn hình này
-  → xoá cả khối mermaid.
+- **`#### Sơ đồ chức năng`**: KHÔNG phải sơ đồ luồng nghiệp vụ — là CÂY TÊN chức năng con.
+  `flowchart TD`, node gốc = tên Chức năng (khối `###` đang viết). Chỉ nối TÊN với TÊN bằng
+  mũi tên xuống — không thêm bước xử lý, điều kiện, hay node hình thoi quyết định nào (đó
+  là việc của `e.`). **Node con phải PHỦ ĐÚNG những gì `#### Mô tả chức năng` bên dưới thật
+  sự có** — một sơ đồ chỉ có mỗi node gốc trơ trọi trong khi phần dưới đặc tả 6 use case là
+  SAI (lỗi đã gặp thật). Lấy node con theo thứ tự ưu tiên:
+  1. `functions.json` CÓ node con trong subtree Chức năng này → dùng đúng tên các node đó
+     (trường `name`, bỏ dấu gạch đầu dòng `- `/`+ ` và dấu chấm cuối câu), đệ quy đủ số cấp.
+  2. `functions.json` KHÔNG có node con (Chức năng chính là một leaf, chỉ sinh đúng một
+     khối `#####`) → node con = **tên các use case thật sự viết ở mục `d.`** của khối đó.
+
+  Có cả hai thì vẽ hai cấp: leaf `functions.json` ở cấp 1, use case của leaf đó ở cấp 2.
+  Luôn dựng được (nguồn cục bộ, không phụ thuộc `intel §5`) — không còn case "không có dữ
+  liệu, xoá khối mermaid" cho mục này.
+- **`###### e. Thiết kế mô hình nghiệp vụ`**: `sequenceDiagram` (KHÔNG phải `flowchart`),
+  **ĐÚNG MỘT khối mermaid cho cả mục** — nhiều use case KHÔNG được tách thành nhiều khối
+  mermaid liên tiếp (mỗi khối lặp lại nguyên si danh sách participant, nhìn thành nhiều sơ
+  đồ rời rạc; lỗi đã gặp thật). Khai `actor`/`participant` MỘT LẦN ở đầu, rồi **mỗi use
+  case bọc trong một khối `rect` có `Note over <actor>,<participant cuối>: <Tên use case>`**
+  làm nhãn — chính là các khung chữ nhật phân tách của tài liệu ban hành thật. Mô phỏng UML
+  sequence diagram có swimlane: `actor` cho vai trò người dùng thực hiện, `participant` cho
+  từng thành phần xử lý bước. Participant lấy đúng tên thành phần `§5` đã nêu cho luồng này
+  (vd Web UI/Backend/Database/dịch vụ ngoài…); `§5` không nêu tên thành phần nào cho bước đó
+  thì được tự suy hợp lý theo đúng bước xử lý `§5` đã mô tả (không bịa thêm thành phần `§5`
+  không hề nhắc tới ở bất kỳ đâu trong luồng). Nhánh điều kiện (§5 ghi "nếu…"/"trường
+  hợp…") thể hiện bằng `alt`/`else` **bên trong `rect` của use case tương ứng**. `§5` không
+  có luồng nào cho leaf này → xoá cả khối mermaid.
 - **`###### c. Mô hình Usecase`**: mermaid không có UML use-case native — mô phỏng bằng
   `flowchart` (actor = node chữ nhật `A([Tên actor])`, use case = node oval
   `UC([Tên Use Case])`, cạnh nối actor→use case). Dữ liệu từ `intel §12` (trường
   `Người dùng` → actor, `Tên Use Case` → use case). `§12` không có khối `###` nào ứng với
-  màn hình này → xoá cả khối mermaid.
+  màn hình hiện thực leaf này → xoá cả khối mermaid.
 
-**`###### f. Thiết kế UX/UI`**: luôn ghi cố định `_(cần chèn ảnh — không tự sinh)_` — không
-bao giờ tự vẽ mockup hay mô tả bố cục màn hình (`intel.md` không quét bố cục UI).
+**`###### f. Thiết kế UX/UI và Mô tả điều khiển`**: MỘT mục gộp, **CHIA THEO TỪNG USE
+CASE**. Mỗi use case ở mục `d.` là một đầu mục lớn `**[Tên use case]**` ở đây (cùng tên,
+cùng thứ tự, đúng bằng số bảng UC ở `d.`), bên dưới nó theo đúng thứ tự: (1) placeholder
+ảnh của các màn liên quan RIÊNG use case đó — luôn ghi cố định
+`_(cần chèn ảnh — không tự sinh)_`, không bao giờ tự vẽ mockup hay mô tả bố cục
+(`intel.md` không quét bố cục UI); (2) ngay dưới là bảng điều khiển RIÊNG của use case đó
+(rót từ `intel §11`, quy ước cột xem bước 6).
+
+**TUYỆT ĐỐI KHÔNG gộp điều khiển của mọi use case vào MỘT bảng duy nhất** — lỗi đã gặp
+thật: một bảng 30 dòng trộn lẫn điều khiển của tạo mới, sửa, khoá, chuyển đơn vị, không
+tra được điều khiển nào thuộc thao tác nào. Điều khiển dùng chung cho nhiều use case (vd
+nút "Hủy" của mọi hộp thoại) thì LẶP LẠI ở từng use case dùng nó, không tách thành một
+bảng "dùng chung" riêng.
+
+**Cố ý lệch docx ban hành** (docx tách thành hai mục `f.`/`g.` riêng): tách rời thì người
+đọc phải xem hết ảnh màn của mọi use case rồi mới tới bảng điều khiển — gộp lại để ảnh và
+bảng của cùng một use case nằm cạnh nhau. Vì vậy `Yêu cầu nghiệp vụ` mang chữ `g.` (chứ
+không phải `h.`), tổng cộng BẢY mục `a.`-`g.`, không phải tám.
 
 ### 6. Chuyển hoá bắt buộc khi rót
 
@@ -288,7 +313,7 @@ bao giờ tự vẽ mockup hay mô tả bố cục màn hình (`intel.md` không
 > để lộ mức độ tự tin nội bộ).
 
 `intel §9` không có nguyên văn thông báo (câu hỏi đã bị đưa xuống `intel §8` vì không tìm
-được nguồn) → mục `h. Yêu cầu nghiệp vụ` viết mô tả **ý nghĩa** của thông báo dựa trên
+được nguồn) → mục `g. Yêu cầu nghiệp vụ` viết mô tả **ý nghĩa** của thông báo dựa trên
 `intel §5`/`§4` (hành vi hệ thống khi tình huống đó xảy ra), không bịa nguyên văn giả.
 
 Văn phong rót giữ nguyên toàn bộ quy ước đã chốt ở spec đợt 3B-1 §6:
@@ -315,12 +340,23 @@ Văn phong rót giữ nguyên toàn bộ quy ước đã chốt ở spec đợt 
   `<li>`). `Luồng sự kiện nhỏ` khai triển lại đúng các nhãn `S-n` đó theo thứ tự, mỗi `S-n`
   một khối `<div style="margin-left:1.5em">` riêng chứa dòng nhãn + một `<ol>` các bước con
   của nhánh đó — xem đúng cấu trúc mẫu ở `srs-template.md`.
-- **`g. Mô tả điều khiển`**: cột `Tên điều khiển` viết dạng `**[Loại] "[nhãn hiển thị đúng
-  nguyên văn trên UI]"**` — IN ĐẬM cả ô (`**...**`), đúng như tài liệu ban hành thật. Cột
-  `Mô tả điều khiển` giữ văn xuôi thường (không in đậm), 2-3 câu tách dòng riêng theo thứ
-  tự: (1) hình thức + vị trí hiển thị, (2) ràng buộc ngắn gọn nếu có (câu độc lập "Trường
-  bắt buộc."), (3) hành vi/mục đích khi tương tác.
-- **`h. Yêu cầu nghiệp vụ`**: CÓ quy tắc thật → danh sách gạch đầu dòng (`- `), MỖI quy
+  > **Rủi ro chưa kiểm chứng thực nghiệm**: lý do chọn HTML thô (thay vì `|...|`/`<br>`) là
+  > để giữ colspan/thụt lề khi xuất sang Word — nhưng máy dựng khuôn này KHÔNG cài `pandoc`
+  > để chạy thử thật `pandoc srs.md -o srs.docx`. Nếu người/công cụ nào đó sau này xuất
+  > `srs.md` sang `.docx` bằng pandoc, HTML thô có rủi ro bị đưa vào dưới dạng `RawBlock`
+  > mà docx writer không xử lý (bỏ im lặng, không báo lỗi) — khi đó cả mục `d.` biến mất
+  > khỏi bản Word mà cổng kiểm ở đây (chỉ soát `srs.md`, không soát output Word) không biết.
+  > Trước khi giao bản Word đầu tiên dựng từ khuôn này: chạy thử một lần thật, xác nhận `d.`
+  > còn nguyên trong `.docx`; nếu không, quay lại dùng bảng markdown thuần (mất `colspan`
+  > nhưng chắc chắn không bị bỏ) cho tới khi có đường xuất khác xử lý được HTML thô.
+- **Bảng điều khiển trong `f. Thiết kế UX/UI và Mô tả điều khiển`**: MỖI use case một bảng
+  riêng, đặt NGAY DƯỚI placeholder ảnh của chính use case đó (không tách heading `######`
+  riêng — đầu mục use case chỉ là dòng in đậm `**[Tên use case]**`). Cột `Tên điều khiển` viết dạng
+  `**[Loại] "[nhãn hiển thị đúng nguyên văn trên UI]"**` — IN ĐẬM cả ô (`**...**`), đúng
+  như tài liệu ban hành thật. Cột `Mô tả điều khiển` giữ văn xuôi thường (không in đậm),
+  2-3 câu tách dòng riêng theo thứ tự: (1) hình thức + vị trí hiển thị, (2) ràng buộc ngắn
+  gọn nếu có (câu độc lập "Trường bắt buộc."), (3) hành vi/mục đích khi tương tác.
+- **`g. Yêu cầu nghiệp vụ`**: CÓ quy tắc thật → danh sách gạch đầu dòng (`- `), MỖI quy
   tắc/ràng buộc một dòng riêng — không gộp nhiều quy tắc thành đoạn văn nhiều câu. Mỗi
   dòng vẫn là câu ghép "Khi người dùng [hành động], hệ thống [phản ứng], đồng thời [phản
   ứng phụ]" hoặc "nếu… thì…, ngược lại…" — nêu rõ điều kiện kích hoạt trước kết quả. Quy
@@ -351,7 +387,7 @@ Không dùng AskUserQuestion ở bước này.
 resolve được → đọc `.specify/extensions/dft-speckit/templates/srs-template.md` → vẫn
 không thấy → hỏi. Đây là khung mẫu MỘT Nhóm/MỘT Chức năng duy nhất — dùng để lấy đúng
 chuỗi heading cố định (`#### Sơ đồ chức năng`/`Mục đích chức năng`/`Mô tả chức năng`,
-`###### a.`-`h.`, format `<!-- FN: ... -->`) rồi lặp lại cấu trúc đó cho mọi Nhóm/Chức
+`###### a.`-`g.`, format `<!-- FN: ... -->`) rồi lặp lại cấu trúc đó cho mọi Nhóm/Chức
 năng thật của unit — **không tự nhớ lại từ mô tả bằng lời ở các bước trên**, dù mô tả đã
 khá đầy đủ: `srs_verify.py` so khớp tên heading CHÍNH XÁC theo chuỗi cố định (kể cả dấu
 câu, khoảng trắng), sai một ký tự sẽ làm cổng kiểm cấu trúc (bước 9) im lặng không chạy
@@ -360,38 +396,48 @@ câu, khoảng trắng), sai một ký tự sẽ làm cổng kiểm cấu trúc 
 Đây là bước duy nhất ghi vào `srs.md`. Áp đúng luật no-clobber đã ghi nhớ ở bước 4 nếu
 file đã tồn tại từ trước.
 
-- **Đánh số `1.`/`2.1.`/`a.`-`h.` theo VỊ TRÍ XUẤT HIỆN khi ghi** — Nhóm đầu tiên là `1.`,
-  Chức năng đầu tiên trong Nhóm là `<số Nhóm>.1`, tiếp tục tăng dần. Chữ cái `a.`-`h.` LUÔN
+- **Đánh số `1.`/`2.1.`/`a.`-`g.` theo VỊ TRÍ XUẤT HIỆN khi ghi** — Nhóm đầu tiên là `1.`,
+  Chức năng đầu tiên trong Nhóm là `<số Nhóm>.1`, tiếp tục tăng dần. Chữ cái `a.`-`g.` LUÔN
   cố định thứ tự (không phụ thuộc vị trí, đây là 8 mục có tên riêng, không phải danh sách
   đếm). Không lưu số cố định giữa các lần chạy — chạy lại tự tính lại theo cấu trúc hiện
   tại, giống cách `intel_tree.py`'s `compute_paths()` đánh số thư mục theo vị trí trong
   `children`.
 - **Chỉ CẤP `##` (Nhóm) và `###` (Chức năng) nhận tiền tố số** (`1.`, `2.1.`, …) — đây là
   hai cấp thật sự đếm được, có thứ tự phụ thuộc vị trí. **Ba heading `#### Sơ đồ chức
-  năng`/`Mục đích chức năng`/`Mô tả chức năng` và tám mục `###### a.`-`h.` KHÔNG BAO GIỜ
+  năng`/`Mục đích chức năng`/`Mô tả chức năng` và bảy mục `###### a.`-`g.` KHÔNG BAO GIỜ
   nhận tiền tố số** — đây là các mục CỐ ĐỊNH, TÊN CỐ ĐỊNH, luôn xuất hiện đúng thứ tự đúng
-  tên đó (chữ `a.`-`h.` đã là "số" cố định riêng của chúng, không phải số vị trí thêm vào
+  tên đó (chữ `a.`-`g.` đã là "số" cố định riêng của chúng, không phải số vị trí thêm vào
   ngoài tên). Đánh số thêm vào các heading này là sai — `srs_verify.py` so khớp tên các
-  heading này CHÍNH XÁC theo chuỗi cố định để chạy cổng kiểm 8 mục a.-h.
-- **`##### Tên leaf function list` LUÔN có mặt — một khối cho MỖI leaf FN-ID con trực tiếp
-  của Chức năng đang viết**, đối chiếu trực tiếp `functions.json` (không còn nhóm theo màn
-  hình, không còn điều kiện ≥2 màn hình). Với mỗi leaf:
+  heading này CHÍNH XÁC theo chuỗi cố định để chạy cổng kiểm 8 mục a.-g.
+- **`##### Tên leaf function list` LUÔN có mặt — một khối cho MỖI leaf FN-ID trong TOÀN BỘ
+  subtree `functions.json` của Chức năng đang viết, bất kể sâu mấy cấp** (KHÔNG chỉ con
+  trực tiếp — một Chức năng có cháu/chắt vẫn phải sinh khối cho từng leaf ở đáy cây, không
+  dừng ở cấp nhóm-con trung gian), đối chiếu trực tiếp `functions.json` (không còn nhóm
+  theo màn hình, không còn điều kiện ≥2 màn hình). Với mỗi leaf:
   - **Tiêu đề** = trường `name` của leaf trong `functions.json`, bỏ dấu gạch đầu dòng
     `- `/`+ ` và dấu chấm cuối câu — KHÔNG đưa mã FN-ID vào tiêu đề (tài liệu giao khách
     không lộ mã nội bộ).
   - **Ngay dưới heading, thêm comment ẩn `<!-- FN-leaf: <FN-ID của leaf này> -->`** — chỉ
     phục vụ đối chiếu/công cụ, không hiện khi xem markdown/xuất Word. Đây là marker RIÊNG
     (khác `<!-- FN: ... -->` ở heading Chức năng — hai marker không thay thế nhau, viết cả
-    hai).
-  - **Nội dung `a.`-`h.` bên dưới lấy từ MÀN HÌNH THẬT hiện thực leaf này** (xác định qua
+    hai). **Đây là cổng BLOCKING** (`srs_verify.py`'s `check_leaf_blocks`, bước 9): tập
+    FN-leaf của mọi khối `#####` trong một Chức năng phải khớp CHÍNH XÁC (không thiếu,
+    không thừa, không trùng) với tập FN-ID trong `<!-- FN: ... -->` của chính Chức năng đó
+    — thiếu một khối, thiếu một comment, hay trùng comment giữa hai khối đều bị chặn.
+  - **Nội dung `a.`-`g.` bên dưới lấy từ MÀN HÌNH THẬT hiện thực leaf này** (xác định qua
     `intel §2`/`§11`/`§12`). Hai leaf khác nhau cùng chung một màn hình → LẶP NGUYÊN VẸN
-    toàn bộ `a.`-`h.` (kể cả bảng `g.`, mọi bảng UC ở `d.`) ở cả hai khối `#####` — không
+    toàn bộ `a.`-`g.` (kể cả bảng điều khiển trong `f.`, mọi bảng UC ở `d.`) ở cả hai khối `#####` — không
     cắt gọn nội dung theo riêng từng leaf, chấp nhận trùng lặp để đối chiếu 1-1 với function
     list cho dễ.
+  - **Leaf không ánh xạ được sang màn hình riêng nào** (hành động đó chỉ là một nút/thao
+    tác nằm trên màn hình của leaf khác, không có `intel §2` riêng) → lấy nội dung a.-g.
+    của màn hình chứa hành động đó, nêu rõ ở mục `b. Điều kiện thực hiện` rằng đây là một
+    thao tác trong màn hình đó (không bịa một màn hình riêng không tồn tại).
   - **Leaf ứng với dòng §2 có `Loại = không-có-UI` ở `§11`** (endpoint REST thuần, job nền,
     CLI, message consumer — không có giao diện thật) vẫn tạo khối `#####` riêng như bình
-    thường (mọi leaf đều có khối, không có ngoại lệ) — chỉ khác là mục `f. Thiết kế UX/UI`
-    và `g. Mô tả điều khiển` của khối đó ghi "Chưa có thông tin" (không có UI để mô tả),
+    thường (mọi leaf đều có khối, không có ngoại lệ) — chỉ khác là mục
+    `f. Thiết kế UX/UI và Mô tả điều khiển` của khối đó ghi "Chưa có thông tin" (không có
+    UI để mô tả — bỏ luôn cả placeholder ảnh lẫn bảng điều khiển),
     các mục còn lại vẫn rót đúng nội dung nghiệp vụ tìm được.
 - **`<!-- FN: FN-ID, FN-ID... -->` ngay dưới heading Chức năng** — liệt kê MỌI FN-ID lá mà
   Chức năng đó phủ (lấy từ `intel §1`, đối chiếu `intel §2` xem FN nào gắn với màn hình
@@ -405,14 +451,14 @@ file đã tồn tại từ trước.
   trong phạm vi đều phải xuất hiện trong `<!-- FN: ... -->` của MỘT Chức năng nào đó, dù
   nội dung còn sơ sài).
   - **Ca "chưa tìm thấy code" viết KHÁC ca "có code nhưng thiếu thông tin hành chính".**
-    Mục `h. Yêu cầu nghiệp vụ` của Chức năng chưa tìm thấy code ghi đúng nguyên văn
+    Mục `g. Yêu cầu nghiệp vụ` của Chức năng chưa tìm thấy code ghi đúng nguyên văn
     `Chưa tìm thấy hiện thực trong mã nguồn.` — KHÔNG dùng "Chưa có thông tin" cho ca
     này (hai câu mang nghĩa khác nhau: một câu là "có code, chỉ thiếu thông tin hành
     chính không suy được", câu kia là "không có bằng chứng nào cho thấy FN này đã hiện
     thực"). Các mục a.-g. còn lại vẫn ghi "Chưa có thông tin" như bình thường. Đây không
     chỉ là quy ước hành văn: `srs_verify.py` bước 9 chặn (BLOCKING) một Chức năng mà TẤT
-    CẢ mục a.-h. đều rỗng/"Chưa có thông tin" (comment FN đủ không có nghĩa tài liệu có
-    nội dung) — câu "Chưa tìm thấy hiện thực trong mã nguồn." ở mục `h.` là bằng chứng có
+    CẢ mục a.-g. đều rỗng/"Chưa có thông tin" (comment FN đủ không có nghĩa tài liệu có
+    nội dung) — câu "Chưa tìm thấy hiện thực trong mã nguồn." ở mục `g.` là bằng chứng có
     thật (khớp `intel §1`) khiến Chức năng đó KHÔNG bị tính là rỗng ruột, trong khi vẫn
     trung thực rằng không có gì để đặc tả.
 
@@ -431,16 +477,27 @@ sinh `srs.md` thì không có gì để so, bỏ cờ này. Đọc JSON trả v�
 `warnings`.
 
 - **`blocking` khác rỗng (mã thoát ≠ 0) → cấm báo xong.** Với mục có `goi_y` (`thieu-fn`,
-  `placeholder`, `chuc-nang-rong-ruot`, `mat-chuc-nang`), sửa theo đúng gợi ý đó.
+  `placeholder`, `chuc-nang-rong-ruot`, `khoi-leaf-rong-ruot`, `mat-chuc-nang`,
+  `thieu-fn-leaf`, `trung-fn-leaf`, `thieu-khoi-leaf`, `fn-leaf-la`, `html-bang-hong`), sửa
+  theo đúng gợi ý đó. Bốn `loai` mới `thieu-fn-leaf`/`trung-fn-leaf`/`thieu-khoi-leaf`/
+  `fn-leaf-la` đều thuộc gate `check_leaf_blocks` (ràng buộc mỗi khối `#####` ↔ đúng một
+  leaf FN-ID, xem bước 8) — sửa bằng cách thêm/sửa comment `<!-- FN-leaf: ... -->` hoặc
+  thêm khối `#####` còn thiếu, KHÔNG được xoá bớt leaf khỏi `<!-- FN: ... -->` để né gate.
+  `khoi-leaf-rong-ruot` giống `chuc-nang-rong-ruot` nhưng soát RIÊNG từng khối `#####` (một
+  khối cụ thể rỗng dù Chức năng cha đã "sạch" nhờ khối khác) — ba cách sửa dưới đây cho
+  `chuc-nang-rong-ruot` áp y hệt cho khối bị `khoi-leaf-rong-ruot`, chỉ khác phạm vi (một
+  khối, không phải cả Chức năng). `html-bang-hong` nghĩa là khối `<table>` ở mục `d.` có
+  dòng trống bên trong, thẻ mở/đóng lệch cặp, hoặc `<table>`/`</table>` không khớp số lượng
+  trong toàn văn bản — sửa lại đúng cú pháp HTML, không xoá bảng để né cảnh báo.
   `thieu-fn` nghĩa là một FN-ID chưa xuất hiện trong bất kỳ `<!-- FN: ... -->` nào — kiểm
   lại khối Chức năng tương ứng đã có comment đúng chưa, không phải "thêm một dòng ma trận
   cho có" như khuôn cũ (khuôn này không còn ma trận). `chuc-nang-rong-ruot` nghĩa là một
-  Chức năng có `<!-- FN: ... -->` đủ nhưng cả 8 mục a.-h. đều rỗng/"Chưa có thông tin" —
+  Chức năng có `<!-- FN: ... -->` đủ nhưng cả 7 mục a.-g. đều rỗng/"Chưa có thông tin" —
   **ba ca khác nhau, ba cách sửa khác nhau**: (1) FN chưa tìm thấy code (`intel §1` ghi
-  "không tìm thấy") → sửa mục `h.` thành đúng câu `Chưa tìm thấy hiện thực trong mã
+  "không tìm thấy") → sửa mục `g.` thành đúng câu `Chưa tìm thấy hiện thực trong mã
   nguồn.` (bước 8 đã quy định — câu này KHÔNG bị tính là rỗng); (2) FN đã tìm thấy code
   nhưng mọi thứ `intel.md` ghi được về Chức năng này chỉ nằm ở `§8` (câu hỏi chính sách
-  nghiệp vụ, KHÔNG được rót vào `srs.md` theo luật bước 7) → mục `h.` viết một câu THẬT
+  nghiệp vụ, KHÔNG được rót vào `srs.md` theo luật bước 7) → mục `g.` viết một câu THẬT
   mô tả những gì code làm được xác nhận (vd tên hành động, đối tượng tác động — lấy từ
   `intel §2`/tên Chức năng, không cần đợi §8 trả lời để có câu này), không để cả 8 mục
   trống chỉ vì phần SÂU HƠN của nghiệp vụ chưa rõ; (3) không thuộc ca 1 hay 2 → quay lại
@@ -463,12 +520,15 @@ sinh `srs.md` thì không có gì để so, bỏ cờ này. Đọc JSON trả v�
     (§12/§5 không có dữ liệu). **`#### Sơ đồ chức năng` KHÔNG còn nằm trong danh sách được
     phép trống** — mục này dựng từ `functions.json` (luôn có dữ liệu), nên `muc-rong` ở
     mục này LÀ lỗi thật, phải sửa chứ không được xếp vào nhóm "đã lường trước". Một unit
-    sạch vẫn có thể ra vài `muc-rong` "đã lường trước" (đúng 2 mục `c.`/`e.` do thiếu
-    nguồn). **Không được vì vậy mà lướt qua CẢ danh sách warnings** — tách riêng: liệt kê
-    các `muc-rong` đã lường trước (đúng 2 mục trên, do thiếu nguồn) thành MỘT dòng gộp, rồi
-    soát TỪNG warning còn lại (mọi `muc-rong` khác — bao gồm bất kỳ `muc-rong` nào ở `####
-    Sơ đồ chức năng` — mọi `chuc-nang-thieu-muc`/`man-hinh-thieu-muc`/`nghi-duong-dan-code`)
-    như bình thường — không được gộp cả nhóm "còn lại" vào lý do của 2 mục đã lường trước.
+    sạch vẫn có thể ra vài `muc-rong` "đã lường trước" — **tối đa 2 mục CHO MỖI khối
+    `#####`** (đúng `c.` và `e.` của khối đó, do thiếu nguồn), KHÔNG PHẢI hằng số "2 mục"
+    cho cả tài liệu: một Chức năng có N khối `#####` thiếu nguồn có thể ra tới 2×N
+    `muc-rong` hợp lệ — đếm theo số khối, không phải một con số cố định. **Không được vì
+    vậy mà lướt qua CẢ danh sách warnings** — tách riêng: liệt kê các `muc-rong` đã lường
+    trước (đúng `c.`/`e.` của từng khối, do thiếu nguồn) thành MỘT dòng gộp, rồi soát TỪNG
+    warning còn lại (mọi `muc-rong` khác — bao gồm bất kỳ `muc-rong` nào ở `#### Sơ đồ chức
+    năng` — mọi `chuc-nang-thieu-muc`/`man-hinh-thieu-muc`/`nghi-duong-dan-code`) như bình
+    thường — không được gộp cả nhóm "còn lại" vào lý do của các mục đã lường trước.
 
 ### 10. Ghi ngược trạng thái
 
@@ -549,15 +609,26 @@ BLOCKING mà không tự sửa được.
   giao khách.
 - **Bịa `Mức quan trọng`/`Loại UC`/`Thời điểm sử dụng` ở mục `d.`** thay vì ghi "Chưa có
   thông tin" → đây là phân loại nghiệp vụ thuần, không có căn cứ code nào trả lời được.
-- **Tự vẽ mockup hoặc mô tả bố cục cho mục `f. Thiết kế UX/UI`** → luôn ghi cố định
-  `_(cần chèn ảnh — không tự sinh)_`, `intel.md` không quét bố cục UI.
+- **Tự vẽ mockup hoặc mô tả bố cục cho phần ảnh của mục `f. Thiết kế UX/UI và Mô tả điều
+  khiển`** → luôn ghi cố định `_(cần chèn ảnh — không tự sinh)_`, `intel.md` không quét bố
+  cục UI. (Phần BẢNG điều khiển của cùng mục này thì có nguồn thật là `intel §11` — rót
+  bình thường, đừng nhầm hai phần với nhau.)
+- **Tách `f.` trở lại thành hai mục riêng `f. Thiết kế UX/UI` + `g. Mô tả điều khiển` theo
+  docx** → khuôn này CỐ Ý gộp làm một (`srs_verify.py` so khớp đúng bảy tên mục `a.`-`g.`,
+  tách ra sẽ bị chặn `man-hinh-thieu-muc` và `Yêu cầu nghiệp vụ` sai chữ).
+- **Gộp mọi điều khiển của mọi use case vào MỘT bảng duy nhất ở `f.`** → phải chia theo
+  từng use case, mỗi use case một đầu mục in đậm + ảnh riêng + bảng riêng.
+- **Tách `e.` thành nhiều khối mermaid liên tiếp, mỗi use case một khối** → đúng MỘT khối
+  `sequenceDiagram`, các use case phân tách bằng `rect` + `Note over`.
+- **Vẽ `#### Sơ đồ chức năng` chỉ có mỗi node gốc** trong khi `#### Mô tả chức năng` bên
+  dưới đặc tả nhiều use case → node con phải phủ đúng những gì phần dưới thật sự có.
 - **Tự suy luận bước cho sơ đồ mermaid khi `intel §5`/`§12` không có dữ liệu** → xoá cả
   khối mermaid, một sơ đồ bịa trông như đã xác minh còn nguy hiểm hơn văn xuôi bịa.
 - **Tự sinh nội dung cho "Sơ đồ các giao thức kết nối giữa các khối"/"Cơ sở dữ liệu"/
   "Giao tiếp trong hệ thống"** → không có nguồn nào trong `intel.md` cho ba mục này, luôn
   đánh dấu comment `TODO 3B-4`, không tự suy.
 - **Bỏ khối `#####` của một leaf FN-ID vì "trùng màn hình với leaf khác đã viết rồi"** →
-  sai, mỗi leaf LUÔN có khối `#####` riêng dù nội dung `a.`-`h.` lặp y hệt leaf khác cùng
+  sai, mỗi leaf LUÔN có khối `#####` riêng dù nội dung `a.`-`g.` lặp y hệt leaf khác cùng
   màn hình — đây là thiết kế cố ý để đối chiếu 1-1 với `functions.json`, không phải lỗi
   trùng lặp cần dọn.
 - **Đưa mã FN-ID vào tiêu đề `#####`** thay vì để trong comment ẩn `<!-- FN-leaf: ... -->`
@@ -571,7 +642,7 @@ BLOCKING mà không tự sửa được.
 - **Dùng "Ngoài phạm vi" hoặc bất kỳ cơ chế nào để bỏ qua hẳn một FN/Chức năng** → khuôn
   mới không còn mục ma trận truy vết để khai nhánh này; mọi FN trong phạm vi bắt buộc
   xuất hiện trong một `<!-- FN: ... -->`, dù nội dung Chức năng đó còn sơ sài (nhiều mục
-  `a.`-`h.` phải ghi "Chưa có thông tin").
+  `a.`-`g.` phải ghi "Chưa có thông tin").
 - **`blocking` khác rỗng mà vẫn báo xong**, hoặc sửa `srs.md` chỉ để qua cổng mà không sửa
   nội dung thật → cổng nghiệm thu trở thành hình thức.
 - **Trình bày `warnings` sau khi đã ghi ngược trạng thái ở bước 10** → đảo đúng thứ tự bắt

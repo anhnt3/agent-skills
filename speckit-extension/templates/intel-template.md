@@ -52,7 +52,7 @@
 
 <!-- Cột "Độ chắc chắn" ghi lại mức tự tin nội bộ khi rút quy tắc. Khuôn srs.md hiện tại
      (đợt 3B-3, cấu trúc 4 cấp mô phỏng docx thật) không còn N.4/N.5 riêng — mọi quy tắc
-     (kể cả đánh dấu "suy đoán") rót chung vào mục `h. Yêu cầu nghiệp vụ`, không đánh dấu
+     (kể cả đánh dấu "suy đoán") rót chung vào mục `g. Yêu cầu nghiệp vụ`, không đánh dấu
      lại mức tự tin trong tài liệu giao khách (xem srs-from-code.md bước 6). Cột này vẫn
      hữu ích cho người soát tay đọc trực tiếp intel.md. -->
 
@@ -107,7 +107,7 @@
 | --- | --- | --- |
 | [tình huống] | "[nguyên văn]" | [file:dòng] |
 
-<!-- Lấy từ file ngôn ngữ / hằng số / mã lỗi. Nguồn cho mục `h. Yêu cầu nghiệp vụ` của
+<!-- Lấy từ file ngôn ngữ / hằng số / mã lỗi. Nguồn cho mục `g. Yêu cầu nghiệp vụ` của
      srs.md khi mô tả hành vi/thông báo hệ thống — chép nguyên văn, không diễn đạt lại. -->
 
 ## 10. Phát hiện cần người quyết định — logic mâu thuẫn / lỗ hổng bảo mật

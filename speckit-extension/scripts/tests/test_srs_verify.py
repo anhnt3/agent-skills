@@ -37,6 +37,10 @@ Xác thực danh tính người dùng trước khi cho phép truy cập hệ th�
 
 #### Mô tả chức năng
 
+##### Đăng nhập
+
+<!-- FN-leaf: FN-01-01 -->
+
 ###### a. Đối tượng tham gia
 
 Người dùng hệ thống.
@@ -63,17 +67,15 @@ flowchart TD
     A([Bắt đầu]) --> B[Xác thực]
 ```
 
-###### f. Thiết kế UX/UI
+###### f. Thiết kế UX/UI và Mô tả điều khiển
 
 _(cần chèn ảnh — không tự sinh)_
-
-###### g. Mô tả điều khiển
 
 | Tên điều khiển | Mô tả điều khiển |
 | --- | --- |
 | Textbox "Tên đăng nhập" | Trường bắt buộc. |
 
-###### h. Yêu cầu nghiệp vụ
+###### g. Yêu cầu nghiệp vụ
 
 Khi người dùng nhấn nút đăng nhập, hệ thống kiểm tra thông tin.
 
@@ -93,6 +95,10 @@ flowchart TD
 Khôi phục quyền truy cập khi người dùng quên mật khẩu.
 
 #### Mô tả chức năng
+
+##### Quên mật khẩu
+
+<!-- FN-leaf: FN-01-02 -->
 
 ###### a. Đối tượng tham gia
 
@@ -120,15 +126,13 @@ flowchart TD
     A([Bắt đầu]) --> B[Gửi email đặt lại mật khẩu]
 ```
 
-###### f. Thiết kế UX/UI
+###### f. Thiết kế UX/UI và Mô tả điều khiển
 
 _(cần chèn ảnh — không tự sinh)_
 
-###### g. Mô tả điều khiển
-
 Không có.
 
-###### h. Yêu cầu nghiệp vụ
+###### g. Yêu cầu nghiệp vụ
 
 Hệ thống gửi email đặt lại mật khẩu.
 """
@@ -151,6 +155,140 @@ def test_check_fn_coverage_blocking_when_missing():
     srs = SRS_OK.replace("<!-- FN: FN-01-02 -->", "<!-- FN: -->")
     out = sv.check_fn_coverage(srs, WANTED)
     assert any(b["loai"] == "thieu-fn" and "FN-01-02" in b["thong_diep"] for b in out)
+
+
+def test_check_html_table_integrity_clean_on_real_table():
+    text = (
+        "<table>\n"
+        "<tr><td><b>Tên Use Case:</b> Đăng nhập</td>"
+        "<td><b>Mức quan trọng:</b> Cao</td></tr>\n"
+        "<tr><td colspan=\"2\"><b>Luồng sự kiện chuẩn:</b>\n"
+        "<ol>\n<li>Bước 1</li>\n</ol>\n</td></tr>\n"
+        "</table>\n"
+    )
+    assert sv.check_html_table_integrity(text) == []
+
+
+def test_check_html_table_integrity_catches_blank_line_inside_table():
+    # M5 (đợt review "trước khi hoàn thành"): critic chạy thật cho thấy một
+    # dòng trống giữa hai <tr> lọt qua mọi gate — không cả warning.
+    text = (
+        "<table>\n"
+        "<tr><td><b>Tên Use Case:</b> Đăng nhập</td>"
+        "<td><b>Mức quan trọng:</b> Cao</td></tr>\n"
+        "\n"
+        "<tr><td colspan=\"2\"><b>Mô tả tóm tắt:</b> ...</td></tr>\n"
+        "</table>\n"
+    )
+    out = sv.check_html_table_integrity(text)
+    assert any(b["loai"] == "html-bang-hong" and "dòng trống" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_html_table_integrity_catches_unbalanced_tag():
+    text = (
+        "<table>\n"
+        "<tr><td><b>Tên Use Case:</b> Đăng nhập</td>"
+        "<td><b>Mức quan trọng:</b> Cao</td></tr>\n"
+        "<tr><td colspan=\"2\"><b>Luồng sự kiện chuẩn:</b>\n"
+        "<ol>\n<li>Bước 1\n</ol>\n</td></tr>\n"  # <li> thiếu </li>
+        "</table>\n"
+    )
+    out = sv.check_html_table_integrity(text)
+    assert any(b["loai"] == "html-bang-hong" and "<li>" in b["thong_diep"] for b in out)
+
+
+def test_check_leaf_blocks_clean_on_srs_ok():
+    assert sv.check_leaf_blocks(SRS_OK) == []
+
+
+def test_check_leaf_blocks_catches_fewer_blocks_than_leaves():
+    # C2 (đợt review "trước khi hoàn thành"): thiết kế leaf-based bắt MỖI leaf
+    # FN-ID một khối ##### riêng. Nếu model lặng lẽ quay lại gộp-theo-màn-hình
+    # (2 leaf nhưng comment <!-- FN: --> vẫn liệt đủ 2 ID, chỉ viết 1 khối
+    # ##### ), check_fn_coverage một mình KHÔNG bắt được (đã xác nhận qua
+    # agent) — check_leaf_blocks phải bắt.
+    srs = SRS_OK.replace("<!-- FN: FN-01-02 -->", "<!-- FN: FN-01-01, FN-01-02 -->")
+    out = sv.check_leaf_blocks(srs)
+    # Chức năng "Quên mật khẩu" giờ khai phủ cả FN-01-01 (thật ra thuộc khối
+    # ##### của Chức năng "Đăng nhập" khác) nhưng tự thân nó chỉ có 1 khối
+    # ##### (FN-01-02) -> thiếu khối cho FN-01-01.
+    assert any(b["loai"] == "thieu-khoi-leaf" and "FN-01-01" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_leaf_blocks_catches_missing_fn_leaf_comment():
+    srs = SRS_OK.replace("<!-- FN-leaf: FN-01-01 -->\n\n", "")
+    out = sv.check_leaf_blocks(srs)
+    assert any(b["loai"] == "thieu-fn-leaf" for b in out)
+    # thiếu comment FN-leaf -> cũng không thấy khối leaf khớp FN-01-01
+    assert any(b["loai"] == "thieu-khoi-leaf" and "FN-01-01" in b["thong_diep"]
+               for b in out)
+
+
+DUP_LEAF_SRS = """### Quản lý người dùng
+
+<!-- FN: FN-01-01, FN-01-02 -->
+
+#### Sơ đồ chức năng
+
+#### Mục đích chức năng
+
+Quản lý tài khoản người dùng.
+
+#### Mô tả chức năng
+
+##### Tạo mới người dùng
+
+<!-- FN-leaf: FN-01-01 -->
+
+###### a. Đối tượng tham gia
+
+Quản trị viên.
+
+###### g. Yêu cầu nghiệp vụ
+
+Hệ thống tạo tài khoản mới.
+
+##### Xoá người dùng
+
+<!-- FN-leaf: FN-01-01 -->
+
+###### a. Đối tượng tham gia
+
+Quản trị viên.
+
+###### g. Yêu cầu nghiệp vụ
+
+Hệ thống xoá tài khoản.
+"""
+
+
+def test_check_leaf_blocks_catches_duplicate_fn_leaf():
+    # Hai khối ##### khác nhau trong CÙNG một Chức năng dùng trùng FN-leaf
+    # FN-01-01 (lẽ ra khối thứ hai phải là FN-01-02) -> FN-01-02 thiếu khối
+    # riêng, VÀ FN-01-01 bị gắn trùng ở 2 khối.
+    out = sv.check_leaf_blocks(DUP_LEAF_SRS)
+    assert any(b["loai"] == "trung-fn-leaf" and "FN-01-01" in b["thong_diep"]
+               for b in out)
+    assert any(b["loai"] == "thieu-khoi-leaf" and "FN-01-02" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_leaf_blocks_catches_fn_leaf_not_in_fn_comment():
+    srs = SRS_OK.replace("<!-- FN-leaf: FN-01-01 -->", "<!-- FN-leaf: FN-99-99 -->")
+    out = sv.check_leaf_blocks(srs)
+    assert any(b["loai"] == "fn-leaf-la" and "FN-99-99" in b["thong_diep"] for b in out)
+    assert any(b["loai"] == "thieu-khoi-leaf" and "FN-01-01" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_leaf_blocks_no_finding_when_fn_comment_missing_entirely():
+    # Ca "thiếu hẳn <!-- FN: ... -->" đã có check_fn_coverage lo — check_leaf_blocks
+    # không được tự ý báo thêm khi wanted_ids rỗng (tránh trùng finding).
+    srs = SRS_OK.replace("<!-- FN: FN-01-01 -->", "<!-- FN: -->")
+    out = sv.check_leaf_blocks(srs)
+    assert not any("Đăng nhập" in b["thong_diep"] for b in out)
 
 
 def test_clean_document_has_no_blocking():
@@ -218,26 +356,32 @@ def test_check_man_hinh_structure_clean():
     assert sv.check_man_hinh_structure(SRS_OK) == []
 
 
+_DROP_F_SECTION = (
+    "###### f. Thiết kế UX/UI và Mô tả điều khiển\n\n"
+    "_(cần chèn ảnh — không tự sinh)_\n\n"
+    "| Tên điều khiển | Mô tả điều khiển |\n"
+    "| --- | --- |\n| Textbox \"Tên đăng nhập\" | Trường bắt buộc. |\n\n")
+
+
 def test_check_man_hinh_structure_warns_when_missing_letter():
-    srs = SRS_OK.replace(
-        "###### g. Mô tả điều khiển\n\n| Tên điều khiển | Mô tả điều khiển |\n"
-        "| --- | --- |\n| Textbox \"Tên đăng nhập\" | Trường bắt buộc. |\n\n", "")
+    srs = SRS_OK.replace(_DROP_F_SECTION, "")
+    assert srs != SRS_OK  # fixture đúng khuôn -> phép xoá thật sự có hiệu lực
     out = sv.check_man_hinh_structure(srs)
     assert any(w["loai"] == "man-hinh-thieu-muc" and "Đăng nhập" in w["thong_diep"]
-               and "g. Mô tả điều khiển" in w["thong_diep"] for w in out)
+               and "f. Thiết kế UX/UI và Mô tả điều khiển" in w["thong_diep"]
+               for w in out)
 
 
 def test_check_man_hinh_structure_tolerates_numbered_heading():
     # Agent lỡ đánh số vị trí vào heading cố định "Mô tả chức năng" (vd
-    # "2.1.3. Mô tả chức năng") -- cổng 8 mục a.-h. vẫn phải chạy, không được
+    # "2.1.3. Mô tả chức năng") -- cổng 7 mục a.-g. vẫn phải chạy, không được
     # âm thầm tắt hẳn vì so khớp chuỗi chính xác thất bại.
     srs = SRS_OK.replace("#### Mô tả chức năng", "#### 2.1.3. Mô tả chức năng", 1)
-    srs = srs.replace(
-        "###### g. Mô tả điều khiển\n\n| Tên điều khiển | Mô tả điều khiển |\n"
-        "| --- | --- |\n| Textbox \"Tên đăng nhập\" | Trường bắt buộc. |\n\n", "")
+    srs = srs.replace(_DROP_F_SECTION, "")
     out = sv.check_man_hinh_structure(srs)
     assert any(w["loai"] == "man-hinh-thieu-muc" and "Đăng nhập" in w["thong_diep"]
-               and "g. Mô tả điều khiển" in w["thong_diep"] for w in out)
+               and "f. Thiết kế UX/UI và Mô tả điều khiển" in w["thong_diep"]
+               for w in out)
 
 
 def test_check_man_hinh_structure_ignores_missing_optional_mermaid():
@@ -365,15 +509,64 @@ Chưa có thông tin.
 
 ###### e. Thiết kế mô hình nghiệp vụ
 
-###### f. Thiết kế UX/UI
+###### f. Thiết kế UX/UI và Mô tả điều khiển
 
 _(cần chèn ảnh — không tự sinh)_
 
-###### g. Mô tả điều khiển
-
 Không có.
 
-###### h. Yêu cầu nghiệp vụ
+###### g. Yêu cầu nghiệp vụ
+
+Chưa có thông tin.
+"""
+
+
+EMPTY_CHUC_NANG_HTML_TABLE = """## Đăng ký đăng nhập
+
+### Đăng nhập
+
+<!-- FN: FN-01-01 -->
+
+#### Sơ đồ chức năng
+
+#### Mục đích chức năng
+
+Chưa có thông tin.
+
+#### Mô tả chức năng
+
+###### a. Đối tượng tham gia
+
+- Chưa có thông tin.
+
+###### b. Điều kiện thực hiện
+
+- Chưa có thông tin.
+
+###### c. Mô hình Usecase
+
+###### d. Kịch bản trường hợp sử dụng
+
+<table>
+<tr><td><b>Tên Use Case:</b> Chưa có thông tin</td><td><b>Mức quan trọng:</b> Chưa có thông tin</td></tr>
+<tr><td><b>Người dùng:</b> Chưa có thông tin</td><td><b>Loại UC:</b> Chưa có thông tin</td></tr>
+<tr><td colspan="2"><b>Người sử dụng và yêu cầu:</b> Chưa có thông tin</td></tr>
+<tr><td colspan="2"><b>Mô tả tóm tắt:</b> Chưa có thông tin</td></tr>
+<tr><td colspan="2"><b>Thời điểm sử dụng:</b> Chưa có thông tin</td></tr>
+<tr><td colspan="2"><b>Luồng sự kiện chuẩn:</b> Chưa có thông tin</td></tr>
+<tr><td colspan="2"><b>Luồng sự kiện nhỏ:</b> Chưa có thông tin</td></tr>
+</table>
+
+###### e. Thiết kế mô hình nghiệp vụ
+
+###### f. Thiết kế UX/UI và Mô tả điều khiển
+
+_(cần chèn ảnh — không tự sinh)_
+
+| Tên điều khiển | Mô tả điều khiển |
+| --- | --- |
+
+###### g. Yêu cầu nghiệp vụ
 
 Chưa có thông tin.
 """
@@ -390,7 +583,7 @@ def test_check_content_density_blocks_empty_chuc_nang():
 
 
 def test_check_content_density_mermaid_only_item_counts_as_content():
-    # Chức năng mà mọi mục a.-h. đều "Chưa có thông tin" TRỪ một mục chỉ có
+    # Chức năng mà mọi mục a.-g. đều "Chưa có thông tin" TRỪ một mục chỉ có
     # mermaid (không văn xuôi) -> KHÔNG bị chặn, vì mục đó có nội dung thật.
     text = EMPTY_CHUC_NANG.replace(
         "###### c. Mô hình Usecase\n\n###### d.",
@@ -402,23 +595,171 @@ def test_check_content_density_mermaid_only_item_counts_as_content():
 
 def test_check_content_density_not_found_evidence_phrase_is_not_empty():
     # V1 (fix round 2): Chức năng chưa tìm thấy code viết đúng câu quy định ở
-    # mục h. (khác "Chưa có thông tin") -> KHÔNG bị chặn rỗng ruột, dù mọi mục
+    # mục g. (khác "Chưa có thông tin") -> KHÔNG bị chặn rỗng ruột, dù mọi mục
     # còn lại đều "Chưa có thông tin" (đúng luật bước 8 của srs-from-code.md).
     text = EMPTY_CHUC_NANG.replace(
-        "###### h. Yêu cầu nghiệp vụ\n\nChưa có thông tin.",
-        "###### h. Yêu cầu nghiệp vụ\n\nChưa tìm thấy hiện thực trong mã nguồn.")
+        "###### g. Yêu cầu nghiệp vụ\n\nChưa có thông tin.",
+        "###### g. Yêu cầu nghiệp vụ\n\nChưa tìm thấy hiện thực trong mã nguồn.")
     out = sv.check_content_density(text)
+    assert out == []
+
+
+def test_check_content_density_blocks_empty_html_table_d_and_empty_table_g():
+    # C1 (đợt review "trước khi hoàn thành"): khung mới bắt `d.` LUÔN là một
+    # khối <table> HTML thô, và `g.` là bảng markdown — cả hai không bao giờ
+    # khớp _EMPTY_ITEM_RE (so khớp toàn chuỗi) dù mọi field bên trong đều
+    # "Chưa có thông tin"/bảng không có dòng dữ liệu. Trước fix, ca này lọt
+    # qua chuc-nang-rong-ruot hoàn toàn (đã xác nhận bằng agent chạy thật).
+    out = sv.check_content_density(EMPTY_CHUC_NANG_HTML_TABLE)
+    assert any(b["loai"] == "chuc-nang-rong-ruot" for b in out)
+
+
+def test_check_content_density_real_html_table_d_counts_as_content():
+    # Đối chứng: bảng <table> có nội dung THẬT (không phải toàn "Chưa có
+    # thông tin") vẫn phải được tính là có nội dung — _structured_item_is_empty
+    # không được chặn nhầm ca thật.
+    text = EMPTY_CHUC_NANG_HTML_TABLE.replace(
+        "<tr><td colspan=\"2\"><b>Mô tả tóm tắt:</b> Chưa có thông tin</td></tr>",
+        "<tr><td colspan=\"2\"><b>Mô tả tóm tắt:</b> Người dùng nhập tài khoản "
+        "và mật khẩu, hệ thống xác thực rồi tạo phiên đăng nhập.</td></tr>")
+    out = sv.check_content_density(text)
+    assert out == []
+
+
+def test_structured_item_image_placeholder_alone_is_empty():
+    # Mục f. (đã gộp UX/UI + Mô tả điều khiển) LUÔN mang placeholder ảnh cố
+    # định; nếu coi chuỗi đó là "nội dung thật" thì mọi f. tự cứu chính nó khỏi
+    # gate rỗng — đúng lỗi mà fix "Tên Use Case" vừa vá ở d.
+    body = ("_(cần chèn ảnh — không tự sinh)_"
+            "| Tên điều khiển | Mô tả điều khiển || --- | --- |")
+    assert sv._structured_item_is_empty(body) is True
+
+
+def test_structured_item_usecase_headings_alone_are_empty():
+    # f. giờ chia theo từng use case bằng dòng in đậm `**[Tên use case]**`.
+    # Tên đó suy từ mục d., không mang thông tin mới — một f. chỉ có các đầu
+    # mục use case + placeholder ảnh + bảng rỗng vẫn phải bị coi là rỗng.
+    body = ("**Tạo mới người dùng**_(cần chèn ảnh — không tự sinh)_"
+            "| Tên điều khiển | Mô tả điều khiển || --- | --- |"
+            "**Cập nhật người dùng**_(cần chèn ảnh — không tự sinh)_"
+            "| Tên điều khiển | Mô tả điều khiển || --- | --- |")
+    assert sv._structured_item_is_empty(body) is True
+
+
+def test_structured_item_real_control_row_is_not_empty():
+    body = ("_(cần chèn ảnh — không tự sinh)_"
+            "| Tên điều khiển | Mô tả điều khiển || --- | --- |"
+            "| **Button \"Lưu\"** | Nút cuối form, lưu thay đổi. |")
+    assert sv._structured_item_is_empty(body) is False
+
+
+def test_check_content_density_blocks_when_only_ten_use_case_is_filled():
+    # Vòng verify 2 (đợt review "trước khi hoàn thành"): value của "Tên Use
+    # Case" suy thẳng từ tên khối, tự nó không mang thông tin — một `d.` chỉ
+    # điền mỗi field này (7 field còn lại "Chưa có thông tin", 7 mục a.-g.
+    # còn lại cũng rỗng) KHÔNG được coi là Chức năng đã có nội dung.
+    text = EMPTY_CHUC_NANG_HTML_TABLE.replace(
+        "<tr><td><b>Tên Use Case:</b> Chưa có thông tin</td>",
+        "<tr><td><b>Tên Use Case:</b> Đăng nhập</td>")
+    out = sv.check_content_density(text)
+    assert any(b["loai"] == "chuc-nang-rong-ruot" for b in out)
+
+
+def test_check_leaf_content_density_catches_stub_leaf_block_hidden_by_sibling():
+    # Vòng verify 2: check_content_density gộp theo Chức năng (###) — một
+    # khối ##### rỗng bên cạnh một khối khác có nội dung thật KHÔNG bị bắt ở
+    # cấp Chức năng (đã xác nhận: blocking rỗng trơn). check_leaf_content_density
+    # phải bắt riêng khối rỗng đó.
+    stub_srs = SRS_OK + """
+
+##### Đổi mật khẩu
+
+<!-- FN-leaf: FN-01-03 -->
+
+###### a. Đối tượng tham gia
+
+Chưa có thông tin.
+
+###### b. Điều kiện thực hiện
+
+Chưa có thông tin.
+
+###### c. Mô hình Usecase
+
+###### d. Kịch bản trường hợp sử dụng
+
+Chưa có thông tin.
+
+###### e. Thiết kế mô hình nghiệp vụ
+
+###### f. Thiết kế UX/UI và Mô tả điều khiển
+
+_(cần chèn ảnh — không tự sinh)_
+
+Chưa có thông tin.
+
+###### g. Yêu cầu nghiệp vụ
+
+Chưa có thông tin.
+"""
+    # Chức năng cha "Quên mật khẩu" vẫn "sạch" ở cấp gộp vì khối FN-01-02 có
+    # nội dung thật — xác nhận đúng như mô tả (không phải giả định):
+    assert sv.check_content_density(stub_srs) == []
+    out = sv.check_leaf_content_density(stub_srs)
+    assert any(b["loai"] == "khoi-leaf-rong-ruot" and "Đổi mật khẩu" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_html_table_integrity_catches_unclosed_table_tag():
+    # Vòng verify 2: <table> không bao giờ đóng — ca lệch nặng nhất khi xuất
+    # Word — trước đây _HTML_TABLE_BLOCK_RE đòi đủ cặp mở/đóng nên im lặng bỏ
+    # qua hoàn toàn.
+    text = "<table>\n<tr><td>Chưa có thông tin</td></tr>\n"  # thiếu </table>
+    out = sv.check_html_table_integrity(text)
+    assert any(b["loai"] == "html-bang-hong" and "không khớp" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_leaf_blocks_ignores_mock_headings_inside_fenced_example():
+    # Vòng verify 2: một khối rào minh hoạ khung (```markdown) có dòng
+    # `### `/`##### ` mẫu bên trong KHÔNG được coi là heading thật, kẻo lệch
+    # ranh giới Chức năng/khối leaf và báo oan thiếu khối.
+    srs = SRS_OK.replace(
+        "###### a. Đối tượng tham gia\n\nNgười dùng hệ thống.",
+        "###### a. Đối tượng tham gia\n\n"
+        "Người dùng hệ thống.\n\n"
+        "```markdown\n### Ví dụ minh hoạ\n\n##### Một leaf giả\n```",
+    )
+    out = sv.check_leaf_blocks(srs)
     assert out == []
 
 
 def test_check_content_density_blocks_empty_even_with_stray_dash_prefix():
     # M7 (đợt bổ sung "h. dạng list gạch đầu dòng"): nếu agent lỡ thêm "- " vào
-    # trước câu rỗng cố định (đáng lẽ phải giữ plain sentence khi mục h. thật sự
+    # trước câu rỗng cố định (đáng lẽ phải giữ plain sentence khi mục g. thật sự
     # không có gì để ghi) -> vẫn phải bị coi là rỗng, không được lọt qua cổng nhờ
     # dấu gạch đầu dòng thừa.
     text = EMPTY_CHUC_NANG.replace(
-        "###### h. Yêu cầu nghiệp vụ\n\nChưa có thông tin.",
-        "###### h. Yêu cầu nghiệp vụ\n\n- Chưa có thông tin.")
+        "###### g. Yêu cầu nghiệp vụ\n\nChưa có thông tin.",
+        "###### g. Yêu cầu nghiệp vụ\n\n- Chưa có thông tin.")
+    out = sv.check_content_density(text)
+    assert any(b["loai"] == "chuc-nang-rong-ruot" for b in out)
+
+
+@pytest.mark.parametrize("variant", [
+    "* Chưa có thông tin.",
+    "+ Chưa có thông tin.",
+    "1. Chưa có thông tin.",
+    "2) Chưa có thông tin.",
+    "**Chưa có thông tin.**",
+])
+def test_check_content_density_blocks_empty_with_other_bullet_or_emphasis_variants(variant):
+    # m1 (đợt review "trước khi hoàn thành"): critic chạy thật cho thấy
+    # _EMPTY_ITEM_RE cũ chỉ chặn đúng ký tự "-", ba biến thể bullet/số/in đậm
+    # khác đều lọt qua (chuc-nang-rong-ruot không bắt được).
+    text = EMPTY_CHUC_NANG.replace(
+        "###### g. Yêu cầu nghiệp vụ\n\nChưa có thông tin.",
+        f"###### g. Yêu cầu nghiệp vụ\n\n{variant}")
     out = sv.check_content_density(text)
     assert any(b["loai"] == "chuc-nang-rong-ruot" for b in out)
 
@@ -498,7 +839,7 @@ Xem danh sách A.
 
 Người dùng.
 
-###### h. Yêu cầu nghiệp vụ
+###### g. Yêu cầu nghiệp vụ
 
 Hiển thị danh sách A.
 
@@ -520,7 +861,7 @@ Xem danh sách B.
 
 Người dùng.
 
-###### h. Yêu cầu nghiệp vụ
+###### g. Yêu cầu nghiệp vụ
 
 Hiển thị danh sách B.
 """
@@ -546,7 +887,7 @@ Xem danh sách A.
 
 Người dùng.
 
-###### h. Yêu cầu nghiệp vụ
+###### g. Yêu cầu nghiệp vụ
 
 Hiển thị danh sách A.
 
