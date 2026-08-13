@@ -1,0 +1,599 @@
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+import srs_verify as sv
+
+FUNCTIONS_TREE = [
+    {"id": "FN-01", "name": "Xác thực", "description": "", "children": [
+        {"id": "FN-01-01", "name": "Đăng nhập", "description": "", "children": []},
+        {"id": "FN-01-02", "name": "Quên mật khẩu", "description": "", "children": []},
+    ]},
+    {"id": "FN-02", "name": "Hợp đồng", "description": "", "children": [
+        {"id": "FN-02-01", "name": "Danh sách hợp đồng", "description": "", "children": []},
+    ]},
+]
+
+WANTED = ["FN-01-01", "FN-01-02"]
+
+SRS_OK = """## Đăng ký đăng nhập
+
+### Đăng nhập
+
+<!-- FN: FN-01-01 -->
+
+#### Sơ đồ chức năng
+
+```mermaid
+flowchart TD
+    A([Bắt đầu]) --> B[Nhập tài khoản]
+```
+
+#### Mục đích chức năng
+
+Xác thực danh tính người dùng trước khi cho phép truy cập hệ thống.
+
+#### Mô tả chức năng
+
+###### a. Đối tượng tham gia
+
+Người dùng hệ thống.
+
+###### b. Điều kiện thực hiện
+
+Người dùng đã có tài khoản.
+
+###### c. Mô hình Usecase
+
+```mermaid
+flowchart LR
+    A([Người dùng]) --> UC([Đăng nhập])
+```
+
+###### d. Kịch bản trường hợp sử dụng
+
+Tên Use Case: Đăng nhập
+
+###### e. Thiết kế mô hình nghiệp vụ
+
+```mermaid
+flowchart TD
+    A([Bắt đầu]) --> B[Xác thực]
+```
+
+###### f. Thiết kế UX/UI
+
+_(cần chèn ảnh — không tự sinh)_
+
+###### g. Mô tả điều khiển
+
+| Tên điều khiển | Mô tả điều khiển |
+| --- | --- |
+| Textbox "Tên đăng nhập" | Trường bắt buộc. |
+
+###### h. Yêu cầu nghiệp vụ
+
+Khi người dùng nhấn nút đăng nhập, hệ thống kiểm tra thông tin.
+
+### Quên mật khẩu
+
+<!-- FN: FN-01-02 -->
+
+#### Sơ đồ chức năng
+
+```mermaid
+flowchart TD
+    A([Bắt đầu]) --> B[Yêu cầu đặt lại mật khẩu]
+```
+
+#### Mục đích chức năng
+
+Khôi phục quyền truy cập khi người dùng quên mật khẩu.
+
+#### Mô tả chức năng
+
+###### a. Đối tượng tham gia
+
+Người dùng hệ thống.
+
+###### b. Điều kiện thực hiện
+
+Người dùng đã có tài khoản.
+
+###### c. Mô hình Usecase
+
+```mermaid
+flowchart LR
+    A([Người dùng]) --> UC([Quên mật khẩu])
+```
+
+###### d. Kịch bản trường hợp sử dụng
+
+Tên Use Case: Quên mật khẩu
+
+###### e. Thiết kế mô hình nghiệp vụ
+
+```mermaid
+flowchart TD
+    A([Bắt đầu]) --> B[Gửi email đặt lại mật khẩu]
+```
+
+###### f. Thiết kế UX/UI
+
+_(cần chèn ảnh — không tự sinh)_
+
+###### g. Mô tả điều khiển
+
+Không có.
+
+###### h. Yêu cầu nghiệp vụ
+
+Hệ thống gửi email đặt lại mật khẩu.
+"""
+
+
+def test_parse_fn_comments_collects_ids():
+    assert sv.parse_fn_comments(SRS_OK) == {"FN-01-01", "FN-01-02"}
+
+
+def test_parse_fn_comments_handles_multiple_ids_in_one_comment():
+    text = "<!-- FN: FN-01-01, FN-01-02 -->"
+    assert sv.parse_fn_comments(text) == {"FN-01-01", "FN-01-02"}
+
+
+def test_check_fn_coverage_clean():
+    assert sv.check_fn_coverage(SRS_OK, WANTED) == []
+
+
+def test_check_fn_coverage_blocking_when_missing():
+    srs = SRS_OK.replace("<!-- FN: FN-01-02 -->", "<!-- FN: -->")
+    out = sv.check_fn_coverage(srs, WANTED)
+    assert any(b["loai"] == "thieu-fn" and "FN-01-02" in b["thong_diep"] for b in out)
+
+
+def test_clean_document_has_no_blocking():
+    r = sv.verify(SRS_OK, WANTED)
+    assert r["blocking"] == []
+
+
+def test_missing_fn_comment_is_blocking():
+    srs = SRS_OK.replace("<!-- FN: FN-01-02 -->", "<!-- FN: -->")
+    r = sv.verify(srs, WANTED)
+    assert any(b["loai"] == "thieu-fn" and "FN-01-02" in b["thong_diep"]
+               for b in r["blocking"])
+
+
+def test_placeholder_is_blocking():
+    srs = SRS_OK + "\n[Tên phụ lục]\n"
+    r = sv.verify(srs, WANTED)
+    assert any(b["loai"] == "placeholder" for b in r["blocking"])
+
+
+def test_markdown_link_is_not_a_placeholder():
+    srs = SRS_OK + "\nXem [tài liệu tham khảo](https://example.com/a).\n"
+    r = sv.verify(srs, WANTED)
+    assert not any(b["loai"] == "placeholder" for b in r["blocking"])
+
+
+def test_mermaid_block_is_not_a_placeholder():
+    srs = SRS_OK + "\n```mermaid\nflowchart TD\n    B[Nhập thông tin]\n```\n"
+    r = sv.verify(srs, WANTED)
+    assert not any(b["loai"] == "placeholder" for b in r["blocking"])
+
+
+def test_inline_code_syntax_example_is_not_a_placeholder():
+    srs = SRS_OK + "\n| `A([Bắt đầu])` | `B[Nhập thông tin]` |\n"
+    r = sv.verify(srs, WANTED)
+    assert r["blocking"] == []
+
+
+def test_fn_comment_itself_is_not_a_placeholder():
+    # <!-- FN: FN-01-01, FN-01-02 --> không có dấu [] nào, nhưng xác nhận comment
+    # HTML ẩn nói chung (bất kỳ nội dung nào) không lẫn vào placeholder detection.
+    srs = SRS_OK + "\n<!-- ghi chú nội bộ [không phải placeholder] -->\n"
+    r = sv.verify(srs, WANTED)
+    assert not any(b["loai"] == "placeholder" for b in r["blocking"])
+
+
+def test_empty_wanted_list_warns():
+    r = sv.verify(SRS_OK, [])
+    assert any(w["loai"] == "pham-vi-rong" for w in r["warnings"])
+
+
+def test_check_chuc_nang_structure_clean():
+    assert sv.check_chuc_nang_structure(SRS_OK) == []
+
+
+def test_check_chuc_nang_structure_warns_when_missing_muc():
+    srs = SRS_OK.replace("#### Mục đích chức năng\n\nXác thực danh tính người dùng "
+                          "trước khi cho phép truy cập hệ thống.\n\n", "")
+    out = sv.check_chuc_nang_structure(srs)
+    assert any(w["loai"] == "chuc-nang-thieu-muc" and "Đăng nhập" in w["thong_diep"]
+               and "Mục đích chức năng" in w["thong_diep"] for w in out)
+
+
+def test_check_man_hinh_structure_clean():
+    assert sv.check_man_hinh_structure(SRS_OK) == []
+
+
+def test_check_man_hinh_structure_warns_when_missing_letter():
+    srs = SRS_OK.replace(
+        "###### g. Mô tả điều khiển\n\n| Tên điều khiển | Mô tả điều khiển |\n"
+        "| --- | --- |\n| Textbox \"Tên đăng nhập\" | Trường bắt buộc. |\n\n", "")
+    out = sv.check_man_hinh_structure(srs)
+    assert any(w["loai"] == "man-hinh-thieu-muc" and "Đăng nhập" in w["thong_diep"]
+               and "g. Mô tả điều khiển" in w["thong_diep"] for w in out)
+
+
+def test_check_man_hinh_structure_tolerates_numbered_heading():
+    # Agent lỡ đánh số vị trí vào heading cố định "Mô tả chức năng" (vd
+    # "2.1.3. Mô tả chức năng") -- cổng 8 mục a.-h. vẫn phải chạy, không được
+    # âm thầm tắt hẳn vì so khớp chuỗi chính xác thất bại.
+    srs = SRS_OK.replace("#### Mô tả chức năng", "#### 2.1.3. Mô tả chức năng", 1)
+    srs = srs.replace(
+        "###### g. Mô tả điều khiển\n\n| Tên điều khiển | Mô tả điều khiển |\n"
+        "| --- | --- |\n| Textbox \"Tên đăng nhập\" | Trường bắt buộc. |\n\n", "")
+    out = sv.check_man_hinh_structure(srs)
+    assert any(w["loai"] == "man-hinh-thieu-muc" and "Đăng nhập" in w["thong_diep"]
+               and "g. Mô tả điều khiển" in w["thong_diep"] for w in out)
+
+
+def test_check_man_hinh_structure_ignores_missing_optional_mermaid():
+    # Bỏ trống mermaid ở "c. Mô hình Usecase" và "e. Thiết kế mô hình nghiệp vụ" của
+    # "Quên mật khẩu" (vẫn giữ heading) -- không được coi là thiếu mục, vì heading
+    # vẫn có mặt. Dùng biến thể riêng (không phải SRS_OK) vì SRS_OK giờ là tài liệu
+    # điền đủ hoàn toàn, dùng cho test_correct_document_has_zero_empty_section_warnings.
+    srs = SRS_OK.replace(
+        "###### c. Mô hình Usecase\n\n```mermaid\nflowchart LR\n"
+        "    A([Người dùng]) --> UC([Quên mật khẩu])\n```\n\n",
+        "###### c. Mô hình Usecase\n\n")
+    srs = srs.replace(
+        "###### e. Thiết kế mô hình nghiệp vụ\n\n```mermaid\nflowchart TD\n"
+        "    A([Bắt đầu]) --> B[Gửi email đặt lại mật khẩu]\n```\n\n",
+        "###### e. Thiết kế mô hình nghiệp vụ\n\n")
+    out = sv.check_man_hinh_structure(srs)
+    assert not any("Quên mật khẩu" in w["thong_diep"] for w in out)
+
+
+def test_code_path_is_warning_not_blocking():
+    srs = SRS_OK + "\nHành vi nằm ở src/auth/login.ts:42.\n"
+    r = sv.verify(srs, WANTED)
+    assert r["blocking"] == []
+    assert any(w["loai"] == "nghi-duong-dan-code" for w in r["warnings"])
+
+
+def test_empty_section_is_warning_only():
+    srs = SRS_OK + "\n###### i. Mục thừa\n\n"
+    r = sv.verify(srs, WANTED)
+    assert r["blocking"] == []
+    assert any(w["loai"] == "muc-rong" for w in r["warnings"])
+
+
+def test_correct_document_has_zero_empty_section_warnings():
+    # SRS_OK là tài liệu điền đủ, đúng cấu trúc 4 cấp: heading chứa (## Nhóm,
+    # ### Chức năng, #### Mô tả chức năng) chỉ là container (con là heading sâu
+    # hơn), không phải "mục rỗng"; mục có mermaid (Sơ đồ chức năng, c., e.) có nội
+    # dung thật dù strip_noise xoá sạch fence. Không được có warning muc-rong nào.
+    assert not any(w["loai"] == "muc-rong" for w in sv.verify(SRS_OK, WANTED)["warnings"])
+
+
+def _run(tmp_path, srs_text, root="FN-01"):
+    import subprocess
+    srs = tmp_path / "srs.md"
+    srs.write_text(srs_text, encoding="utf-8")
+    fns = tmp_path / "functions.json"
+    fns.write_text(json.dumps({"functions": FUNCTIONS_TREE}, ensure_ascii=False),
+                   encoding="utf-8")
+    script = Path(sv.__file__)
+    return subprocess.run(
+        [sys.executable, str(script), str(srs), "--functions", str(fns),
+         "--root", root],
+        capture_output=True, text=True, encoding="utf-8")
+
+
+def test_cli_exits_zero_when_only_warnings(tmp_path):
+    p = _run(tmp_path, SRS_OK + "\nXem src/auth/login.ts:42.\n")
+    assert p.returncode == 0, p.stderr
+    assert json.loads(p.stdout)["warnings"]
+
+
+def test_cli_exits_one_when_blocking(tmp_path):
+    srs = SRS_OK.replace("<!-- FN: FN-01-02 -->", "<!-- FN: -->")
+    p = _run(tmp_path, srs)
+    assert p.returncode == 1
+    assert json.loads(p.stdout)["blocking"]
+
+
+def test_cli_empty_root_covers_whole_tree(tmp_path):
+    p = _run(tmp_path, SRS_OK, root="")
+    assert p.returncode == 1
+    assert any(b["loai"] == "thieu-fn" and "FN-02-01" in b["thong_diep"]
+               for b in json.loads(p.stdout)["blocking"])
+
+
+def test_cli_reports_unknown_root(tmp_path):
+    p = _run(tmp_path, SRS_OK, root="FN-99")
+    assert p.returncode != 0
+    assert "FN-99" in p.stderr
+
+
+def test_cli_has_no_template_flag(tmp_path):
+    import subprocess
+    srs = tmp_path / "srs.md"
+    srs.write_text(SRS_OK, encoding="utf-8")
+    fns = tmp_path / "functions.json"
+    fns.write_text(json.dumps({"functions": FUNCTIONS_TREE}, ensure_ascii=False),
+                   encoding="utf-8")
+    script = Path(sv.__file__)
+    p = subprocess.run(
+        [sys.executable, str(script), str(srs), "--functions", str(fns),
+         "--root", "FN-01", "--template", "nope.md"],
+        capture_output=True, text=True, encoding="utf-8")
+    assert p.returncode != 0
+    assert "unrecognized arguments" in p.stderr or "unrecognized arguments" in p.stdout
+
+
+EMPTY_CHUC_NANG = """## Đăng ký đăng nhập
+
+### Đăng nhập
+
+<!-- FN: FN-01-01 -->
+
+#### Sơ đồ chức năng
+
+#### Mục đích chức năng
+
+Chưa có thông tin.
+
+#### Mô tả chức năng
+
+###### a. Đối tượng tham gia
+
+Chưa có thông tin.
+
+###### b. Điều kiện thực hiện
+
+Chưa có thông tin
+
+###### c. Mô hình Usecase
+
+###### d. Kịch bản trường hợp sử dụng
+
+Chưa có thông tin.
+
+###### e. Thiết kế mô hình nghiệp vụ
+
+###### f. Thiết kế UX/UI
+
+_(cần chèn ảnh — không tự sinh)_
+
+###### g. Mô tả điều khiển
+
+Không có.
+
+###### h. Yêu cầu nghiệp vụ
+
+Chưa có thông tin.
+"""
+
+
+def test_check_content_density_clean_on_srs_ok():
+    assert sv.check_content_density(SRS_OK) == []
+
+
+def test_check_content_density_blocks_empty_chuc_nang():
+    out = sv.check_content_density(EMPTY_CHUC_NANG)
+    assert any(b["loai"] == "chuc-nang-rong-ruot" and "Đăng nhập" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_content_density_mermaid_only_item_counts_as_content():
+    # Chức năng mà mọi mục a.-h. đều "Chưa có thông tin" TRỪ một mục chỉ có
+    # mermaid (không văn xuôi) -> KHÔNG bị chặn, vì mục đó có nội dung thật.
+    text = EMPTY_CHUC_NANG.replace(
+        "###### c. Mô hình Usecase\n\n###### d.",
+        "###### c. Mô hình Usecase\n\n```mermaid\nflowchart LR\n"
+        "    A([Người dùng]) --> UC([Đăng nhập])\n```\n\n###### d.")
+    out = sv.check_content_density(text)
+    assert out == []
+
+
+def test_check_content_density_not_found_evidence_phrase_is_not_empty():
+    # V1 (fix round 2): Chức năng chưa tìm thấy code viết đúng câu quy định ở
+    # mục h. (khác "Chưa có thông tin") -> KHÔNG bị chặn rỗng ruột, dù mọi mục
+    # còn lại đều "Chưa có thông tin" (đúng luật bước 8 của srs-from-code.md).
+    text = EMPTY_CHUC_NANG.replace(
+        "###### h. Yêu cầu nghiệp vụ\n\nChưa có thông tin.",
+        "###### h. Yêu cầu nghiệp vụ\n\nChưa tìm thấy hiện thực trong mã nguồn.")
+    out = sv.check_content_density(text)
+    assert out == []
+
+
+def test_check_content_density_blocks_empty_even_with_stray_dash_prefix():
+    # M7 (đợt bổ sung "h. dạng list gạch đầu dòng"): nếu agent lỡ thêm "- " vào
+    # trước câu rỗng cố định (đáng lẽ phải giữ plain sentence khi mục h. thật sự
+    # không có gì để ghi) -> vẫn phải bị coi là rỗng, không được lọt qua cổng nhờ
+    # dấu gạch đầu dòng thừa.
+    text = EMPTY_CHUC_NANG.replace(
+        "###### h. Yêu cầu nghiệp vụ\n\nChưa có thông tin.",
+        "###### h. Yêu cầu nghiệp vụ\n\n- Chưa có thông tin.")
+    out = sv.check_content_density(text)
+    assert any(b["loai"] == "chuc-nang-rong-ruot" for b in out)
+
+
+def test_verify_blocks_empty_chuc_nang_document():
+    r = sv.verify(EMPTY_CHUC_NANG, ["FN-01-01"])
+    assert any(b["loai"] == "chuc-nang-rong-ruot" for b in r["blocking"])
+
+
+def test_check_no_clobber_chuc_nang_none_before_is_clean():
+    assert sv.check_no_clobber_chuc_nang(SRS_OK, None) == []
+
+
+def test_check_no_clobber_chuc_nang_passes_when_unchanged():
+    assert sv.check_no_clobber_chuc_nang(SRS_OK, SRS_OK) == []
+
+
+def test_check_no_clobber_chuc_nang_blocks_when_chuc_nang_dropped():
+    before = SRS_OK
+    after = SRS_OK.split("### Quên mật khẩu")[0]
+    out = sv.check_no_clobber_chuc_nang(after, before)
+    assert any(b["loai"] == "mat-chuc-nang" and "Quên mật khẩu" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_no_clobber_chuc_nang_tolerates_position_number_prefix():
+    # V2 (fix round 2): số thứ tự vị trí (thêm bởi bước 8 khi ghi khung, KHÔNG
+    # có trong fixture SRS_OK) không được coi là mất Chức năng, chỉ so theo
+    # tập FN-ID phủ -- không so theo tên/số nguyên văn.
+    before = SRS_OK
+    after = (SRS_OK
+             .replace("### Đăng nhập", "### 1.1. Đăng nhập")
+             .replace("### Quên mật khẩu", "### 1.2. Quên mật khẩu"))
+    assert sv.check_no_clobber_chuc_nang(after, before) == []
+
+
+def test_check_no_clobber_chuc_nang_tolerates_rename_when_fn_kept():
+    # Đổi TÊN Chức năng (không đổi FN-ID nó phủ) -- hợp lệ khi intel.md đổi
+    # tên hiển thị -- không được tính là mất.
+    before = SRS_OK
+    after = SRS_OK.replace("### Đăng nhập", "### Đăng nhập vào hệ thống")
+    assert sv.check_no_clobber_chuc_nang(after, before) == []
+
+
+def test_check_no_clobber_chuc_nang_still_blocks_when_fn_id_truly_gone():
+    # Đổi tên VÀ đổi luôn FN-ID phủ (không FN-ID nào của khối cũ còn ở bản
+    # mới) -- đây mới là ca mất thật, phải chặn dù tên đổi.
+    before = SRS_OK
+    after = (SRS_OK
+             .replace("### Đăng nhập", "### Đăng nhập lại")
+             .replace("<!-- FN: FN-01-01 -->", "<!-- FN: FN-09-09 -->"))
+    out = sv.check_no_clobber_chuc_nang(after, before)
+    assert any(b["loai"] == "mat-chuc-nang" and "FN-01-01" in b["thong_diep"]
+               for b in out)
+
+
+def test_check_no_clobber_chuc_nang_does_not_collapse_duplicate_titles():
+    # Hai Chức năng khác Nhóm trùng tên hiển thị ("Danh sách") không được gộp
+    # thành một mục trong bản đồ nội bộ -- gộp sẽ làm FN-ID của khối trùng tên
+    # ĐẦU bị khối trùng tên SAU đè mất, tự tạo lại đúng lỗi no-clobber này
+    # sinh ra để bắt (round 3 finding M-A).
+    before = """## Nhom A
+
+### Danh sách
+
+<!-- FN: FN-01-01 -->
+
+#### Sơ đồ chức năng
+
+#### Mục đích chức năng
+
+Xem danh sách A.
+
+#### Mô tả chức năng
+
+###### a. Đối tượng tham gia
+
+Người dùng.
+
+###### h. Yêu cầu nghiệp vụ
+
+Hiển thị danh sách A.
+
+## Nhom B
+
+### Danh sách
+
+<!-- FN: FN-02-01 -->
+
+#### Sơ đồ chức năng
+
+#### Mục đích chức năng
+
+Xem danh sách B.
+
+#### Mô tả chức năng
+
+###### a. Đối tượng tham gia
+
+Người dùng.
+
+###### h. Yêu cầu nghiệp vụ
+
+Hiển thị danh sách B.
+"""
+    # Chạy lại: cả hai khối "Danh sách" vẫn giữ nguyên -- không được báo mất.
+    assert sv.check_no_clobber_chuc_nang(before, before) == []
+
+    # Xoá hẳn khối "Danh sách" đầu tiên (FN-01-01) -- PHẢI báo mất, dù khối
+    # "Danh sách" thứ hai (tên trùng, FN-ID khác) vẫn còn nguyên.
+    after = before.replace(
+        """### Danh sách
+
+<!-- FN: FN-01-01 -->
+
+#### Sơ đồ chức năng
+
+#### Mục đích chức năng
+
+Xem danh sách A.
+
+#### Mô tả chức năng
+
+###### a. Đối tượng tham gia
+
+Người dùng.
+
+###### h. Yêu cầu nghiệp vụ
+
+Hiển thị danh sách A.
+
+## Nhom B""", "## Nhom B")
+    out = sv.check_no_clobber_chuc_nang(after, before)
+    assert any(b["loai"] == "mat-chuc-nang" and "FN-01-01" in b["thong_diep"]
+               for b in out)
+
+
+def test_verify_blocks_when_before_loses_a_chuc_nang():
+    before = SRS_OK
+    after = SRS_OK.split("### Quên mật khẩu")[0]
+    r = sv.verify(after, ["FN-01-01"], before)
+    assert any(b["loai"] == "mat-chuc-nang" for b in r["blocking"])
+
+
+def test_backtick_wrapped_code_path_is_still_a_warning():
+    # M1: bọc đường dẫn trong backtick không được né cảnh báo nghi-duong-dan-code.
+    srs = SRS_OK + "\nHành vi nằm ở `src/auth/login.ts:42`.\n"
+    r = sv.verify(srs, WANTED)
+    assert any(w["loai"] == "nghi-duong-dan-code" and "login.ts" in w["thong_diep"]
+               for w in r["warnings"])
+
+
+def test_backtick_mermaid_syntax_example_still_not_a_placeholder():
+    # Xác nhận M1 không phá lại hành vi cũ: ví dụ cú pháp mermaid trong backtick
+    # vẫn không bị tính là placeholder chưa điền.
+    srs = SRS_OK + "\n| `A([Bắt đầu])` | `B[Nhập thông tin]` |\n"
+    r = sv.verify(srs, WANTED)
+    assert r["blocking"] == []
+
+
+def test_cli_before_flag_enables_no_clobber_check(tmp_path):
+    before = SRS_OK
+    after = SRS_OK.split("### Quên mật khẩu")[0]
+    before_path = tmp_path / "before.md"
+    before_path.write_text(before, encoding="utf-8")
+    # _run() không truyền --before mặc định; ghi srs.md/functions.json qua _run
+    # rồi gọi subprocess trực tiếp thêm cờ --before.
+    _run(tmp_path, after, root="FN-01")
+    import subprocess
+    srs = tmp_path / "srs.md"
+    fns = tmp_path / "functions.json"
+    script = Path(sv.__file__)
+    p = subprocess.run(
+        [sys.executable, str(script), str(srs), "--functions", str(fns),
+         "--root", "FN-01", "--before", str(before_path)],
+        capture_output=True, text=True, encoding="utf-8")
+    assert p.returncode == 1
+    assert any(b["loai"] == "mat-chuc-nang" for b in json.loads(p.stdout)["blocking"])
