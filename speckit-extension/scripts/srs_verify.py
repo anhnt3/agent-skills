@@ -592,6 +592,42 @@ _HTML_TABLE_BLOCK_RE = re.compile(r"<table>(.*?)</table>", re.S)
 _HTML_TABLE_INNER_TAGS = ("tr", "td", "ol", "li", "div")
 
 
+def check_one_usecase_per_leaf(text: str) -> list[dict]:
+    """Mục `d.` của MỖI khối `#####` phải có TỐI ĐA MỘT bảng `<table>` — một
+    khối `#####` (một leaf FN-ID) là MỘT use case. Các chức năng nhỏ bên trong
+    leaf là nhánh `S-n` của `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ`, KHÔNG
+    phải use case riêng. Không có gate này thì model rất dễ tự bẻ một use case
+    lớn thành N use case nhỏ rồi viết N bảng liên tiếp (lỗi đã gặp thật: một
+    leaf sinh ra 6 bảng) — mọi gate khác đều im lặng vì tài liệu vẫn "đầy đủ"
+    và giàu nội dung, chỉ sai cấu trúc nghiệp vụ. 0 bảng vẫn hợp lệ (mục `d.`
+    ghi "Chưa có thông tin")."""
+    marks = _all_headings(text)
+    lines = _fence_sentinel(text).splitlines()
+    out = []
+    for idx, (i, lvl, title) in enumerate(marks):
+        if lvl != 6 or _strip_num_prefix(title) != "d. Kịch bản trường hợp sử dụng":
+            continue
+        end = len(lines)
+        for j in range(idx + 1, len(marks)):
+            if marks[j][1] <= lvl:
+                end = marks[j][0]
+                break
+        n = sum(ln.count("<table>") for ln in lines[i + 1:end])
+        if n > 1:
+            out.append({
+                "loai": "nhieu-use-case-mot-leaf",
+                "thong_diep": f"Mục 'd. Kịch bản trường hợp sử dụng' ở dòng {i + 1} có "
+                              f"{n} bảng use case — mỗi khối ##### là MỘT use case nên "
+                              "chỉ được có tối đa một bảng.",
+                "goi_y": "Gộp lại thành MỘT bảng: giữ use case chính (tên = tên leaf, "
+                         "tức tiêu đề khối #####), các use case còn lại chuyển thành "
+                         "nhánh S-1, S-2… trong Luồng sự kiện chuẩn/Luồng sự kiện nhỏ "
+                         "của bảng đó. Mục e. và f. cũng chia theo đúng các nhánh S-n "
+                         "này.",
+            })
+    return out
+
+
 YCNV_SOFT_CAP = 15
 
 
@@ -698,6 +734,7 @@ def verify(srs_text: str, wanted: list[str], before: str | None = None) -> dict:
     blocking.extend(check_no_clobber_chuc_nang(srs_text, before))
     blocking.extend(check_leaf_blocks(srs_text))
     blocking.extend(check_html_table_integrity(srs_text))
+    blocking.extend(check_one_usecase_per_leaf(srs_text))
 
     if not wanted:
         warnings.append({

@@ -53,22 +53,24 @@
      thoi quyết định).
 
      NODE CON PHẢI PHỦ ĐÚNG NHỮNG GÌ "Mô tả chức năng" BÊN DƯỚI THẬT SỰ CÓ — sơ đồ một
-     node trơ trọi trong khi phần dưới đặc tả 6 use case là SAI (lỗi đã gặp thật). Lấy
+     node trơ trọi trong khi phần dưới đặc tả 6 chức năng nhỏ là SAI (lỗi đã gặp thật). Lấy
      node con theo thứ tự ưu tiên:
        1. `functions.json` có node con trong subtree Chức năng này -> dùng đúng tên các
           node đó (trường "name", bỏ dấu gạch đầu dòng "- "/"+ " và dấu chấm cuối câu),
           đệ quy đủ số cấp đang có.
        2. `functions.json` KHÔNG có node con (Chức năng chính là một leaf) -> node con =
-          tên các use case thật sự viết ở mục `d.` của (các) khối `#####` bên dưới.
-     Hai nguồn cùng có thì vẽ cả hai cấp: leaf functions.json ở cấp 1, use case của leaf
-     đó ở cấp 2. Luôn dựng được — không có case "không có dữ liệu" để xoá khối này. -->
+          tên các CHỨC NĂNG NHỎ, tức các nhánh `S-n` viết ở mục `d.` của khối `#####`
+          bên dưới.
+     Hai nguồn cùng có thì vẽ cả hai cấp: leaf functions.json ở cấp 1, chức năng nhỏ (`S-n`)
+     của leaf đó ở cấp 2. Luôn dựng được — không có case "không có dữ liệu" để xoá khối
+     này. -->
 
 ```mermaid
 flowchart TD
     A[Tên Chức năng] --> B1[Tên leaf/nhóm con 1]
     A --> B2[Tên leaf/nhóm con 2]
-    B2 --> C1[Tên use case 1 của leaf này]
-    B2 --> C2[Tên use case 2 của leaf này]
+    B2 --> C1[Tên chức năng nhỏ 1 của leaf này]
+    B2 --> C2[Tên chức năng nhỏ 2 của leaf này]
 ```
 
 #### Mục đích chức năng
@@ -94,7 +96,7 @@ flowchart TD
      mục b.; leaf hoàn toàn chưa tìm thấy code → theo đúng luật "chưa tìm thấy hiện thực"
      ở bước 8. Nội dung a.-g. bên dưới là của MÀN HÌNH THẬT hiện thực leaf này (theo intel
      §2/§11/§12) — 2 leaf khác nhau cùng chung một màn hình thì LẶP NGUYÊN VẸN toàn bộ
-     a.-g. (kể cả bảng điều khiển trong f., mọi bảng UC ở d.) ở cả 2 khối `#####`, không cắt gọn theo riêng
+     a.-g. (kể cả bảng điều khiển trong f., bảng UC ở d.) ở cả 2 khối `#####`, không cắt gọn theo riêng
      từng leaf. -->
 
 ###### a. Đối tượng tham gia
@@ -123,7 +125,20 @@ flowchart LR
 
 ###### d. Kịch bản trường hợp sử dụng
 
-<!-- TOÀN BỘ 9 field nằm trong MỘT bảng HTML thô (không dùng cú pháp `|...|` — GFM thuần
+<!-- ĐÚNG MỘT USE CASE CHO CẢ MỤC NÀY — một khối `#####` (một leaf FN-ID) là MỘT use case,
+     nên mục `d.` có ĐÚNG MỘT bảng, KHÔNG BAO GIỜ nhiều bảng nối tiếp.
+
+     Leaf có nhiều CHỨC NĂNG NHỎ bên trong (vd "Quản lý danh sách người dùng" gồm tra cứu,
+     tạo mới, cập nhật, khoá/mở khoá, xem chi tiết) -> chúng KHÔNG phải use case riêng, mà
+     là các NHÁNH `S-1`, `S-2`… nằm trong `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ` của
+     chính use case này (đúng như tài liệu ban hành thật: use case "Đăng nhập" mang S-1
+     "Đăng nhập bằng Username", S-2 "Đăng nhập bằng Facebook hoặc Google"…). Tự bẻ một use
+     case lớn thành N use case nhỏ rồi viết N bảng là SAI (lỗi đã gặp thật: một leaf sinh
+     ra 6 bảng).
+
+     `Tên Use Case` = tên leaf, tức đúng tiêu đề khối `#####` đang viết.
+
+     TOÀN BỘ 9 field nằm trong MỘT bảng HTML thô (không dùng cú pháp `|...|` — GFM thuần
      không có colspan nên không merge được 1 hàng thành full-width). 4 field đầu (Tên Use
      Case/Mức quan trọng/Người dùng/Loại UC) là bảng 2 cột thật; 5 field còn lại (Người sử
      dụng và yêu cầu/Mô tả tóm tắt/Thời điểm sử dụng/Luồng sự kiện chuẩn/Luồng sự kiện nhỏ)
@@ -165,10 +180,11 @@ flowchart LR
 
 <!-- ĐÚNG MỘT khối mermaid sequenceDiagram cho cả mục này — KHÔNG tách thành nhiều khối
      mermaid liên tiếp (mỗi khối lặp lại nguyên si danh sách participant, nhìn như nhiều
-     sơ đồ rời rạc; lỗi đã gặp thật). Nhiều use case thì vẫn MỘT sơ đồ, mỗi use case bọc
-     trong một khối `rect` có `Note over` mang TÊN USE CASE đó làm nhãn — chính là các
-     khung chữ nhật phân tách của tài liệu ban hành thật. Khai participant MỘT LẦN ở đầu,
-     dùng chung cho mọi khối `rect`.
+     sơ đồ rời rạc; lỗi đã gặp thật). Leaf có nhiều CHỨC NĂNG NHỎ (các nhánh `S-n` ở mục
+     `d.`) thì vẫn MỘT sơ đồ, mỗi chức năng nhỏ bọc trong một khối `rect` có `Note over`
+     mang TÊN CHỨC NĂNG NHỎ đó làm nhãn — chính là các khung chữ nhật phân tách của tài
+     liệu ban hành thật. Khai participant MỘT LẦN ở đầu, dùng chung cho mọi khối `rect`.
+     Nhãn `rect` phải TRÙNG tên nhánh `S-n` tương ứng ở mục `d.`.
 
      Mô phỏng UML sequence diagram có swimlane. Participant = đúng thành phần intel §5 nêu
      tên cho luồng này (vd Web UI/Backend/Database/dịch vụ ngoài...) — §5 không nêu tên
@@ -184,7 +200,7 @@ sequenceDiagram
     participant P2 as [Thành phần xử lý 2]
 
     rect rgb(245, 245, 255)
-        Note over U,P2: [Tên use case 1]
+        Note over U,P2: [Tên chức năng nhỏ 1 — trùng tên nhánh S-1 ở mục d.]
         U->>P1: [bước 1]
         alt [Điều kiện nhánh 1]
             P1-->>U: [kết quả nhánh 1]
@@ -194,7 +210,7 @@ sequenceDiagram
     end
 
     rect rgb(245, 245, 255)
-        Note over U,P2: [Tên use case 2]
+        Note over U,P2: [Tên chức năng nhỏ 2 — trùng tên nhánh S-2 ở mục d.]
         U->>P1: [bước 1]
         P1->>P2: [bước 2]
         P2-->>U: [kết quả]
@@ -208,21 +224,22 @@ sequenceDiagram
      khiển, rất bất tiện. Gộp lại: ảnh của use case này rồi NGAY bảng điều khiển của chính
      use case đó.
 
-     CHIA THEO TỪNG USE CASE — mỗi use case ở mục `d.` là MỘT đầu mục lớn `**[Tên use
-     case]**` ở đây, bên dưới nó là ảnh của các màn liên quan riêng use case đó rồi tới
-     bảng điều khiển riêng của nó. TUYỆT ĐỐI KHÔNG gộp mọi điều khiển của mọi use case vào
-     MỘT bảng duy nhất (lỗi đã gặp thật: một bảng 30 dòng trộn lẫn điều khiển của tạo mới,
-     sửa, khoá, chuyển đơn vị — không tra được điều khiển nào thuộc thao tác nào).
+     CHIA THEO TỪNG CHỨC NĂNG NHỎ — mỗi nhánh `S-n` ở mục `d.` là MỘT đầu mục lớn
+     `**[Tên chức năng nhỏ]**` ở đây, bên dưới nó là ảnh của các màn liên quan riêng chức
+     năng nhỏ đó rồi tới bảng điều khiển riêng của nó. TUYỆT ĐỐI KHÔNG gộp mọi điều khiển
+     vào MỘT bảng duy nhất (lỗi đã gặp thật: một bảng 30 dòng trộn lẫn điều khiển của tạo
+     mới, sửa, khoá, chuyển đơn vị — không tra được điều khiển nào thuộc thao tác nào).
 
-     Số đầu mục ở đây = số use case ở mục `d.`, cùng tên, cùng thứ tự. Điều khiển dùng
-     chung cho nhiều use case (vd nút "Hủy" của mọi hộp thoại) thì lặp lại ở từng use case
-     dùng nó, không tách thành một bảng "dùng chung" riêng.
+     Số đầu mục ở đây = số nhánh `S-n` ở mục `d.`, cùng tên, cùng thứ tự. Leaf không có
+     nhánh `S-n` nào (use case một luồng thẳng) -> KHÔNG chia đầu mục, chỉ một ảnh + một
+     bảng. Điều khiển dùng chung cho nhiều chức năng nhỏ (vd nút "Hủy" của mọi hộp thoại)
+     thì lặp lại ở từng chỗ dùng nó, không tách thành một bảng "dùng chung" riêng.
 
      Ảnh: luôn ghi cố định "_(cần chèn ảnh — không tự sinh)_" (không tự vẽ mockup, không mô
      tả bố cục). Bảng: cột "Tên điều khiển" IN ĐẬM cả ô (`**[Loại] "[nhãn]"**`), cột "Mô tả
      điều khiển" giữ văn xuôi thường, không in đậm. -->
 
-**[Tên use case 1 — trùng tên với bảng UC thứ nhất ở mục d.]**
+**[Tên chức năng nhỏ 1 — trùng tên nhánh S-1 ở mục d.]**
 
 _(cần chèn ảnh — không tự sinh)_
 
@@ -230,7 +247,7 @@ _(cần chèn ảnh — không tự sinh)_
 | --- | --- |
 | **[Loại] "[nhãn]"** | [hình thức + vị trí hiển thị. Ràng buộc ngắn gọn nếu có. Hành vi/mục đích khi tương tác.] |
 
-**[Tên use case 2 — trùng tên với bảng UC thứ hai ở mục d.]**
+**[Tên chức năng nhỏ 2 — trùng tên nhánh S-2 ở mục d.]**
 
 _(cần chèn ảnh — không tự sinh)_
 

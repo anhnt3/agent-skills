@@ -157,6 +157,39 @@ def test_check_fn_coverage_blocking_when_missing():
     assert any(b["loai"] == "thieu-fn" and "FN-01-02" in b["thong_diep"] for b in out)
 
 
+_UC_TABLE = (
+    "<table>\n"
+    "<tr><td><b>Tên Use Case:</b> {name}</td>"
+    "<td><b>Mức quan trọng:</b> Cao</td></tr>\n"
+    "</table>"
+)
+
+
+def test_check_one_usecase_per_leaf_clean_with_single_table():
+    srs = SRS_OK.replace(
+        "###### d. Kịch bản trường hợp sử dụng\n\nTên Use Case: Đăng nhập",
+        "###### d. Kịch bản trường hợp sử dụng\n\n"
+        + _UC_TABLE.format(name="Đăng nhập"))
+    assert sv.check_one_usecase_per_leaf(srs) == []
+
+
+def test_check_one_usecase_per_leaf_blocks_multiple_tables():
+    # Lỗi đã gặp thật: một leaf bị bẻ thành 6 use case -> 6 bảng liên tiếp.
+    # Mọi gate khác im lặng vì tài liệu vẫn đầy nội dung, chỉ sai cấu trúc.
+    srs = SRS_OK.replace(
+        "###### d. Kịch bản trường hợp sử dụng\n\nTên Use Case: Đăng nhập",
+        "###### d. Kịch bản trường hợp sử dụng\n\n"
+        + _UC_TABLE.format(name="Đăng nhập bằng Username") + "\n\n"
+        + _UC_TABLE.format(name="Đăng nhập bằng Google"))
+    out = sv.check_one_usecase_per_leaf(srs)
+    assert any(b["loai"] == "nhieu-use-case-mot-leaf" for b in out)
+
+
+def test_check_one_usecase_per_leaf_allows_zero_table():
+    # `d.` ghi "Chưa có thông tin" (0 bảng) vẫn hợp lệ với gate này.
+    assert sv.check_one_usecase_per_leaf(SRS_OK) == []
+
+
 def _ycnv_srs(n_bullets: int) -> str:
     bullets = "\n".join(
         f"- Khi người dùng thực hiện thao tác {k}, hệ thống phản hồi tương ứng."

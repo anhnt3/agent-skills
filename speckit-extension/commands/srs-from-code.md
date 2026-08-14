@@ -214,7 +214,7 @@ trong `intel.md` không có thì mục `srs.md` tương ứng cũng không có g
 | §7 Tích hợp ngoài, tác vụ nền, sự kiện | rải vào mục `g. Yêu cầu nghiệp vụ` |
 | §9 Thông báo hiển thị | rải vào mục `g. Yêu cầu nghiệp vụ` |
 | §11 Điều khiển giao diện | phần BẢNG của mục `f. Thiết kế UX/UI và Mô tả điều khiển` (bảng Tên điều khiển/Mô tả điều khiển, khớp cột `Màn hình` của §11 với màn hình hiện thực leaf đang viết) |
-| §12 Kịch bản Use Case | mục `d. Kịch bản trường hợp sử dụng` (rót nguyên văn 9 field docx thật vào MỘT bảng HTML thô — Tên Use Case là tên khối `###`, 8 field còn lại là hàng bảng, xem quy ước bảng HTML ở bước 8; field `Màn hình` của §12 CHỈ dùng để chọn đúng khối §12 khớp màn hình đang viết, KHÔNG copy vào `d.`) + mục `c. Mô hình Usecase` (mermaid, dựng từ Tên Use Case + Người dùng của §12) |
+| §12 Kịch bản Use Case | mục `d. Kịch bản trường hợp sử dụng` — **ĐÚNG MỘT bảng cho cả mục** (một khối `#####` = một use case): `Tên Use Case` = tên leaf (tiêu đề khối `#####`), 8 field còn lại là hàng bảng, xem quy ước bảng HTML ở bước 8. Nhiều khối `###` của §12 cùng ứng với leaf này → chúng là các CHỨC NĂNG NHỎ, gộp thành các nhánh `S-1`, `S-2`… trong `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ` của bảng duy nhất đó, KHÔNG viết thành nhiều bảng. Field `Màn hình` của §12 CHỈ dùng để chọn đúng khối §12 thuộc leaf đang viết, KHÔNG copy vào `d.` + mục `c. Mô hình Usecase` (mermaid, dựng từ Tên Use Case + Người dùng của §12) |
 | §10 Phát hiện logic/bảo mật | **Không rót vào `srs.md`** — chỉ dùng ở bước 11 để hỏi người dùng |
 
 **Ba field của §12 luôn ghi cố định "Chưa có thông tin" khi rót sang `d. Kịch bản trường
@@ -256,28 +256,31 @@ Không tự suy nội dung cho ba mục này từ bất kỳ nguồn nào — kh
   `flowchart TD`, node gốc = tên Chức năng (khối `###` đang viết). Chỉ nối TÊN với TÊN bằng
   mũi tên xuống — không thêm bước xử lý, điều kiện, hay node hình thoi quyết định nào (đó
   là việc của `e.`). **Node con phải PHỦ ĐÚNG những gì `#### Mô tả chức năng` bên dưới thật
-  sự có** — một sơ đồ chỉ có mỗi node gốc trơ trọi trong khi phần dưới đặc tả 6 use case là
+  sự có** — một sơ đồ chỉ có mỗi node gốc trơ trọi trong khi phần dưới đặc tả 6 chức năng nhỏ là
   SAI (lỗi đã gặp thật). Lấy node con theo thứ tự ưu tiên:
   1. `functions.json` CÓ node con trong subtree Chức năng này → dùng đúng tên các node đó
      (trường `name`, bỏ dấu gạch đầu dòng `- `/`+ ` và dấu chấm cuối câu), đệ quy đủ số cấp.
   2. `functions.json` KHÔNG có node con (Chức năng chính là một leaf, chỉ sinh đúng một
-     khối `#####`) → node con = **tên các use case thật sự viết ở mục `d.`** của khối đó.
+     khối `#####`) → node con = **tên các CHỨC NĂNG NHỎ, tức các nhánh `S-n` viết ở mục
+     `d.`** của khối đó.
 
-  Có cả hai thì vẽ hai cấp: leaf `functions.json` ở cấp 1, use case của leaf đó ở cấp 2.
+  Có cả hai thì vẽ hai cấp: leaf `functions.json` ở cấp 1, chức năng nhỏ (`S-n`) của leaf
+  đó ở cấp 2.
   Luôn dựng được (nguồn cục bộ, không phụ thuộc `intel §5`) — không còn case "không có dữ
   liệu, xoá khối mermaid" cho mục này.
 - **`###### e. Thiết kế mô hình nghiệp vụ`**: `sequenceDiagram` (KHÔNG phải `flowchart`),
-  **ĐÚNG MỘT khối mermaid cho cả mục** — nhiều use case KHÔNG được tách thành nhiều khối
-  mermaid liên tiếp (mỗi khối lặp lại nguyên si danh sách participant, nhìn thành nhiều sơ
-  đồ rời rạc; lỗi đã gặp thật). Khai `actor`/`participant` MỘT LẦN ở đầu, rồi **mỗi use
-  case bọc trong một khối `rect` có `Note over <actor>,<participant cuối>: <Tên use case>`**
-  làm nhãn — chính là các khung chữ nhật phân tách của tài liệu ban hành thật. Mô phỏng UML
+  **ĐÚNG MỘT khối mermaid cho cả mục** — nhiều chức năng nhỏ KHÔNG được tách thành nhiều
+  khối mermaid liên tiếp (mỗi khối lặp lại nguyên si danh sách participant, nhìn thành
+  nhiều sơ đồ rời rạc; lỗi đã gặp thật). Khai `actor`/`participant` MỘT LẦN ở đầu, rồi
+  **mỗi CHỨC NĂNG NHỎ (nhánh `S-n` ở mục `d.`) bọc trong một khối `rect` có
+  `Note over <actor>,<participant cuối>: <Tên chức năng nhỏ>`** làm nhãn (nhãn phải TRÙNG
+  tên nhánh `S-n` tương ứng) — chính là các khung chữ nhật phân tách của tài liệu ban hành thật. Mô phỏng UML
   sequence diagram có swimlane: `actor` cho vai trò người dùng thực hiện, `participant` cho
   từng thành phần xử lý bước. Participant lấy đúng tên thành phần `§5` đã nêu cho luồng này
   (vd Web UI/Backend/Database/dịch vụ ngoài…); `§5` không nêu tên thành phần nào cho bước đó
   thì được tự suy hợp lý theo đúng bước xử lý `§5` đã mô tả (không bịa thêm thành phần `§5`
   không hề nhắc tới ở bất kỳ đâu trong luồng). Nhánh điều kiện (§5 ghi "nếu…"/"trường
-  hợp…") thể hiện bằng `alt`/`else` **bên trong `rect` của use case tương ứng**. `§5` không
+  hợp…") thể hiện bằng `alt`/`else` **bên trong `rect` của chức năng nhỏ tương ứng**. `§5` không
   có luồng nào cho leaf này → xoá cả khối mermaid.
 - **`###### c. Mô hình Usecase`**: mermaid không có UML use-case native — mô phỏng bằng
   `flowchart` (actor = node chữ nhật `A([Tên actor])`, use case = node oval
@@ -286,22 +289,23 @@ Không tự suy nội dung cho ba mục này từ bất kỳ nguồn nào — kh
   màn hình hiện thực leaf này → xoá cả khối mermaid.
 
 **`###### f. Thiết kế UX/UI và Mô tả điều khiển`**: MỘT mục gộp, **CHIA THEO TỪNG USE
-CASE**. Mỗi use case ở mục `d.` là một đầu mục lớn `**[Tên use case]**` ở đây (cùng tên,
-cùng thứ tự, đúng bằng số bảng UC ở `d.`), bên dưới nó theo đúng thứ tự: (1) placeholder
-ảnh của các màn liên quan RIÊNG use case đó — luôn ghi cố định
+NĂNG NHỎ**. Mỗi nhánh `S-n` ở mục `d.` là một đầu mục lớn `**[Tên chức năng nhỏ]**` ở đây
+(cùng tên, cùng thứ tự, đúng bằng số nhánh `S-n` ở `d.`), bên dưới nó theo đúng thứ tự:
+(1) placeholder ảnh của các màn liên quan RIÊNG chức năng nhỏ đó — luôn ghi cố định
 `_(cần chèn ảnh — không tự sinh)_`, không bao giờ tự vẽ mockup hay mô tả bố cục
-(`intel.md` không quét bố cục UI); (2) ngay dưới là bảng điều khiển RIÊNG của use case đó
-(rót từ `intel §11`, quy ước cột xem bước 6).
+(`intel.md` không quét bố cục UI); (2) ngay dưới là bảng điều khiển RIÊNG của chức năng
+nhỏ đó (rót từ `intel §11`, quy ước cột xem bước 6).
 
-**TUYỆT ĐỐI KHÔNG gộp điều khiển của mọi use case vào MỘT bảng duy nhất** — lỗi đã gặp
+**TUYỆT ĐỐI KHÔNG gộp điều khiển của mọi chức năng nhỏ vào MỘT bảng duy nhất** — lỗi đã gặp
 thật: một bảng 30 dòng trộn lẫn điều khiển của tạo mới, sửa, khoá, chuyển đơn vị, không
-tra được điều khiển nào thuộc thao tác nào. Điều khiển dùng chung cho nhiều use case (vd
-nút "Hủy" của mọi hộp thoại) thì LẶP LẠI ở từng use case dùng nó, không tách thành một
-bảng "dùng chung" riêng.
+tra được điều khiển nào thuộc thao tác nào. Điều khiển dùng chung cho nhiều chức năng nhỏ
+(vd nút "Hủy" của mọi hộp thoại) thì LẶP LẠI ở từng chỗ dùng nó, không tách thành một
+bảng "dùng chung" riêng. Leaf không có nhánh `S-n` nào (use case một luồng thẳng) → KHÔNG
+chia đầu mục, chỉ một ảnh + một bảng.
 
 **Cố ý lệch docx ban hành** (docx tách thành hai mục `f.`/`g.` riêng): tách rời thì người
-đọc phải xem hết ảnh màn của mọi use case rồi mới tới bảng điều khiển — gộp lại để ảnh và
-bảng của cùng một use case nằm cạnh nhau. Vì vậy `Yêu cầu nghiệp vụ` mang chữ `g.` (chứ
+đọc phải xem hết ảnh màn của mọi chức năng nhỏ rồi mới tới bảng điều khiển — gộp lại để ảnh
+và bảng của cùng một chức năng nhỏ nằm cạnh nhau. Vì vậy `Yêu cầu nghiệp vụ` mang chữ `g.` (chứ
 không phải `h.`), tổng cộng BẢY mục `a.`-`g.`, không phải tám.
 
 ### 6. Chuyển hoá bắt buộc khi rót
@@ -349,9 +353,9 @@ Văn phong rót giữ nguyên toàn bộ quy ước đã chốt ở spec đợt 
   > Trước khi giao bản Word đầu tiên dựng từ khuôn này: chạy thử một lần thật, xác nhận `d.`
   > còn nguyên trong `.docx`; nếu không, quay lại dùng bảng markdown thuần (mất `colspan`
   > nhưng chắc chắn không bị bỏ) cho tới khi có đường xuất khác xử lý được HTML thô.
-- **Bảng điều khiển trong `f. Thiết kế UX/UI và Mô tả điều khiển`**: MỖI use case một bảng
-  riêng, đặt NGAY DƯỚI placeholder ảnh của chính use case đó (không tách heading `######`
-  riêng — đầu mục use case chỉ là dòng in đậm `**[Tên use case]**`). Cột `Tên điều khiển` viết dạng
+- **Bảng điều khiển trong `f. Thiết kế UX/UI và Mô tả điều khiển`**: MỖI chức năng nhỏ một
+  bảng riêng, đặt NGAY DƯỚI placeholder ảnh của chính chức năng nhỏ đó (không tách heading
+  `######` riêng — đầu mục chỉ là dòng in đậm `**[Tên chức năng nhỏ]**`). Cột `Tên điều khiển` viết dạng
   `**[Loại] "[nhãn hiển thị đúng nguyên văn trên UI]"**` — IN ĐẬM cả ô (`**...**`), đúng
   như tài liệu ban hành thật. Cột `Mô tả điều khiển` giữ văn xuôi thường (không in đậm),
   2-3 câu tách dòng riêng theo thứ tự: (1) hình thức + vị trí hiển thị, (2) ràng buộc ngắn
@@ -501,8 +505,13 @@ sinh `srs.md` thì không có gì để so, bỏ cờ này. Đọc JSON trả v�
 
 - **`blocking` khác rỗng (mã thoát ≠ 0) → cấm báo xong.** Với mục có `goi_y` (`thieu-fn`,
   `placeholder`, `chuc-nang-rong-ruot`, `khoi-leaf-rong-ruot`, `mat-chuc-nang`,
-  `thieu-fn-leaf`, `trung-fn-leaf`, `thieu-khoi-leaf`, `fn-leaf-la`, `html-bang-hong`), sửa
-  theo đúng gợi ý đó. Bốn `loai` mới `thieu-fn-leaf`/`trung-fn-leaf`/`thieu-khoi-leaf`/
+  `thieu-fn-leaf`, `trung-fn-leaf`, `thieu-khoi-leaf`, `fn-leaf-la`, `html-bang-hong`,
+  `nhieu-use-case-mot-leaf`), sửa theo đúng gợi ý đó.
+  `nhieu-use-case-mot-leaf` nghĩa là mục `d.` của một khối `#####` có nhiều hơn một bảng
+  use case — gộp lại thành MỘT bảng (tên use case = tên leaf), các use case thừa chuyển
+  thành nhánh `S-n` trong `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ`, rồi chỉnh `e.`/`f.`
+  chia theo đúng các nhánh `S-n` đó. KHÔNG được xoá bớt nội dung use case để qua cổng.
+  Bốn `loai` `thieu-fn-leaf`/`trung-fn-leaf`/`thieu-khoi-leaf`/
   `fn-leaf-la` đều thuộc gate `check_leaf_blocks` (ràng buộc mỗi khối `#####` ↔ đúng một
   leaf FN-ID, xem bước 8) — sửa bằng cách thêm/sửa comment `<!-- FN-leaf: ... -->` hoặc
   thêm khối `#####` còn thiếu, KHÔNG được xoá bớt leaf khỏi `<!-- FN: ... -->` để né gate.
@@ -644,12 +653,15 @@ BLOCKING mà không tự sửa được.
 - **Tách `f.` trở lại thành hai mục riêng `f. Thiết kế UX/UI` + `g. Mô tả điều khiển` theo
   docx** → khuôn này CỐ Ý gộp làm một (`srs_verify.py` so khớp đúng bảy tên mục `a.`-`g.`,
   tách ra sẽ bị chặn `man-hinh-thieu-muc` và `Yêu cầu nghiệp vụ` sai chữ).
-- **Gộp mọi điều khiển của mọi use case vào MỘT bảng duy nhất ở `f.`** → phải chia theo
-  từng use case, mỗi use case một đầu mục in đậm + ảnh riêng + bảng riêng.
-- **Tách `e.` thành nhiều khối mermaid liên tiếp, mỗi use case một khối** → đúng MỘT khối
-  `sequenceDiagram`, các use case phân tách bằng `rect` + `Note over`.
+- **Tự bẻ một use case lớn thành N use case nhỏ rồi viết N bảng ở `d.`** → MỘT khối `#####`
+  là MỘT use case, mục `d.` có ĐÚNG MỘT bảng. Các chức năng nhỏ bên trong là nhánh `S-n`
+  của chính use case đó, không phải use case riêng (lỗi đã gặp thật: một leaf sinh 6 bảng).
+- **Gộp mọi điều khiển của mọi chức năng nhỏ vào MỘT bảng duy nhất ở `f.`** → phải chia
+  theo từng chức năng nhỏ, mỗi cái một đầu mục in đậm + ảnh riêng + bảng riêng.
+- **Tách `e.` thành nhiều khối mermaid liên tiếp** → đúng MỘT khối `sequenceDiagram`, các
+  chức năng nhỏ phân tách bằng `rect` + `Note over`.
 - **Vẽ `#### Sơ đồ chức năng` chỉ có mỗi node gốc** trong khi `#### Mô tả chức năng` bên
-  dưới đặc tả nhiều use case → node con phải phủ đúng những gì phần dưới thật sự có.
+  dưới đặc tả nhiều chức năng nhỏ → node con phải phủ đúng những gì phần dưới thật sự có.
 - **Tự suy luận bước cho sơ đồ mermaid khi `intel §5`/`§12` không có dữ liệu** → xoá cả
   khối mermaid, một sơ đồ bịa trông như đã xác minh còn nguy hiểm hơn văn xuôi bịa.
 - **Tự sinh nội dung cho "Sơ đồ các giao thức kết nối giữa các khối"/"Cơ sở dữ liệu"/
