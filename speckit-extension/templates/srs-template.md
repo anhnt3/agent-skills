@@ -240,9 +240,36 @@ _(cần chèn ảnh — không tự sinh)_
 
 ###### g. Yêu cầu nghiệp vụ
 
-<!-- CÓ quy tắc thật -> danh sách gạch đầu dòng ("- "), MỖI quy tắc/ràng buộc một dòng
-     riêng — không viết thành đoạn văn nhiều câu gộp lại. Mỗi dòng vẫn giữ câu ghép điều
-     kiện → kết quả.
+<!-- CÓ quy tắc thật -> danh sách gạch đầu dòng ("- "), MỖI quy tắc một dòng riêng — không
+     viết thành đoạn văn nhiều câu gộp lại. Mỗi dòng vẫn giữ câu ghép điều kiện → kết quả.
+
+     CHỈ GHI QUY TẮC QUAN TRỌNG — mục này là NƠI CHỐT NGHIỆP VỤ, không phải bản kê mọi thứ
+     code làm. Tiêu chí giữ: quy tắc mà người đọc KHÔNG suy ra được từ quy ước phần mềm
+     thông thường, sai thì hậu quả nghiệp vụ thật. Nhắm 5-12 dòng mỗi khối; dài hơn gần
+     như chắc chắn đang liệt kê thứ đáng bỏ (bản đã gặp thật: 38 dòng, quá nửa là validate
+     và thông báo).
+
+     BỎ (đã có chỗ khác, hoặc hiển nhiên với mọi phần mềm):
+       - Ràng buộc định dạng/độ dài từng trường (tối đa N ký tự, đúng định dạng email/số
+         điện thoại, mật khẩu phải có chữ hoa/số/ký tự đặc biệt), "trường bắt buộc" ->
+         những thứ này ĐÃ nằm ở cột "Mô tả điều khiển" mục f., ghi lại là trùng lặp.
+       - Nguyên văn câu thông báo lỗi/thành công.
+       - Hành vi CRUD/UI thông thường: đóng hộp thoại sau khi lưu, tải lại danh sách, khoá
+         nút khi đang gửi, phân trang/sắp xếp mặc định, độ trễ gõ phím, loại bản ghi đã
+         xoá khỏi truy vấn, ghi nhật ký thao tác.
+
+     GIỮ:
+       - Quy tắc duy nhất/trùng lặp và phạm vi áp dụng của nó.
+       - Phân quyền và phạm vi dữ liệu (ai được thấy/thao tác cái gì).
+       - Vòng đời trạng thái và điều kiện chuyển trạng thái.
+       - Ràng buộc liên trường/liên thực thể, quy tắc tính toán.
+       - Giao dịch/hoàn tác, tính nhất quán giữa các hệ thống.
+       - Hành vi TRÁI quy ước thông thường (chỗ người đọc dễ đoán sai).
+
+     Phân vân một quy tắc thuộc "hiển nhiên" hay không -> GIỮ. KHÔNG được dùng cớ "hiển
+     nhiên" để bỏ quy tắc có ngưỡng/con số nghiệp vụ, quy tắc phân quyền, hay quy tắc
+     trạng thái — ba loại này luôn ở lại dù trông đơn giản.
+
      KHÔNG có gì để ghi (mục thật sự rỗng, hoặc ca "chưa tìm thấy code") -> giữ PLAIN
      SENTENCE, KHÔNG thêm dấu "- " — viết đúng nguyên văn "Chưa có thông tin." hoặc "Chưa
      tìm thấy hiện thực trong mã nguồn." như mọi mục a.-g. khác. srs_verify.py nhận diện

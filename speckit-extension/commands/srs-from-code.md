@@ -361,7 +361,30 @@ Văn phong rót giữ nguyên toàn bộ quy ước đã chốt ở spec đợt 
   dòng vẫn là câu ghép "Khi người dùng [hành động], hệ thống [phản ứng], đồng thời [phản
   ứng phụ]" hoặc "nếu… thì…, ngược lại…" — nêu rõ điều kiện kích hoạt trước kết quả. Quy
   tắc nào có nhiều nhánh con liên quan chặt (cùng một điều kiện gốc) mới gộp chung một
-  dòng; các quy tắc độc lập nhau tách dòng riêng. **KHÔNG có gì để ghi → giữ PLAIN SENTENCE,
+  dòng; các quy tắc độc lập nhau tách dòng riêng.
+
+  **CHỈ GHI QUY TẮC QUAN TRỌNG — đây là nơi chốt nghiệp vụ, KHÔNG phải bản kê mọi thứ code
+  làm.** Tiêu chí giữ: quy tắc mà người đọc KHÔNG suy ra được từ quy ước phần mềm thông
+  thường, sai thì có hậu quả nghiệp vụ thật. Nhắm **5-12 dòng mỗi khối leaf**; vượt xa
+  ngưỡng đó gần như chắc chắn đang liệt kê thứ đáng bỏ (bản đã gặp thật: 38 dòng, quá nửa
+  là ràng buộc validate từng trường và nguyên văn thông báo).
+  - **BỎ** (đã có chỗ khác, hoặc hiển nhiên với mọi phần mềm): ràng buộc định dạng/độ dài
+    từng trường (tối đa N ký tự, đúng định dạng email/số điện thoại, mật khẩu có chữ hoa/
+    số/ký tự đặc biệt) và "trường bắt buộc" — **đã nằm ở cột `Mô tả điều khiển` mục `f.`**,
+    ghi lại ở đây là trùng lặp; nguyên văn câu thông báo lỗi/thành công; hành vi CRUD/UI
+    thông thường (đóng hộp thoại sau khi lưu, tải lại danh sách, khoá nút khi đang gửi,
+    phân trang/sắp xếp mặc định, độ trễ gõ phím, loại bản ghi đã xoá khỏi truy vấn, ghi
+    nhật ký thao tác).
+  - **GIỮ**: quy tắc duy nhất/trùng lặp và phạm vi áp dụng; phân quyền và phạm vi dữ liệu
+    (ai được thấy/thao tác cái gì); vòng đời trạng thái và điều kiện chuyển trạng thái;
+    ràng buộc liên trường/liên thực thể, quy tắc tính toán; giao dịch/hoàn tác và tính
+    nhất quán giữa các hệ thống; hành vi TRÁI quy ước thông thường.
+  - **Phân vân thuộc loại nào → GIỮ.** KHÔNG được dùng cớ "hiển nhiên" để bỏ quy tắc có
+    ngưỡng/con số nghiệp vụ, quy tắc phân quyền, hay quy tắc trạng thái — ba loại này luôn
+    ở lại dù trông đơn giản. Rút gọn ở đây là bỏ thứ TRÙNG hoặc thứ mọi phần mềm đều làm,
+    KHÔNG phải bỏ bớt cho ngắn.
+
+  **KHÔNG có gì để ghi → giữ PLAIN SENTENCE,
   KHÔNG thêm `- `** — viết đúng nguyên văn "Chưa có thông tin." hoặc (ca chưa tìm thấy
   code) "Chưa tìm thấy hiện thực trong mã nguồn." như quy định ở bước 8, giống mọi mục
   a.-g. khác. `srs_verify.py` nhận diện mục rỗng bằng khớp NGUYÊN VĂN hai câu này (không
@@ -512,6 +535,11 @@ sinh `srs.md` thì không có gì để so, bỏ cờ này. Đọc JSON trả v�
   TẠI ĐÂY cho người dùng**, trước khi làm bước 10. `chuc-nang-thieu-muc`/`man-hinh-thieu-
   muc` nghĩa là một Chức năng/Màn hình thiếu heading con bắt buộc — xem lại có phải bỏ sót
   thật hay chỉ là nội dung để trống hợp lệ (vd không có luồng §12 cho mermaid `c.`).
+  `yeu-cau-nghiep-vu-dai` nghĩa là mục `g.` của một khối leaf vượt ngưỡng mềm 15 gạch đầu
+  dòng — soát lại theo đúng danh sách BỎ/GIỮ ở bước 6 (bỏ ràng buộc định dạng từng trường,
+  nguyên văn thông báo, hành vi CRUD/UI thông thường; giữ nguyên quy tắc phân quyền/trạng
+  thái/ngưỡng nghiệp vụ). Chức năng phức tạp thật sự vượt ngưỡng là hợp lệ — nhưng phải nêu
+  rõ đã soát và vì sao giữ, không được im lặng bỏ qua.
   `nghi-duong-dan-code` có thể là báo nhầm (tên file nghiệp vụ hợp lệ trong mô tả); chọn
   "đây là báo nhầm" thì phải nêu đích danh từng chuỗi + lý do cụ thể. Không được im lặng
   bỏ qua bất kỳ warning nào.

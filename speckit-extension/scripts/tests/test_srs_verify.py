@@ -157,6 +157,33 @@ def test_check_fn_coverage_blocking_when_missing():
     assert any(b["loai"] == "thieu-fn" and "FN-01-02" in b["thong_diep"] for b in out)
 
 
+def _ycnv_srs(n_bullets: int) -> str:
+    bullets = "\n".join(
+        f"- Khi người dùng thực hiện thao tác {k}, hệ thống phản hồi tương ứng."
+        for k in range(n_bullets))
+    return SRS_OK.replace(
+        "###### g. Yêu cầu nghiệp vụ\n\nKhi người dùng nhấn nút đăng nhập, "
+        "hệ thống kiểm tra thông tin.",
+        f"###### g. Yêu cầu nghiệp vụ\n\n{bullets}")
+
+
+def test_check_yeu_cau_nghiep_vu_length_quiet_at_cap():
+    assert sv.check_yeu_cau_nghiep_vu_length(_ycnv_srs(sv.YCNV_SOFT_CAP)) == []
+
+
+def test_check_yeu_cau_nghiep_vu_length_warns_above_cap():
+    out = sv.check_yeu_cau_nghiep_vu_length(_ycnv_srs(sv.YCNV_SOFT_CAP + 1))
+    assert any(w["loai"] == "yeu-cau-nghiep-vu-dai" for w in out)
+
+
+def test_check_yeu_cau_nghiep_vu_length_is_warning_not_blocking():
+    # Ngưỡng "quy tắc quan trọng" là phán đoán — Chức năng phức tạp thật sự
+    # có thể vượt chính đáng, nên gate này KHÔNG được chặn báo xong.
+    r = sv.verify(_ycnv_srs(sv.YCNV_SOFT_CAP + 10), WANTED)
+    assert r["blocking"] == []
+    assert any(w["loai"] == "yeu-cau-nghiep-vu-dai" for w in r["warnings"])
+
+
 def test_check_html_table_integrity_clean_on_real_table():
     text = (
         "<table>\n"

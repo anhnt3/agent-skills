@@ -592,6 +592,46 @@ _HTML_TABLE_BLOCK_RE = re.compile(r"<table>(.*?)</table>", re.S)
 _HTML_TABLE_INNER_TAGS = ("tr", "td", "ol", "li", "div")
 
 
+YCNV_SOFT_CAP = 15
+
+
+def check_yeu_cau_nghiep_vu_length(text: str) -> list[dict]:
+    """WARNING khi mục `g. Yêu cầu nghiệp vụ` của một khối leaf dài quá
+    `YCNV_SOFT_CAP` gạch đầu dòng. Mục này là NƠI CHỐT NGHIỆP VỤ, không phải
+    bản kê mọi thứ code làm — bản đã gặp thật có 38 dòng mà quá nửa là ràng
+    buộc validate từng trường (đã có ở cột `Mô tả điều khiển` mục `f.`) và
+    nguyên văn thông báo. Chỉ WARNING, KHÔNG BLOCKING: ranh giới "quy tắc
+    quan trọng" là phán đoán, một Chức năng phức tạp thật sự có thể vượt
+    ngưỡng chính đáng — cổng này chỉ buộc người soát nhìn lại, không tự quyết
+    thay."""
+    marks = _all_headings(text)
+    fill_lines = _fence_sentinel(text).splitlines()
+    out = []
+    for idx, (i, lvl, title) in enumerate(marks):
+        if lvl != 6 or _strip_num_prefix(title) != "g. Yêu cầu nghiệp vụ":
+            continue
+        end = len(fill_lines)
+        for j in range(idx + 1, len(marks)):
+            if marks[j][1] <= lvl:
+                end = marks[j][0]
+                break
+        n = sum(1 for ln in fill_lines[i + 1:end] if ln.lstrip().startswith("- "))
+        if n > YCNV_SOFT_CAP:
+            out.append({
+                "loai": "yeu-cau-nghiep-vu-dai",
+                "thong_diep": f"Mục 'g. Yêu cầu nghiệp vụ' ở dòng {i + 1} có {n} gạch "
+                              f"đầu dòng (ngưỡng mềm {YCNV_SOFT_CAP}).",
+                "goi_y": "Soát lại và bỏ những dòng thuộc nhóm ĐÃ CÓ CHỖ KHÁC hoặc hiển "
+                         "nhiên: ràng buộc định dạng/độ dài từng trường và 'trường bắt "
+                         "buộc' (đã ở cột Mô tả điều khiển mục f.), nguyên văn câu thông "
+                         "báo, hành vi CRUD/UI thông thường. GIỮ nguyên quy tắc phân "
+                         "quyền, quy tắc trạng thái và quy tắc có ngưỡng/con số nghiệp vụ "
+                         "dù trông đơn giản. Chức năng phức tạp thật sự vượt ngưỡng là "
+                         "hợp lệ — nêu rõ lý do khi trình bày warning này.",
+            })
+    return out
+
+
 def check_html_table_integrity(text: str) -> list[dict]:
     """Mục `d.` bắt buộc một khối `<table>...</table>` HTML thô liền mạch —
     một dòng trống ở giữa làm nhiều bộ render (kể cả nhiều đường xuất Word)
@@ -674,6 +714,7 @@ def verify(srs_text: str, wanted: list[str], before: str | None = None) -> dict:
 
     warnings.extend(check_chuc_nang_structure(srs_text))
     warnings.extend(check_man_hinh_structure(srs_text))
+    warnings.extend(check_yeu_cau_nghiep_vu_length(srs_text))
 
     for i, line in enumerate(_preserve_inline_code(srs_text).splitlines(), start=1):
         for m in CODE_PATH_RE.finditer(line):
