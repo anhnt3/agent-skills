@@ -423,19 +423,28 @@ câu, khoảng trắng), sai một ký tự sẽ làm cổng kiểm cấu trúc 
 Đây là bước duy nhất ghi vào `srs.md`. Áp đúng luật no-clobber đã ghi nhớ ở bước 4 nếu
 file đã tồn tại từ trước.
 
-- **Đánh số `1.`/`2.1.`/`a.`-`g.` theo VỊ TRÍ XUẤT HIỆN khi ghi** — Nhóm đầu tiên là `1.`,
-  Chức năng đầu tiên trong Nhóm là `<số Nhóm>.1`, tiếp tục tăng dần. Chữ cái `a.`-`g.` LUÔN
-  cố định thứ tự (không phụ thuộc vị trí, đây là 8 mục có tên riêng, không phải danh sách
-  đếm). Không lưu số cố định giữa các lần chạy — chạy lại tự tính lại theo cấu trúc hiện
-  tại, giống cách `intel_tree.py`'s `compute_paths()` đánh số thư mục theo vị trí trong
-  `children`.
-- **Chỉ CẤP `##` (Nhóm) và `###` (Chức năng) nhận tiền tố số** (`1.`, `2.1.`, …) — đây là
-  hai cấp thật sự đếm được, có thứ tự phụ thuộc vị trí. **Ba heading `#### Sơ đồ chức
-  năng`/`Mục đích chức năng`/`Mô tả chức năng` và bảy mục `###### a.`-`g.` KHÔNG BAO GIỜ
-  nhận tiền tố số** — đây là các mục CỐ ĐỊNH, TÊN CỐ ĐỊNH, luôn xuất hiện đúng thứ tự đúng
-  tên đó (chữ `a.`-`g.` đã là "số" cố định riêng của chúng, không phải số vị trí thêm vào
-  ngoài tên). Đánh số thêm vào các heading này là sai — `srs_verify.py` so khớp tên các
-  heading này CHÍNH XÁC theo chuỗi cố định để chạy cổng kiểm 8 mục a.-g.
+- **Đánh số theo VỊ TRÍ XUẤT HIỆN khi ghi** — Nhóm đầu tiên là `1.`, Chức năng đầu tiên
+  trong Nhóm là `<số Nhóm>.1`, khối leaf đầu tiên là `<số Chức năng>.3.1` (vì `Mô tả chức
+  năng` luôn là mục `####` thứ ba), tiếp tục tăng dần. Chữ cái `a.`-`g.` LUÔN cố định thứ
+  tự (không phụ thuộc vị trí, đây là 7 mục có tên riêng, không phải danh sách đếm). Không
+  lưu số cố định giữa các lần chạy — chạy lại tự tính lại theo cấu trúc hiện tại, giống
+  cách `intel_tree.py`'s `compute_paths()` đánh số thư mục theo vị trí trong `children`.
+- **BỐN cấp `##` → `#####` đều nhận tiền tố số phân cấp**, đúng như tài liệu ban hành thật
+  (docx: `3.1.3. Mô tả chức năng` → `3.1.3.1. Trang thông tin cá nhân`):
+
+  | Cấp | Ví dụ | Nguồn số |
+  | --- | --- | --- |
+  | `##` Nhóm | `## 1. [Tên Nhóm]` | vị trí Nhóm trong tài liệu |
+  | `###` Chức năng | `### 1.1. [Tên Chức năng]` | vị trí trong Nhóm |
+  | `####` ba mục cố định | `#### 1.1.1. Sơ đồ chức năng`, `1.1.2. Mục đích chức năng`, `1.1.3. Mô tả chức năng` | luôn theo thứ tự cố định 1/2/3 |
+  | `#####` khối leaf | `##### 1.1.3.1. [Tên leaf]` | vị trí trong `Mô tả chức năng` |
+
+  **Riêng bảy mục `###### a.`-`g.` KHÔNG BAO GIỜ nhận tiền tố số** — chữ `a.`-`g.` đã là
+  "số" cố định riêng của chúng, thêm số vị trí vào nữa là sai.
+
+  Tên mục sau tiền tố số phải giữ NGUYÊN VĂN (`Sơ đồ chức năng`, `Mục đích chức năng`,
+  `Mô tả chức năng`, `a. Đối tượng tham gia`…) — `srs_verify.py` bóc tiền tố số rồi so khớp
+  CHÍNH XÁC phần tên còn lại để chạy các cổng kiểm cấu trúc; đổi tên mục là tắt cổng.
 - **`##### Tên leaf function list` LUÔN có mặt — một khối cho MỖI leaf FN-ID trong TOÀN BỘ
   subtree `functions.json` của Chức năng đang viết, bất kể sâu mấy cấp** (KHÔNG chỉ con
   trực tiếp — một Chức năng có cháu/chắt vẫn phải sinh khối cho từng leaf ở đáy cây, không

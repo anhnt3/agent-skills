@@ -19,9 +19,19 @@
                               mục `f.` để ảnh và bảng điều khiển của cùng một màn nằm
                               cạnh nhau, "Yêu cầu nghiệp vụ" lùi từ h. xuống g.)
 
-     Số thứ tự (1./2.1./a.-g.) tính theo VỊ TRÍ xuất hiện khi ghi, không lưu cố định — xem
-     hướng dẫn đánh số ở srs-from-code.md. Khung này (file mẫu) không tự đánh số, vì đây
-     chỉ là một Nhóm/Chức năng mẫu duy nhất, không phải toàn tài liệu.
+     ĐÁNH SỐ: bốn cấp `##` -> `#####` đều mang tiền tố số phân cấp, đúng như tài liệu ban
+     hành thật (docx: "3.1.3. Mô tả chức năng" -> "3.1.3.1. Trang thông tin cá nhân"):
+
+       ## 1. Nhóm
+         ### 1.1. Chức năng
+           #### 1.1.1. Sơ đồ chức năng / 1.1.2. Mục đích chức năng / 1.1.3. Mô tả chức năng
+             ##### 1.1.3.1. Tên leaf
+               ###### a.-g.   (chữ cái, KHÔNG thêm số vị trí)
+
+     Số trong khung mẫu này (1., 1.1., 1.1.3.1.) chỉ là VÍ DỤ cho Nhóm/Chức năng đầu tiên —
+     khi ghi thật, số tính theo VỊ TRÍ xuất hiện, tính lại mỗi lần chạy, không lưu cố định.
+     Ba mục `####` luôn theo thứ tự cố định nên luôn là .1/.2/.3. Tên mục sau tiền tố số
+     giữ NGUYÊN VĂN — srs_verify.py bóc tiền tố số rồi so khớp chính xác phần tên còn lại.
 
      Comment ẩn "FN: FN-ID, FN-ID..." đặt ngay dưới heading `### [Tên Chức năng]` (cú pháp
      thật ở dòng comment ngay dưới heading Chức năng mẫu bên dưới) — KHÔNG hiện khi xem
@@ -37,15 +47,15 @@
      Tài liệu này GIAO KHÁCH — không nêu file:dòng, tên class/hàm, đường dẫn mã nguồn.
      Bằng chứng file:dòng ở lại intel.md cùng thư mục. -->
 
-## [Tên Nhóm]
+## 1. [Tên Nhóm]
 
 <!-- TODO 3B-4: Sơ đồ các giao thức kết nối giữa các khối, Cơ sở dữ liệu — chưa tự sinh, cần đợt sau -->
 
-### [Tên Chức năng]
+### 1.1. [Tên Chức năng]
 
 <!-- FN: [FN-ID, FN-ID...] -->
 
-#### Sơ đồ chức năng
+#### 1.1.1. Sơ đồ chức năng
 
 <!-- KHÔNG phải sơ đồ luồng nghiệp vụ — đây là CÂY TÊN chức năng con. Node gốc = tên Chức
      năng (chính khối `###` đang viết). CHỈ nối tên với tên bằng mũi tên xuống, không thêm
@@ -73,13 +83,13 @@ flowchart TD
     B2 --> C2[Tên chức năng nhỏ 2 của leaf này]
 ```
 
-#### Mục đích chức năng
+#### 1.1.2. Mục đích chức năng
 
 [1 câu, văn phong Hán-Việt trang trọng nêu giá trị/lý do nghiệp vụ — không mô tả thao tác.]
 
-#### Mô tả chức năng
+#### 1.1.3. Mô tả chức năng
 
-##### Tên leaf function list
+##### 1.1.3.1. Tên leaf function list
 
 <!-- FN-leaf: FN-01-XX-XX-XX -->
 

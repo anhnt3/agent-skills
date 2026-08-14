@@ -57,10 +57,12 @@ NUM_PREFIX_RE = re.compile(r"^[\d.]+\s*")
 
 def _strip_num_prefix(title: str) -> str:
     """Bỏ tiền tố số vị trí kiểu `2.1.3. ` khỏi tiêu đề đã parse trước khi so
-    khớp tên mục cố định. `#### Sơ đồ chức năng`/`Mục đích chức năng`/`Mô tả
-    chức năng` và `###### a.`-`g.` là mục CỐ ĐỊNH, TÊN CỐ ĐỊNH — không đánh số vị
-    trí — nhưng đây là phòng vệ chiều sâu (defense-in-depth) phòng khi agent lỡ
-    đánh số nhầm, để cổng kiểm cấu trúc không âm thầm tắt hẳn."""
+    khớp tên mục cố định. Khuôn ban hành đánh số phân cấp ở CẢ BỐN cấp `##` →
+    `#####` (`#### 1.1.3. Mô tả chức năng`, `##### 1.1.3.1. <tên leaf>`), nên
+    hàm này LÀ ĐƯỜNG CHẠY CHÍNH của mọi gate so khớp tên mục, không còn chỉ là
+    phòng vệ chiều sâu — bỏ nó đi là mọi cổng kiểm cấu trúc im lặng tắt hẳn.
+    Riêng `###### a.`-`g.` không mang tiền tố số (chữ cái đã là số riêng của
+    chúng), nhưng vẫn cho qua hàm này phòng khi agent lỡ đánh số nhầm."""
     return NUM_PREFIX_RE.sub("", title).strip()
 
 # BẢY mục (không phải tám): khuôn CỐ Ý gộp hai mục "f. Thiết kế UX/UI" và

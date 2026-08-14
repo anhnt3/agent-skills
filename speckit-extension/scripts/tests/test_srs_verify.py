@@ -165,6 +165,39 @@ _UC_TABLE = (
 )
 
 
+def _numbered(srs: str) -> str:
+    """Bản SRS_OK có đánh số phân cấp đủ bốn cấp ## -> #####, đúng khuôn tài
+    liệu ban hành thật (3.1.3. Mô tả chức năng -> 3.1.3.1. Trang thông tin
+    cá nhân)."""
+    return (srs
+            .replace("## Đăng ký đăng nhập", "## 1. Đăng ký đăng nhập")
+            .replace("### Đăng nhập", "### 1.1. Đăng nhập")
+            .replace("### Quên mật khẩu", "### 1.2. Quên mật khẩu")
+            .replace("#### Sơ đồ chức năng", "#### 1.1.1. Sơ đồ chức năng")
+            .replace("#### Mục đích chức năng", "#### 1.1.2. Mục đích chức năng")
+            .replace("#### Mô tả chức năng", "#### 1.1.3. Mô tả chức năng")
+            .replace("##### Đăng nhập", "##### 1.1.3.1. Đăng nhập")
+            .replace("##### Quên mật khẩu", "##### 1.2.3.1. Quên mật khẩu"))
+
+
+def test_numbered_headings_do_not_disable_structure_gates():
+    # Đánh số phân cấp ở cả bốn cấp ## -> ##### là khuôn CHÍNH THỨC (không
+    # còn là phòng vệ chiều sâu). Mọi cổng so khớp tên mục phải bóc tiền tố
+    # số trước khi so, nếu không sẽ im lặng tắt hẳn — đúng loại lỗi nguy
+    # hiểm nhất: tài liệu sai mà cổng báo sạch.
+    r = sv.verify(_numbered(SRS_OK), WANTED)
+    assert r["blocking"] == []
+    assert sv.check_chuc_nang_structure(_numbered(SRS_OK)) == []
+    assert sv.check_man_hinh_structure(_numbered(SRS_OK)) == []
+
+
+def test_numbered_headings_still_catch_missing_items():
+    # Đối chứng: có đánh số nhưng THIẾU mục thật -> vẫn phải bắt được.
+    srs = _numbered(SRS_OK).replace("###### g. Yêu cầu nghiệp vụ\n\n", "")
+    assert any(w["loai"] == "man-hinh-thieu-muc"
+               for w in sv.check_man_hinh_structure(srs))
+
+
 def test_check_one_usecase_per_leaf_clean_with_single_table():
     srs = SRS_OK.replace(
         "###### d. Kịch bản trường hợp sử dụng\n\nTên Use Case: Đăng nhập",
