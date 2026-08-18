@@ -89,6 +89,27 @@ def test_clean_node_fills_missing_description():
     assert out["description"] == ""
 
 
+def test_clean_use_case_keeps_only_schema_fields():
+    raw = {"id": "FN-01-01-UC-01", "name": "U1", "description": "d",
+           "row": 5, "status": "pending", "importance": "", "type": "Chính"}
+    out = ft.clean_use_case(raw)
+    assert out == {"id": "FN-01-01-UC-01", "name": "U1", "description": "d",
+                    "type": "Chính"}
+
+
+def test_clean_node_includes_cleaned_use_cases_when_present():
+    raw = {"id": "FN-01", "name": "A", "description": "", "children": [],
+           "use_cases": [{"id": "FN-01-UC-01", "name": "U1", "description": "",
+                          "row": 3}]}
+    out = ft.clean_node(raw)
+    assert out["use_cases"] == [{"id": "FN-01-UC-01", "name": "U1", "description": ""}]
+
+
+def test_clean_node_omits_use_cases_key_when_absent():
+    out = ft.clean_node({"id": "FN-01", "name": "A", "children": []})
+    assert "use_cases" not in out
+
+
 def test_build_document_shape():
     doc = ft.build_document(TREE, "DMS", "fn.xlsx", "Sheet1", "2026-08-11", ["FN-03"])
     assert doc["schema_version"] == 1

@@ -46,8 +46,28 @@ def find_by_id(nodes, fid):
     return None
 
 
+def clean_use_case(uc):
+    """Mục use-case con → đúng schema: id/name/description bắt buộc, status và
+    3 trường bổ sung (importance/type/usage_timing) chỉ ghi khi có giá trị
+    thật — không có `children` (use-case không lồng cấp con nào cả)."""
+    out = {
+        "id": uc["id"],
+        "name": uc["name"],
+        "description": uc.get("description", ""),
+    }
+    status = uc.get("status")
+    if status and status != "pending":
+        out["status"] = status
+    for key in UC_EXTRA_FIELDS:
+        val = uc.get(key)
+        if val:
+            out[key] = val
+    return out
+
+
 def clean_node(node):
-    """Node nội bộ → node đúng schema: chỉ 5 trường, bỏ status mặc định.
+    """Node nội bộ → node đúng schema: chỉ 5 trường (+ `use_cases` nếu có),
+    bỏ status mặc định.
 
     Node lúc dựng cây có mang thêm `row` (số dòng nguồn) để báo cáo; trường đó
     không thuộc schema nên phải rơi lại ở đây, không lọt vào file."""
@@ -60,6 +80,9 @@ def clean_node(node):
     if status and status != "pending":
         out["status"] = status
     out["children"] = [clean_node(c) for c in node.get("children") or []]
+    use_cases = node.get("use_cases")
+    if use_cases:
+        out["use_cases"] = [clean_use_case(u) for u in use_cases]
     return out
 
 
