@@ -14,10 +14,23 @@ ID_RE = re.compile(r"^FN(?:-\d{2})+$")
 
 
 def walk(nodes, parents=()):
-    """Duyệt pre-order — đúng thứ tự dòng của file nguồn. Trả (node, tuple cha)."""
+    """Duyệt pre-order — đúng thứ tự dòng của file nguồn. Trả (node, tuple cha).
+
+    Đi qua cả `children` (node cây FN) lẫn `use_cases` (mục use-case con của
+    một node lá) — use-case item không có khoá `children`/`use_cases` của
+    riêng nó nên đệ quy tự dừng, không cần điều kiện chặn riêng."""
     for node in nodes:
         yield node, parents
         yield from walk(node.get("children") or [], parents + (node,))
+        yield from walk(node.get("use_cases") or [], parents + (node,))
+
+
+def is_use_case(node):
+    """True nếu node là một mục use-case con (không phải node cây FN).
+
+    Phân biệt bằng sự VẮNG MẶT của khoá `children` — mọi node cây FN đều có
+    khoá này (kể cả khi rỗng `[]`), còn use-case item thì không bao giờ có."""
+    return "children" not in node
 
 
 def name_path(node, parents):

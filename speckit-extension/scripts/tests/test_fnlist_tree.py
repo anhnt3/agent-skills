@@ -15,6 +15,16 @@ TREE = [
     {"id": "FN-02", "name": "Quản lý khách hàng", "description": "", "children": []},
 ]
 
+TREE_WITH_UC = [
+    {"id": "FN-01", "name": "Nhóm A", "description": "", "children": [
+        {"id": "FN-01-01", "name": "Lá gộp", "description": "", "children": [],
+         "use_cases": [
+             {"id": "FN-01-01-UC-01", "name": "UC1", "description": "mô tả 1"},
+             {"id": "FN-01-01-UC-02", "name": "UC2", "description": "mô tả 2"},
+         ]},
+    ]},
+]
+
 
 def test_walk_is_pre_order():
     assert [n["id"] for n, _ in ft.walk(TREE)] == [
@@ -25,6 +35,30 @@ def test_walk_reports_ancestors():
     by_id = {n["id"]: parents for n, parents in ft.walk(TREE)}
     assert [p["id"] for p in by_id["FN-01-01-01"]] == ["FN-01", "FN-01-01"]
     assert by_id["FN-01"] == ()
+
+
+def test_walk_descends_into_use_cases():
+    ids = [n["id"] for n, _ in ft.walk(TREE_WITH_UC)]
+    assert ids == ["FN-01", "FN-01-01", "FN-01-01-UC-01", "FN-01-01-UC-02"]
+
+
+def test_walk_reports_ancestors_for_use_case():
+    by_id = {n["id"]: parents for n, parents in ft.walk(TREE_WITH_UC)}
+    parent_ids = [p["id"] for p in by_id["FN-01-01-UC-01"]]
+    assert parent_ids == ["FN-01", "FN-01-01"]
+
+
+def test_name_path_includes_use_case_name():
+    node, parents = next((n, p) for n, p in ft.walk(TREE_WITH_UC)
+                          if n["id"] == "FN-01-01-UC-01")
+    assert ft.name_path(node, parents) == ("Nhóm A", "Lá gộp", "UC1")
+
+
+def test_is_use_case_distinguishes_fn_node_from_use_case_item():
+    fn_node = next(n for n, _ in ft.walk(TREE_WITH_UC) if n["id"] == "FN-01-01")
+    uc_item = next(n for n, _ in ft.walk(TREE_WITH_UC) if n["id"] == "FN-01-01-UC-01")
+    assert ft.is_use_case(fn_node) is False
+    assert ft.is_use_case(uc_item) is True
 
 
 def test_name_path_joins_ancestor_names():
