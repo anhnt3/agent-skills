@@ -217,10 +217,14 @@ trong `intel.md` không có thì mục `srs.md` tương ứng cũng không có g
 | §12 Kịch bản Use Case | mục `d. Kịch bản trường hợp sử dụng` — **ĐÚNG MỘT bảng cho cả mục** (một khối `#####` = một use case): `Tên Use Case` = tên leaf (tiêu đề khối `#####`), 8 field còn lại là hàng bảng, xem quy ước bảng HTML ở bước 8. Nhiều khối `###` của §12 cùng ứng với leaf này → chúng là các CHỨC NĂNG NHỎ, gộp thành các nhánh `S-1`, `S-2`… trong `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ` của bảng duy nhất đó, KHÔNG viết thành nhiều bảng. Field `Màn hình` của §12 CHỈ dùng để chọn đúng khối §12 thuộc leaf đang viết, KHÔNG copy vào `d.` + mục `c. Mô hình Usecase` (mermaid, dựng từ Tên Use Case + Người dùng của §12) |
 | §10 Phát hiện logic/bảo mật | **Không rót vào `srs.md`** — chỉ dùng ở bước 11 để hỏi người dùng |
 
-**Ba field của §12 luôn ghi cố định "Chưa có thông tin" khi rót sang `d. Kịch bản trường
-hợp sử dụng`**: `Mức quan trọng`, `Loại UC`, `Thời điểm sử dụng` — đây là phân loại
-nghiệp vụ thuần, `intel §12` (theo đúng thiết kế của nó) cũng luôn ghi "Chưa có thông
-tin" cho ba field này, rót nguyên văn sang, không tự suy đoán giá trị khác.
+**Ba field `Mức quan trọng`, `Loại UC`, `Thời điểm sử dụng` khi rót sang `d. Kịch bản
+trường hợp sử dụng`: rót NGUYÊN VĂN giá trị `intel §12` đã ghi cho use case này** — có
+thể là giá trị thật (khi `code-intel` tìm được khớp `use_cases[]` có giá trị Excel cho
+field đó) hoặc vẫn "Chưa có thông tin" (khi không khớp được, hoặc `intel §12` sinh theo
+đường tự khám phá không có `use_cases[]` nguồn). `srs-from-code` không tự tra
+`functions.json` để lấy ba field này — chỉ rót đúng những gì `intel.md` đã ghi, giữ
+nguyên ranh giới nội bộ/giao khách hiện có (không tự suy đoán giá trị khác với những gì
+`intel §12` đã kết luận).
 
 **Hai mục cấp Nhóm không có nguồn trong `intel.md` — KHÔNG tự sinh, đánh dấu comment ẩn
 thay vì lược bỏ âm thầm**: "Sơ đồ các giao thức kết nối giữa các khối" và "Cơ sở dữ liệu"
@@ -583,14 +587,20 @@ sinh `srs.md` thì không có gì để so, bỏ cờ này. Đọc JSON trả v�
 cơ hội thấy những gì còn cần soát. **Chạy song song**: **không** gọi ở đây — xem hướng
 dẫn gom về agent cha ở bước 3.
 
-Mọi FN thuộc unit đã xuất hiện trong ít nhất một `<!-- FN: ... -->` → đặt trạng thái `srs`:
+Mọi FN thuộc unit đã xuất hiện trong ít nhất một `<!-- FN: ... -->` → đặt trạng thái
+`srs`. **Cùng lúc**, với mỗi khối `###` ở `intel §12` (đường A, dựng từ `use_cases[]`) đã
+rót thành một nhánh `S-n` trong `srs.md` — dù tìm thấy code hay "Chưa tìm thấy hiện thực
+trong mã nguồn." — đặt luôn `srs` cho đúng ID `use_cases[]` item đó:
 
 ```bash
 python .specify/extensions/dft-speckit/scripts/fnlist_import.py update \
-  --file .specify/docs/functions.json --set FN-01-01=srs [--set FN-01-02=srs ...]
+  --file .specify/docs/functions.json --set FN-01-01=srs --set FN-01-01-UC-01=srs \
+  [--set FN-01-02=srs ...]
 ```
 
 Gọi thẳng, không cần xác nhận riêng — `update` tự validate toàn bộ ID trước khi ghi.
+Nhánh `S-n` tự khám phá từ code (không có `use_cases[]` nguồn) không có ID nào để set —
+chỉ set FN-ID leaf như cũ.
 
 ### 11. Kết thúc — tổng hợp một lượt, không chèn rải rác trong lúc sinh
 
@@ -710,3 +720,8 @@ BLOCKING mà không tự sửa được.
   theo nghĩa bước 9, agent cha không tự sinh lại được nội dung nó không hề nhận). Bước 3
   yêu cầu subagent báo cáo cả `FN-ID=srs`, dòng `intel §10` đang chờ, LẪN nguyên văn
   `warnings` — thiếu bất kỳ phần nào trong ba phần đó là bỏ sót âm thầm.
+- **Tự bịa lại "Chưa có thông tin" cho `Mức quan trọng`/`Loại UC`/`Thời điểm sử dụng` dù
+  `intel §12` đã ghi giá trị thật** → rót nguyên văn những gì `intel.md` có, không tự ý
+  ghi đè bằng "Chưa có thông tin" theo thói quen cũ.
+- **Quên set status cho ID `use_cases[]` item ở bước 10, chỉ set FN-ID leaf** → tiến độ
+  của riêng use-case đó không được ghi nhận dù đã rót xong vào `srs.md`.
