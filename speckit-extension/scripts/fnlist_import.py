@@ -154,7 +154,8 @@ def cmd_write(a) -> None:
 
     report = {
         "out": str(out),
-        "written": sum(1 for _ in ft.walk(tree)),
+        "written": sum(1 for n, _ in ft.walk(tree) if not ft.is_use_case(n)),
+        "written_use_cases": sum(1 for n, _ in ft.walk(tree) if ft.is_use_case(n)),
         "skipped": skipped,
         "retired": retired,
     }

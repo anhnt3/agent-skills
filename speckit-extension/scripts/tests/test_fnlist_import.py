@@ -137,6 +137,32 @@ def test_write_second_run_keeps_ids_status_and_reports_diff(tmp_path, capsys):
                for d in report["diff"])
 
 
+GRID_WITH_CONTENT = [
+    ["STT", "Tên chức năng", "Mô tả", "Mức quan trọng"],
+    ["1", "Quản lý đơn hàng", "", ""],
+    ["1.1", "Danh sách đơn", "", ""],
+    ["uc001", "Xem đơn", "Xem chi tiết đơn", "Cao"],
+    ["uc002", "Tìm đơn", "Tìm theo mã", ""],
+    ["1.2", "Tạo đơn mới", "Điền form tạo đơn", ""],
+]
+
+MAPPING_ABSORB = {"first_data_row": 1,
+                  "columns": {"name": 1, "description": 2, "importance": 3},
+                  "hierarchy": {"mode": "outline", "column": 0,
+                                "unmatched_rows": "absorb"}}
+
+
+def test_write_reports_written_use_cases_separately(tmp_path, capsys):
+    out = run_write(tmp_path, rows=GRID_WITH_CONTENT, mapping=MAPPING_ABSORB)
+    report = json.loads(capsys.readouterr().out)
+    assert report["written"] == 3            # FN-01, FN-01-01, FN-01-02
+    assert report["written_use_cases"] == 2   # 2 use-case gộp trong FN-01-01
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    la = doc["functions"][0]["children"][0]
+    assert la["use_cases"][0]["importance"] == "Cao"
+    assert "importance" not in la["use_cases"][1]
+
+
 def test_write_records_retired_ids_across_runs(tmp_path, capsys):
     out = run_write(tmp_path)
     capsys.readouterr()
