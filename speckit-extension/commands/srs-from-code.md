@@ -145,10 +145,11 @@ entity có thể diễn giải khác nhau, chấp nhận là giới hạn đã b
 
 Subagent **không tự gọi** `fnlist_import.py update` ở Bước 10 của chính nó. Thay vào đó,
 sau khi Bước 9 (verify) pass sạch, subagent **báo cáo lại** cho agent cha danh sách cặp
-`FN-ID=srs` cần cập nhật (không tự ghi) — tránh race: nhiều subagent cùng ghi đè
-`functions.json` sẽ làm mất cập nhật của nhau. Agent cha đợi **tất cả** subagent hoàn
-tất, gom toàn bộ cặp `FN-ID=srs` từ mọi subagent, rồi gọi `fnlist_import.py update`
-**đúng một lần** với đầy đủ các `--set`.
+`FN-ID=srs` VÀ ID `use_cases[]`=srs cần cập nhật (không tự ghi) — đúng cả hai loại ID mà
+Bước 10 quy định phải `--set`, không chỉ FN-ID leaf — tránh race: nhiều subagent cùng ghi
+đè `functions.json` sẽ làm mất cập nhật của nhau. Agent cha đợi **tất cả** subagent hoàn
+tất, gom toàn bộ cặp `FN-ID=srs` và `use_cases[]`=srs từ mọi subagent, rồi gọi
+`fnlist_import.py update` **đúng một lần** với đầy đủ các `--set`.
 
 Cùng lúc báo cáo cặp `FN-ID=srs`, subagent **cũng báo cáo lại** — không tự trình bày,
 không tự hỏi người dùng — hai thứ nữa:
@@ -214,7 +215,7 @@ trong `intel.md` không có thì mục `srs.md` tương ứng cũng không có g
 | §7 Tích hợp ngoài, tác vụ nền, sự kiện | rải vào mục `g. Yêu cầu nghiệp vụ` |
 | §9 Thông báo hiển thị | rải vào mục `g. Yêu cầu nghiệp vụ` |
 | §11 Điều khiển giao diện | phần BẢNG của mục `f. Thiết kế UX/UI và Mô tả điều khiển` (bảng Tên điều khiển/Mô tả điều khiển, khớp cột `Màn hình` của §11 với màn hình hiện thực leaf đang viết) |
-| §12 Kịch bản Use Case | mục `d. Kịch bản trường hợp sử dụng` — **ĐÚNG MỘT bảng cho cả mục** (một khối `#####` = một use case): `Tên Use Case` = tên leaf (tiêu đề khối `#####`), 8 field còn lại là hàng bảng, xem quy ước bảng HTML ở bước 8. Nhiều khối `###` của §12 cùng ứng với leaf này → chúng là các CHỨC NĂNG NHỎ, gộp thành các nhánh `S-1`, `S-2`… trong `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ` của bảng duy nhất đó, KHÔNG viết thành nhiều bảng. Field `Màn hình` của §12 CHỈ dùng để chọn đúng khối §12 thuộc leaf đang viết, KHÔNG copy vào `d.` + mục `c. Mô hình Usecase` (mermaid, dựng từ Tên Use Case + Người dùng của §12) |
+| §12 Kịch bản Use Case | mục `d. Kịch bản trường hợp sử dụng` — **ĐÚNG MỘT bảng cho cả mục** (một khối `#####` = một use case): `Tên Use Case` = tên leaf (tiêu đề khối `#####`), 8 field còn lại là hàng bảng, xem quy ước bảng HTML ở bước 8. Nhiều khối `###` của §12 cùng ứng với leaf này → chúng là các CHỨC NĂNG NHỎ, gộp thành các nhánh `S-1`, `S-2`… trong `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ` của bảng duy nhất đó, KHÔNG viết thành nhiều bảng. **Chọn đúng khối §12 thuộc leaf đang viết**: khối CÓ comment `<!-- use-case-id: <id> -->` ngay dưới heading (đường A, `code-intel` bước 5 phần A) → chọn theo khoá này, khối thuộc leaf có FN-ID là TIỀN TỐ của `<id>` (vd marker `FN-01-01-UC-01` thuộc leaf `FN-01-01`) — dùng khoá này bất kể `Màn hình` của khối là tên màn hình thật hay câu sentinel "Chưa tìm thấy hiện thực trong mã nguồn." (ca không tìm thấy). Khối KHÔNG có marker (đường B, tự khám phá) → chọn như cũ, khớp `Màn hình` với §2. Field `Màn hình` (khi dùng làm khoá) KHÔNG copy vào `d.` + mục `c. Mô hình Usecase` (mermaid, dựng từ Tên Use Case + Người dùng của §12) |
 | §10 Phát hiện logic/bảo mật | **Không rót vào `srs.md`** — chỉ dùng ở bước 11 để hỏi người dùng |
 
 **Ba field `Mức quan trọng`, `Loại UC`, `Thời điểm sử dụng` khi rót sang `d. Kịch bản
@@ -285,12 +286,18 @@ Không tự suy nội dung cho ba mục này từ bất kỳ nguồn nào — kh
   thì được tự suy hợp lý theo đúng bước xử lý `§5` đã mô tả (không bịa thêm thành phần `§5`
   không hề nhắc tới ở bất kỳ đâu trong luồng). Nhánh điều kiện (§5 ghi "nếu…"/"trường
   hợp…") thể hiện bằng `alt`/`else` **bên trong `rect` của chức năng nhỏ tương ứng**. `§5` không
-  có luồng nào cho leaf này → xoá cả khối mermaid.
+  có luồng nào cho leaf này → xoá cả khối mermaid. Nhánh `S-n` mà §12 ghi `Luồng sự kiện
+  chuẩn`/`Luồng sự kiện nhỏ` là "Chưa tìm thấy hiện thực trong mã nguồn." (đường A không
+  tìm thấy, hoặc not-found cục bộ hai field flow — xem `code-intel.md` bước 5 phần A) →
+  **bỏ qua nhánh đó, không vẽ `rect`** cho nó — không có luồng thật nào để mô phỏng.
 - **`###### c. Mô hình Usecase`**: mermaid không có UML use-case native — mô phỏng bằng
   `flowchart` (actor = node chữ nhật `A([Tên actor])`, use case = node oval
   `UC([Tên Use Case])`, cạnh nối actor→use case). Dữ liệu từ `intel §12` (trường
   `Người dùng` → actor, `Tên Use Case` → use case). `§12` không có khối `###` nào ứng với
-  màn hình hiện thực leaf này → xoá cả khối mermaid.
+  màn hình hiện thực leaf này → xoá cả khối mermaid. Khối §12 mà `Màn hình` (hoặc `Người
+  dùng`) ghi nguyên văn "Chưa tìm thấy hiện thực trong mã nguồn." (đường A không tìm thấy)
+  → **bỏ qua khối đó, không vẽ actor/use case cho nó** — không vẽ một actor tên là câu
+  sentinel đó.
 
 **`###### f. Thiết kế UX/UI và Mô tả điều khiển`**: MỘT mục gộp, **CHIA THEO TỪNG USE
 NĂNG NHỎ**. Mỗi nhánh `S-n` ở mục `d.` là một đầu mục lớn `**[Tên chức năng nhỏ]**` ở đây

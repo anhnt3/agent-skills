@@ -115,10 +115,11 @@ entity có thể cite khác nhau, chấp nhận là giới hạn đã biết.
 
 Subagent **không tự gọi** `fnlist_import.py update` ở Bước 10 của chính nó. Thay vào đó,
 sau khi Bước 9 (verify) pass sạch, subagent **báo cáo lại** cho agent cha danh sách cặp
-`FN-ID=status` cần cập nhật (không tự ghi) — tránh race: nhiều subagent cùng ghi đè
-`functions.json` sẽ làm mất cập nhật của nhau. Agent cha đợi **tất cả** subagent hoàn
-tất, gom toàn bộ cặp `FN-ID=status` từ mọi subagent, rồi gọi `fnlist_import.py update`
-**đúng một lần** với đầy đủ các `--set`.
+`FN-ID=status` VÀ ID `use_cases[]`=status cần cập nhật (không tự ghi) — đúng cả hai loại ID
+mà Bước 10 quy định phải `--set`, không chỉ FN-ID leaf — tránh race: nhiều subagent cùng
+ghi đè `functions.json` sẽ làm mất cập nhật của nhau. Agent cha đợi **tất cả** subagent
+hoàn tất, gom toàn bộ cặp `FN-ID=status` và `use_cases[]`=status từ mọi subagent, rồi gọi
+`fnlist_import.py update` **đúng một lần** với đầy đủ các `--set`.
 
 Cùng lúc, subagent **cũng báo cáo lại nguyên văn `warnings`** (nếu có) từ lần chạy
 `intel_verify.py` cuối cùng của unit mình, kèm dòng tổng kết `N lỗi chặn, M cảnh báo.` —
@@ -127,6 +128,14 @@ không báo cáo mục này thì warnings của unit đó (vd `cite-khong-ro`, `
 muc-2`, `man-hinh-thieu-dieu-khien`, `ghi-chu-khong-du-bang-chung`) biến mất hoàn toàn
 khỏi mọi thứ người dùng thấy được. Agent cha đưa nguyên văn warnings đã gom vào phần
 "Kết thúc" của báo cáo cho từng unit.
+
+Cùng lúc, subagent **cũng báo cáo lại danh sách nhánh `S-n` phát sinh thêm** ở §12 đường A
+của unit mình (leaf, tên nhánh — xem bước 5 phần A, mục cuối cùng: khối `### [Tên tự đặt
+từ màn hình/luồng đó]` dựng thêm vì code làm nhiều hơn `use_cases[]` đã khai) — subagent
+không có lượt hỏi riêng của mình để trình bày ca này, nên phải mang lên cho agent cha gom.
+Không báo cáo mục này thì nhánh phát sinh thêm của unit đó biến mất khỏi phần "Kết thúc",
+đúng lỗi mà "một lượt hỏi duy nhất ở cuối" (bước 5 phần A) dự định tránh. Agent cha gom
+danh sách này từ mọi subagent thành **một** mục duy nhất ở phần "Kết thúc" (xem dưới).
 
 Chạy tuần tự: lặp qua từng unit, thực hiện Bước 4–10 cho unit đó xong mới sang unit kế.
 
@@ -236,11 +245,28 @@ case này: áp lại thang tìm kiếm ở bước 4 (tra tên/từ khoá tiến
 key trước, rồi Grep), khoanh vùng trong §2/§5 đã rút của leaf này — KHÔNG quét code lần
 hai ngoài phạm vi đó.
 
+Ngay dưới heading `### [Tên item]`, thêm một dòng comment `<!-- use-case-id: <id> -->` với
+`<id>` là `id` nguyên văn của đúng item `use_cases[]` này (vd `FN-01-01-UC-01`) — áp dụng
+cho CẢ hai ca dưới đây (Tìm thấy lẫn Không tìm thấy, cả hai đều là đường A). Đây là khoá
+liên kết mà `srs-from-code` dùng để nối khối này về đúng leaf, thay cho `Màn hình` — field
+đó không dùng được làm khoá cho khối "không tìm thấy" (xem dưới) vì nó mang câu "Chưa tìm
+thấy hiện thực trong mã nguồn." thay vì tên màn hình thật.
+
 - **Tìm thấy** màn hình/luồng khớp → field như đường B dưới đây: `Màn hình` nguyên văn từ
   §2, `Người dùng` suy từ §6/§2, `Người sử dụng và yêu cầu`/`Mô tả tóm tắt`/`Luồng sự kiện
   chuẩn`/`Luồng sự kiện nhỏ` từ §5, cite đầy đủ.
-- **Không tìm thấy** → `Màn hình` VÀ năm field còn lại (`Người dùng`/`Người sử dụng và yêu
-  cầu`/`Mô tả tóm tắt`/`Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ`) đều ghi đúng nguyên văn
+- **Tìm thấy màn hình nhưng §5 không có luồng nào ứng với nó** (ca giữa: use case CÓ khớp
+  một màn hình thật ở §2, chỉ là §5 chưa ghi luồng nghiệp vụ nào cho màn đó) → `Màn hình`
+  nguyên văn từ §2, `Người dùng` suy từ §6/§2, `Người sử dụng và yêu cầu`/`Mô tả tóm tắt`
+  vẫn viết được (không phụ thuộc §5) như ca "Tìm thấy" ở trên — CHỈ RIÊNG hai field
+  `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ` ghi nguyên văn "Chưa tìm thấy hiện thực trong
+  mã nguồn." (not-found cục bộ, chỉ hai field này, không phải cả khối). **Không đưa xuống
+  §8** — đường A không có lối thoát §8 cho bất kỳ field nào của §12 (khác đường B, xem
+  dưới); đây không phải một ca mới cần ngoại lệ, mà vẫn tuân đúng nguyên tắc "không tìm
+  thấy ở đường A thì ghi ngay tại field, không hỏi".
+- **Không tìm thấy** (không khớp được màn hình/luồng nào cả) → `Màn hình` VÀ năm field còn
+  lại (`Người dùng`/`Người sử dụng và yêu cầu`/`Mô tả tóm tắt`/`Luồng sự kiện chuẩn`/`Luồng
+  sự kiện nhỏ`) đều ghi đúng nguyên văn
   "Chưa tìm thấy hiện thực trong mã nguồn." — **KHÔNG bịa nội dung từ mô tả `use_cases[].description`
   của Excel** (kỷ luật ba dạng vẫn áp dụng nguyên vẹn: không có căn cứ code thì không
   viết, mô tả Excel không phải một nguồn hợp lệ để thay). **KHÔNG đưa xuống §8** — đây là
@@ -429,13 +455,20 @@ Nhánh `S-n` tự khám phá từ code (đường B, hoặc nhánh phát sinh th
 
 ## Kết thúc
 
-Với mỗi unit, báo: FN đã xử lý (tìm thấy/không tìm thấy), FN-ID bị rụng khỏi §1 nếu có
-(bước 8), số mục §8 đang chờ trả lời, số phát hiện §10 (nêu ngắn gọn từng phát hiện),
-đường dẫn `intel.md`, và **dán nguyên văn dòng tổng kết `N lỗi chặn, M cảnh báo.`** của
-lần chạy `intel_verify.py` **cuối cùng** ở bước 9 — bằng chứng đã thực sự chạy script,
-không phải tự thuật lại bằng lời "verify pass sạch". Thiếu dòng này (nhất là ở subagent
-chạy song song, không có ai giám sát nó gõ lệnh) là dấu hiệu bước 9 có thể chưa thực sự
-chạy. **`M > 0` → liệt kê nguyên văn từng warning ngay tại đây** (không chỉ con số `M`) —
+Với mỗi unit, báo: FN đã xử lý (tìm thấy/không tìm thấy); FN-ID bị rụng khỏi §1 nếu có
+(bước 8); số mục §8 đang chờ trả lời; số phát hiện §10 (nêu ngắn gọn từng phát hiện);
+**nhánh `S-n` phát sinh thêm ở §12 đường A** nếu có (leaf, tên nhánh — khối `### [Tên tự
+đặt từ màn hình/luồng đó]` dựng thêm vì code làm nhiều hơn `use_cases[]` đã khai, xem bước
+5 phần A) — với mục này, hỏi người dùng **một lượt duy nhất** có muốn giữ nguyên nhánh đó
+trong `intel.md` hay cập nhật ngược vào `functions.json` (bổ sung thành một item
+`use_cases[]` mới qua `fnlist-import` ở một lượt sau); chạy song song thì dùng đúng danh
+sách subagent đã báo cáo lại ở bước 3, gộp theo unit; không có nhánh phát sinh thêm nào thì
+bỏ hẳn mục này; đường dẫn `intel.md`; và **dán nguyên văn dòng tổng kết `N lỗi chặn, M cảnh
+báo.`** của lần chạy `intel_verify.py` **cuối cùng** ở bước 9 — bằng chứng đã thực sự chạy
+script, không phải tự thuật lại bằng lời "verify pass sạch". Thiếu dòng này (nhất là ở
+subagent chạy song song, không có ai giám sát nó gõ lệnh) là dấu hiệu bước 9 có thể chưa
+thực sự chạy. **`M > 0` → liệt kê nguyên văn từng warning ngay tại đây** (không chỉ con số
+`M`) —
 chạy tuần tự thì đây là nhắc lại gọn nội dung đã trình bày ở bước 9; **chạy song song thì
 đây là LẦN DUY NHẤT warnings của unit đó tới được người dùng** (dùng đúng nội dung subagent
 đã báo cáo lại ở bước 3 — không được chỉ dán số `M` mà bỏ nội dung). Chạy hàng loạt (≥2
@@ -491,6 +524,15 @@ BLOCKING mà không tự sửa được).
 - **Field `Màn hình` ở một khối §12 không khớp nguyên văn cột `Màn hình / endpoint` ở
   §2** (gõ khác một chữ, viết tắt khác) → đứt liên kết mà đợt sau dựa vào để nối use case
   với màn hình; `intel_verify.py` cảnh báo (WARNING) ca này nhưng không chặn, dễ bị bỏ qua.
+  **Ngoại lệ đã biết trước, KHÔNG được "sửa" bằng cách bịa tên màn hình**: một khối §12
+  đường A "Không tìm thấy" (xem bước 5 phần A) ghi `Màn hình` = nguyên văn "Chưa tìm thấy
+  hiện thực trong mã nguồn." — câu này chắc chắn không khớp bất kỳ tên màn hình nào ở §2,
+  nên `intel_verify.py` cảnh báo `man-hinh-o-muc-12-khong-khop-muc-2` cho MỌI khối như vậy
+  là **kết quả dự kiến**, không phải đứt liên kết cần sửa. Đừng thay câu sentinel đó bằng
+  một tên màn hình tự đoán chỉ để cảnh báo im đi — làm vậy là bịa dữ liệu, đúng thứ toàn bộ
+  lệnh này được dựng ra để ngăn. Khối này đã có khoá liên kết riêng
+  (`<!-- use-case-id: ... -->`, xem bước 5 phần A) nên không cần `Màn hình` khớp để liên
+  kết được — cứ để cảnh báo đó tồn tại.
 - **Tự khám phá cách chia `S-n` từ code khi leaf đã có `use_cases[]`** → khung `S-n` CỐ
   ĐỊNH theo đúng tên/thứ tự `use_cases[]`, không tự phát minh cách chia khác cho leaf đó.
 - **Bịa nội dung `Người sử dụng và yêu cầu`/`Mô tả tóm tắt`/`Luồng sự kiện` từ mô tả

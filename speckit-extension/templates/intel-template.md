@@ -168,7 +168,21 @@
 
 ## 12. Kịch bản Use Case
 
+<!-- Khuôn dưới đây mô tả ĐƯỜNG B (leaf không có `use_cases[]` trong `functions.json`) —
+     mọi quy tắc "luôn ghi cố định", "PHẢI khớp nguyên văn cột Màn hình", "không căn cứ →
+     không ghi/lược cả use case, đưa xuống §8" trong khuôn này CHỈ áp cho đường B. Leaf CÓ
+     `use_cases[]` đi theo ĐƯỜNG A — xem `commands/code-intel.md` bước 5 phần "A. Leaf có
+     use_cases[]": khung `S-n` cố định theo `use_cases[]`, ba field phân loại có thể mang
+     giá trị thật từ Excel, "không tìm thấy" ghi thẳng "Chưa tìm thấy hiện thực trong mã
+     nguồn." tại field thay vì lược/xuống §8, và mỗi khối đường A luôn kèm comment
+     `<!-- use-case-id: ... -->` (xem dòng mẫu dưới `### [Tên Use Case]`) làm khoá liên
+     kết cho `srs-from-code` — Field `Màn hình` không dùng được làm khoá cho khối "không
+     tìm thấy" vì nó mang câu "Chưa tìm thấy hiện thực..." thay vì tên màn hình thật. -->
+
 ### [Tên Use Case]
+
+<!-- use-case-id: [FN-ID-UC-nn nếu khối này dựng từ use_cases[] (đường A); bỏ hẳn dòng
+     comment này nếu khối tự khám phá từ code (đường B) — xem code-intel.md bước 5 -->
 
 - **Màn hình**: [tên màn hình đúng như §2]
 - **Mức quan trọng**: Chưa có thông tin
