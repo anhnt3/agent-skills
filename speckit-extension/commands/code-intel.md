@@ -70,8 +70,12 @@ python .specify/extensions/dft-speckit/scripts/intel_tree.py propose \
 ```
 
 In ra danh sách unit đề xuất (mặc định: node có tất cả con đều là lá, hoặc node không
-có con đứng một mình) kèm cây thụt lề có đánh dấu `[UNIT]`. Trình nguyên văn cây này cho
-người dùng qua AskUserQuestion: xác nhận đúng ranh giới, hay muốn gộp/tách lại?
+có con đứng một mình) kèm cây thụt lề có đánh dấu `[UNIT]` — leaf nào có `use_cases[]`
+(BA đã khai từ Excel) thì cây này in thêm các dòng `·` ngay dưới, đó chính là khung `S-n`
+sẽ dùng ở bước 5 §12. Trình nguyên văn cây này cho người dùng qua AskUserQuestion: xác
+nhận đúng ranh giới unit, VÀ đúng khung use-case của từng leaf (dòng `·`) — đây là cấu
+trúc đã biết trước (đọc thẳng từ `functions.json`, không phụ thuộc code), nên xác nhận
+được ngay ở đây, trước khi bắt đầu quét.
 
 - Điều chỉnh hợp lệ: chọn một tập node KHÁC làm root của unit (sâu hơn hoặc cao hơn đề
   xuất), miễn mỗi root vẫn là một nhánh cây hợp lệ (không lẫn hai node không phải anh em
@@ -218,9 +222,49 @@ rõ **lý do cụ thể** (loại điểm vào là gì), kèm cite — đây là
 phải ô trống. `intel_verify.py` ở bước 9 cảnh báo (WARNING) nếu một màn hình ở §2 không
 có dòng §11 nào (kể cả dòng `không-có-UI`), hoặc nếu §11 có tên màn hình không khớp §2.
 
-**Kịch bản Use Case (§12)** — sau khi §2 và §5 đã ghi xong (mục này phụ thuộc cả hai),
-với mỗi màn hình đã có ở §2: dựng một khối `### [Tên Use Case]` trong §12, KHÔNG quét
-code lần hai — tái dùng đúng bằng chứng đã thu:
+**Kịch bản Use Case (§12)** — sau khi §2 và §5 đã ghi xong (mục này phụ thuộc cả hai).
+Leaf đang xử lý **có `use_cases[]`** (đã xác nhận ở bước 1, lấy từ `fn_ids[].use_cases`
+của `intel_tree.py units`) hay **không** quyết định hẳn cách dựng §12 — hai đường tách
+biệt, không trộn:
+
+**A. Leaf có `use_cases[]`** — khung `S-n` CỐ ĐỊNH theo đúng tên/thứ tự các item đó,
+không tự khám phá cách chia khác:
+
+Với MỖI item trong `use_cases[]` (đúng thứ tự), dựng một khối `### [Tên item]` (tên lấy
+nguyên văn từ `use_cases[].name`, không phải tên màn hình). Tìm bằng chứng code khớp use
+case này: áp lại thang tìm kiếm ở bước 4 (tra tên/từ khoá tiếng Việt qua file ngôn ngữ lấy
+key trước, rồi Grep), khoanh vùng trong §2/§5 đã rút của leaf này — KHÔNG quét code lần
+hai ngoài phạm vi đó.
+
+- **Tìm thấy** màn hình/luồng khớp → field như đường B dưới đây: `Màn hình` nguyên văn từ
+  §2, `Người dùng` suy từ §6/§2, `Người sử dụng và yêu cầu`/`Mô tả tóm tắt`/`Luồng sự kiện
+  chuẩn`/`Luồng sự kiện nhỏ` từ §5, cite đầy đủ.
+- **Không tìm thấy** → `Màn hình` VÀ bốn field còn lại (`Người sử dụng và yêu cầu`/`Mô tả
+  tóm tắt`/`Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ`) đều ghi đúng nguyên văn "Chưa tìm
+  thấy hiện thực trong mã nguồn." — **KHÔNG bịa nội dung từ mô tả `use_cases[].description`
+  của Excel** (kỷ luật ba dạng vẫn áp dụng nguyên vẹn: không có căn cứ code thì không
+  viết, mô tả Excel không phải một nguồn hợp lệ để thay). **KHÔNG đưa xuống §8** — đây là
+  kết luận "chưa hiện thực", không phải câu hỏi, cùng tinh thần với "Chưa tìm thấy hiện
+  thực trong mã nguồn." đã dùng ở cấp FN.
+- **`Mức quan trọng`, `Loại UC`, `Thời điểm sử dụng`**: lấy TRỰC TIẾP từ
+  `importance`/`type`/`usage_timing` của đúng item `use_cases[]` này nếu có giá trị — đây
+  vẫn là ngoại lệ hợp lý duy nhất dùng dữ liệu Excel không qua code (ba field này VỐN LÀ
+  phân loại nghiệp vụ thuần, đã miễn trừ khỏi kỷ luật ba dạng từ trước). Không có giá trị
+  (Excel không khai cột đó) → vẫn ghi "Chưa có thông tin" như cũ. **Không đưa ba field này
+  xuống §8** trong mọi trường hợp (tìm thấy hay không) — lý do như đường B dưới đây.
+- **Không có khái niệm "màn hình không có use case thật nào" ở đường này** — `use_cases[]`
+  đã xác nhận CÓ use case thật (BA đã khai từ Excel), nên LUÔN viết đủ khối `###` cho MỌI
+  item, không có nhánh bỏ qua.
+- Quét thấy MỘT màn hình/luồng thật có use case rõ ràng nhưng KHÔNG khớp bất kỳ
+  `use_cases[]` nào đã khai (code làm nhiều hơn Excel liệt kê) → vẫn dựng thêm khối
+  `### [Tên tự đặt từ màn hình/luồng đó]` như đường B (tự khám phá), đặt SAU các khối
+  theo `use_cases[]`, và ghi nhớ đây là nhánh phát sinh thêm — bước 11 sẽ gộp báo cáo toàn
+  bộ nhánh phát sinh thêm của unit thành **một lượt hỏi duy nhất** ở cuối, KHÔNG dừng lại
+  hỏi ngay tại đây (mâu thuẫn với "bước 5-8 không AskUserQuestion").
+
+**B. Leaf không có `use_cases[]`** — giữ nguyên hành vi hiện tại, không đổi gì: với mỗi
+màn hình đã có ở §2, dựng một khối `### [Tên Use Case]`, KHÔNG quét code lần hai — tái
+dùng đúng bằng chứng đã thu:
 
 - **Màn hình**: lấy nguyên văn từ cột "Màn hình / endpoint" của §2 — đây là khoá liên
   kết, phải khớp chính xác.
@@ -239,8 +283,8 @@ code lần hai — tái dùng đúng bằng chứng đã thu:
   lại, vì đây không phải "chưa tìm ra" mà là "cấu trúc không thể tìm ra"; đưa xuống §8
   sẽ cộng thêm 3 câu hỏi vô nghĩa cho MỖI use case vào trần `§8`.
 
-**Ranh giới rõ trước khi quyết định viết gì** — hai tình huống "không có gì để viết cho
-màn này" dễ bị lẫn, phải tách đúng ngay từ đầu:
+**Ranh giới rõ trước khi quyết định viết gì (chỉ áp cho đường B)** — hai tình huống
+"không có gì để viết cho màn này" dễ bị lẫn, phải tách đúng ngay từ đầu:
 
 - **Màn hình/điểm vào không có use case thật nào** (endpoint kỹ thuật thuần — webhook
   nội bộ, health-check, cron trigger, không gắn với luồng người dùng nào) → **không viết
@@ -254,16 +298,17 @@ màn này" dễ bị lẫn, phải tách đúng ngay từ đầu:
   `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ` không viết được có căn cứ → đưa xuống §8 với
   nhãn `[không suy được từ code]`, KHÔNG bỏ khối `###`.
 
-**Gộp câu hỏi §8 theo unit, không theo từng màn hình**: khi nhiều màn hình trong cùng
-một unit đều rơi vào ca thứ hai ở trên (có use case thật nhưng thiếu luồng §5), không
-tạo một mục §8 riêng cho mỗi màn — gộp thành **một** mục duy nhất liệt kê tên các màn
-hình đó, vd: "`[không suy được từ code]` Các màn hình sau chưa có luồng nghiệp vụ ở §5 để
-dựng Luồng sự kiện chuẩn: <Màn A>, <Màn B>, …". Lý do: nhãn `[không suy được từ code]` là
-nhãn duy nhất tính vào trần `check_section8_cap` (`max(3, M/3)`); một unit có nhiều màn
-cùng thiếu luồng §5 mà tạo mỗi màn một mục riêng dễ đẩy tổng số mục §8 vượt trần và
-BLOCKING, trong khi ca này (thiếu luồng §5 cho một use case có thật) là ca duy nhất ở §12
-vẫn phải xuống §8 — ba field phân loại nghiệp vụ ở trên đã được chặn khỏi §8 hoàn toàn,
-nên càng cần gộp ca còn lại để không tự đẩy unit vào chặn cứng.
+**Gộp câu hỏi §8 theo unit, không theo từng màn hình (chỉ áp cho đường B)**: khi nhiều
+màn hình trong cùng một unit đều rơi vào ca thứ hai ở trên (có use case thật nhưng thiếu
+luồng §5), không tạo một mục §8 riêng cho mỗi màn — gộp thành **một** mục duy nhất liệt
+kê tên các màn hình đó, vd: "`[không suy được từ code]` Các màn hình sau chưa có luồng
+nghiệp vụ ở §5 để dựng Luồng sự kiện chuẩn: <Màn A>, <Màn B>, …". Lý do: nhãn `[không suy
+được từ code]` là nhãn duy nhất tính vào trần `check_section8_cap` (`max(3, M/3)`); một
+unit có nhiều màn cùng thiếu luồng §5 mà tạo mỗi màn một mục riêng dễ đẩy tổng số mục §8
+vượt trần và BLOCKING, trong khi ca này (thiếu luồng §5 cho một use case có thật) là ca
+duy nhất ở §12 vẫn phải xuống §8 — ba field phân loại nghiệp vụ ở trên đã được chặn khỏi
+§8 hoàn toàn, nên càng cần gộp ca còn lại để không tự đẩy unit vào chặn cứng. Đường A
+không có ca này (không tìm thấy → ghi ngay tại nhánh, không xuống §8 — xem trên).
 
 ### 6. Ghi phát hiện đáng chú ý — logic mâu thuẫn / lỗ hổng bảo mật
 
@@ -367,15 +412,20 @@ trước khi báo xong.
 đây. **Chạy song song**: **không** gọi ở đây — xem hướng dẫn gom về agent cha ở bước 3.
 
 Với mỗi FN-ID **tìm thấy** trong unit mà `status` hiện tại (từ bước 2) **không phải
-`srs`** (không lùi trạng thái — đã qua `srs-from-code` thì không đặt lại `intel`):
+`srs`** (không lùi trạng thái — đã qua `srs-from-code` thì không đặt lại `intel`), **và**
+với mỗi item `use_cases[]` đã xử lý ở §12 đường A (khối `###` dựng từ nó, dù tìm thấy code
+hay không — cả hai đều tính là "đã xử lý" nhánh đó) mà `status` hiện tại không phải `srs`:
 
 ```bash
 python .specify/extensions/dft-speckit/scripts/fnlist_import.py update \
-  --file .specify/docs/functions.json --set FN-01-01=intel [--set FN-01-02=intel ...]
+  --file .specify/docs/functions.json --set FN-01-01=intel --set FN-01-01-UC-01=intel \
+  [--set FN-01-02=intel ...]
 ```
 
 Gọi thẳng, không cần xác nhận riêng — `update` tự validate, và đổi status là hành vi có
-thể lùi lại. FN-ID vốn đã `srs` thì bỏ qua, không đưa vào `--set`.
+thể lùi lại. FN-ID hoặc ID `use_cases[]` vốn đã `srs` thì bỏ qua, không đưa vào `--set`.
+Nhánh `S-n` tự khám phá từ code (đường B, hoặc nhánh phát sinh thêm ở đường A không khớp
+`use_cases[]` nào) không có ID `use_cases[]` nào để set — chỉ set FN-ID leaf như cũ.
 
 ## Kết thúc
 
@@ -441,3 +491,14 @@ BLOCKING mà không tự sửa được).
 - **Field `Màn hình` ở một khối §12 không khớp nguyên văn cột `Màn hình / endpoint` ở
   §2** (gõ khác một chữ, viết tắt khác) → đứt liên kết mà đợt sau dựa vào để nối use case
   với màn hình; `intel_verify.py` cảnh báo (WARNING) ca này nhưng không chặn, dễ bị bỏ qua.
+- **Tự khám phá cách chia `S-n` từ code khi leaf đã có `use_cases[]`** → khung `S-n` CỐ
+  ĐỊNH theo đúng tên/thứ tự `use_cases[]`, không tự phát minh cách chia khác cho leaf đó.
+- **Bịa nội dung `Người sử dụng và yêu cầu`/`Mô tả tóm tắt`/`Luồng sự kiện` từ mô tả
+  `use_cases[].description` (Excel) khi không tìm thấy code** → phá kỷ luật ba dạng; ghi
+  đúng "Chưa tìm thấy hiện thực trong mã nguồn." như quy định, không dùng Excel thay code.
+- **Đưa nhánh `use_cases[]` không tìm thấy code xuống §8** → đây là kết luận "chưa hiện
+  thực", không phải câu hỏi chờ trả lời; ghi ngay tại nhánh, không đưa xuống §8.
+- **Dừng lại hỏi AskUserQuestion ngay khi thấy nhánh `S-n` phát sinh thêm (code nhiều hơn
+  Excel khai)** → gộp vào đúng một lượt ở bước 11 cuối cùng, không hỏi giữa lúc sinh.
+- **Quên set status cho ID `use_cases[]` item ở bước 10, chỉ set FN-ID leaf** → tiến độ
+  của riêng use-case đó không được ghi nhận dù đã xử lý xong ở §12.
