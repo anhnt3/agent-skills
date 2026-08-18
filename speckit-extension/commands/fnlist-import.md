@@ -172,9 +172,11 @@ Quản lý đơn hàng
 Quản lý khách hàng
 ```
 
-Đây là đúng chỗ dễ sai nhất của trường hợp gộp use-case: gộp nhầm nhiều use-case khác nhau
-thành một, hoặc ngược lại tách nhầm một use-case thành nhiều node lá. Cây có `·` phải cho
-người dùng thấy rõ NHÓM nào gộp bao nhiêu use-case.
+Cây thụt lề chứ không phải bảng phẳng, vì thứ dễ sai nhất ở lệnh này là **cấp bậc**, và
+bảng phẳng giấu đúng cái đó đi. Đặc biệt khi dùng `unmatched_rows: "absorb"`, đây là đúng
+chỗ dễ sai nhất của trường hợp gộp use-case: gộp nhầm nhiều use-case khác nhau thành một,
+hoặc ngược lại tách nhầm một use-case thành nhiều node lá. Cây có `·` phải cho người dùng
+thấy rõ NHÓM nào gộp bao nhiêu use-case.
 
 Hỏi qua AskUserQuestion: "Cấp bậc và ánh xạ này đúng chưa?" — **chờ phản hồi thật, cấm tự
 tuyên bố người dùng đã đồng ý.** Chưa có phản hồi → DỪNG, không chạy bước 4. Sai → quay

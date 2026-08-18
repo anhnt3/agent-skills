@@ -96,10 +96,7 @@ nào; một node có thể vừa có `children` vừa có `use_cases`.
     {
       "id": "FN-01-01-UC-01",
       "name": "Quản lý danh sách người dùng",
-      "description": "1. Quản trị hệ thống thao tác tạo mới...",
-      "importance": "",
-      "type": "",
-      "usage_timing": ""
+      "description": "1. Quản trị hệ thống thao tác tạo mới..."
     }
   ]
 }
