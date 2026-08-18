@@ -99,12 +99,17 @@ def compute_paths(nodes: list[dict], prefix: str = "") -> dict[str, str]:
 
 def render_tree(nodes: list[dict], unit_ids: set[str], depth: int = 0) -> list[str]:
     """Cây thụt lề, đánh dấu `[UNIT]` ở node là ranh giới unit đề xuất — để
-    LLM trình cho người dùng xác nhận/điều chỉnh trước khi quét."""
+    LLM trình cho người dùng xác nhận/điều chỉnh trước khi quét. Use-case con
+    (`use_cases[]`, nếu leaf có) in thêm ngay dưới, đánh dấu `·` — cùng quy
+    ước đã dùng ở checkpoint của `fnlist-import` — để người dùng xác nhận
+    luôn cả khung `S-n` trước khi `code-intel` bắt đầu tìm bằng chứng."""
     lines = []
     for node in nodes:
         marker = "  [UNIT]" if node["id"] in unit_ids else ""
         lines.append("  " * depth + f"{node['name']} ({node['id']}){marker}")
         lines.extend(render_tree(node.get("children") or [], unit_ids, depth + 1))
+        for uc in node.get("use_cases") or []:
+            lines.append("  " * (depth + 1) + f"· {uc['name']} ({uc['id']})")
     return lines
 
 
@@ -129,6 +134,27 @@ def cmd_propose(a) -> None:
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 
+UC_FIELDS = ("importance", "type", "usage_timing")
+
+
+def _fn_entry(lf: dict) -> dict:
+    """Một leaf FN → mục trong `fn_ids`. Khoá `use_cases` chỉ thêm khi leaf
+    thật sự có — vắng mặt khi không có, đúng quy ước "vắng mặt = không có"
+    của `functions.json`, để không phá lệnh gọi cũ chỉ mong đúng ba khoá
+    `id`/`name`/`status`."""
+    entry = {"id": lf["id"], "name": lf["name"], "status": lf.get("status", "pending")}
+    use_cases = lf.get("use_cases")
+    if use_cases:
+        entry["use_cases"] = [
+            {"id": uc["id"], "name": uc["name"],
+             "description": uc.get("description", ""),
+             "status": uc.get("status", "pending"),
+             **{k: uc.get(k, "") for k in UC_FIELDS}}
+            for uc in use_cases
+        ]
+    return entry
+
+
 def cmd_units(a) -> None:
     doc = json.loads(Path(a.functions).read_text(encoding="utf-8"))
     tree = doc.get("functions") or []
@@ -144,8 +170,7 @@ def cmd_units(a) -> None:
             "id": node["id"],
             "name": node["name"],
             "path": paths[node["id"]] + "/intel.md",
-            "fn_ids": [{"id": lf["id"], "name": lf["name"],
-                       "status": lf.get("status", "pending")} for lf in leaves],
+            "fn_ids": [_fn_entry(lf) for lf in leaves],
         })
     print(json.dumps(out, ensure_ascii=False, indent=2))
 

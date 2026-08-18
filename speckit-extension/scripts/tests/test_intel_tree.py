@@ -129,6 +129,28 @@ def test_render_tree_no_marker_when_not_a_unit():
     assert lines[1] == "  A1 (FN-01-01)  [UNIT]"
 
 
+def test_render_tree_shows_use_cases_with_dot_marker():
+    tree = [{"id": "FN-01", "name": "A", "children": [], "use_cases": [
+        {"id": "FN-01-UC-01", "name": "U1"},
+        {"id": "FN-01-UC-02", "name": "U2"},
+    ]}]
+    lines = it.render_tree(tree, set())
+    assert lines == ["A (FN-01)", "  · U1 (FN-01-UC-01)", "  · U2 (FN-01-UC-02)"]
+
+
+def test_render_tree_use_cases_nest_under_children_too():
+    tree = [{"id": "FN-01", "name": "A", "children": [
+        {"id": "FN-01-01", "name": "A1", "children": [], "use_cases": [
+            {"id": "FN-01-01-UC-01", "name": "U1"}]},
+    ]}]
+    lines = it.render_tree(tree, set())
+    assert lines == [
+        "A (FN-01)",
+        "  A1 (FN-01-01)",
+        "    · U1 (FN-01-01-UC-01)",
+    ]
+
+
 def _doc(functions):
     return {"schema_version": 1, "system": "T", "source": {}, "updated": "2026-08-12",
             "retired_ids": [], "functions": functions}
@@ -208,6 +230,47 @@ def test_cli_units_defaults_missing_status_to_pending(tmp_path):
         capture_output=True, text=True, encoding="utf-8")
     out = _json.loads(p.stdout)
     assert out["units"][0]["fn_ids"][0]["status"] == "pending"
+
+
+def test_cli_units_includes_use_cases_when_present(tmp_path):
+    import json as _json
+    import subprocess
+    doc = _doc([
+        {"id": "FN-01", "name": "A", "description": "", "children": [], "use_cases": [
+            {"id": "FN-01-UC-01", "name": "U1", "description": "mo ta 1",
+             "importance": "Cao"},
+            {"id": "FN-01-UC-02", "name": "U2", "description": ""},
+        ]},
+    ])
+    fp = tmp_path / "functions.json"
+    fp.write_text(_json.dumps(doc), encoding="utf-8")
+    script = Path(it.__file__)
+    p = subprocess.run(
+        [sys.executable, str(script), "units", "--functions", str(fp), "--roots", "FN-01"],
+        capture_output=True, text=True, encoding="utf-8")
+    assert p.returncode == 0, p.stderr
+    out = _json.loads(p.stdout)
+    ucs = out["units"][0]["fn_ids"][0]["use_cases"]
+    assert ucs[0] == {"id": "FN-01-UC-01", "name": "U1", "description": "mo ta 1",
+                      "status": "pending", "importance": "Cao", "type": "",
+                      "usage_timing": ""}
+    assert ucs[1] == {"id": "FN-01-UC-02", "name": "U2", "description": "",
+                      "status": "pending", "importance": "", "type": "",
+                      "usage_timing": ""}
+
+
+def test_cli_units_omits_use_cases_key_when_leaf_has_none(tmp_path):
+    import json as _json
+    import subprocess
+    doc = _doc([{"id": "FN-01", "name": "A", "description": "", "children": []}])
+    fp = tmp_path / "functions.json"
+    fp.write_text(_json.dumps(doc), encoding="utf-8")
+    script = Path(it.__file__)
+    p = subprocess.run(
+        [sys.executable, str(script), "units", "--functions", str(fp), "--roots", "FN-01"],
+        capture_output=True, text=True, encoding="utf-8")
+    out = _json.loads(p.stdout)
+    assert "use_cases" not in out["units"][0]["fn_ids"][0]
 
 
 def test_cli_units_reports_missing_root(tmp_path):
