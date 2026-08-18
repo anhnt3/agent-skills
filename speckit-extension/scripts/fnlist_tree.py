@@ -367,6 +367,10 @@ def assign_ids(tree, old_tree=None, retired=()):
     Hai node MỚI trùng tên dưới cùng cha: chỉ node gặp trước trong duyệt được
     khớp/tiêu thụ ID cũ theo đường dẫn tên; node trùng tên còn lại rơi vào luật
     2 và nhận số mới — tránh hai chức năng khác nhau đâm chung một ID.
+
+    `use_cases` trên một node lá dùng LẠI đúng bốn luật trên, chỉ đổi phạm vi
+    từ "toàn cây" thành "trong một node cha" — tiền tố ID là `<id-cha>-UC`
+    thay vì `FN`.
     """
     old_by_path = {}
     for node, parents in walk(old_tree or []):
@@ -399,7 +403,10 @@ def assign_ids(tree, old_tree=None, retired=()):
                     seq += 1
                 node["id"] = f"{prefix}-{seq:02d}"
                 used.add(seq)
-            recurse(node["children"], parents + (node,), node["id"])
+            if "children" in node:
+                recurse(node["children"], parents + (node,), node["id"])
+            if node.get("use_cases"):
+                recurse(node["use_cases"], parents + (node,), f"{node['id']}-UC")
 
     recurse(tree, (), "FN")
 

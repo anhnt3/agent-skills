@@ -419,6 +419,12 @@ def _ids(tree):
     return [n["id"] for n, _ in ft.walk(tree)]
 
 
+def _mk_uc(name, description="", **extra):
+    d = {"name": name, "description": description}
+    d.update(extra)
+    return d
+
+
 def test_assign_ids_numbers_per_parent():
     tree = [_mk("A", [_mk("A1", [_mk("A1a")]), _mk("A2")]), _mk("B")]
     ft.assign_ids(tree)
@@ -514,6 +520,67 @@ def test_assign_ids_move_plus_insert_same_run_no_id_collision_or_status_leak():
     assert y_id != "FN-01-01"                 # cấm tái dùng ID vừa chết trong cùng lần
     assert x_id == "FN-02-01"
     assert "status" not in next(n for n, _ in ft.walk(new) if n["name"] == "Y")
+
+
+def test_assign_ids_assigns_use_case_ids_scoped_to_parent():
+    tree = [_mk("A", [_mk("A1")])]
+    tree[0]["children"][0]["use_cases"] = [_mk_uc("U1"), _mk_uc("U2")]
+    ft.assign_ids(tree)
+    a1 = tree[0]["children"][0]
+    assert a1["id"] == "FN-01-01"
+    assert [u["id"] for u in a1["use_cases"]] == ["FN-01-01-UC-01", "FN-01-01-UC-02"]
+
+
+def test_assign_ids_reuses_use_case_id_across_reimport():
+    old = [_mk("A", [_mk("A1")])]
+    old[0]["children"][0]["use_cases"] = [_mk_uc("U1"), _mk_uc("U2")]
+    ft.assign_ids(old)
+    new = [_mk("A", [_mk("A1")])]
+    new[0]["children"][0]["use_cases"] = [_mk_uc("U1"), _mk_uc("Umoi"), _mk_uc("U2")]
+    ft.assign_ids(new, old)
+    a1 = new[0]["children"][0]
+    got = {u["name"]: u["id"] for u in a1["use_cases"]}
+    assert got["U1"] == "FN-01-01-UC-01"
+    assert got["U2"] == "FN-01-01-UC-02"          # KHÔNG bị dịch số
+    assert got["Umoi"] == "FN-01-01-UC-03"        # chèn giữa, mang số cuối
+
+
+def test_assign_ids_never_reuses_retired_use_case_number():
+    old = [_mk("A", [_mk("A1")])]
+    old[0]["children"][0]["use_cases"] = [_mk_uc("U1")]
+    ft.assign_ids(old)
+    uc_id = old[0]["children"][0]["use_cases"][0]["id"]
+    new = [_mk("A", [_mk("A1")])]
+    new[0]["children"][0]["use_cases"] = [_mk_uc("Umoi")]
+    ft.assign_ids(new, old, retired=[uc_id])
+    got_id = new[0]["children"][0]["use_cases"][0]["id"]
+    assert got_id != uc_id
+    assert got_id == "FN-01-01-UC-02"
+
+
+def test_carry_status_copies_use_case_status_by_id():
+    old = [_mk("A", [_mk("A1")])]
+    old[0]["children"][0]["use_cases"] = [_mk_uc("U1")]
+    ft.assign_ids(old)
+    old[0]["children"][0]["use_cases"][0]["status"] = "intel"
+    new = [_mk("A", [_mk("A1")])]
+    new[0]["children"][0]["use_cases"] = [_mk_uc("U1"), _mk_uc("U2")]
+    ft.assign_ids(new, old)
+    ft.carry_status(new, old)
+    ucs = {u["name"]: u for u in new[0]["children"][0]["use_cases"]}
+    assert ucs["U1"]["status"] == "intel"
+    assert "status" not in ucs["U2"]
+
+
+def test_compute_retired_includes_removed_use_case_ids():
+    old = [_mk("A", [_mk("A1")])]
+    old[0]["children"][0]["use_cases"] = [_mk_uc("U1"), _mk_uc("U2")]
+    ft.assign_ids(old)
+    u2_id = old[0]["children"][0]["use_cases"][1]["id"]
+    new = [_mk("A", [_mk("A1")])]
+    new[0]["children"][0]["use_cases"] = [_mk_uc("U1")]
+    ft.assign_ids(new, old)
+    assert u2_id in ft.compute_retired(old, new)
 
 
 def test_compute_retired_accumulates():
