@@ -1,4 +1,5 @@
 .omc/
+.superpowers/
 .DS_Store
 speckit-dft-mstem-preset/dist/
 AGENTS.md
