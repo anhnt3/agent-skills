@@ -697,6 +697,32 @@ def test_diff_move_without_description_change_has_no_extra_keys():
     assert "cu" not in move and "moi" not in move
 
 
+def test_diff_reports_use_case_added_and_removed():
+    old = [_mk("A", [_mk("A1")])]
+    old[0]["children"][0]["use_cases"] = [_mk_uc("U1"), _mk_uc("U2")]
+    old = _prepared(old)
+    new = [_mk("A", [_mk("A1")])]
+    new[0]["children"][0]["use_cases"] = [_mk_uc("U1"), _mk_uc("U3")]
+    new = _prepared(new)
+    entries = ft.diff_trees(old, new)
+    kinds = {(d["loai"], d["ten"]) for d in entries}
+    assert ("use-case bỏ", "U2") in kinds
+    assert ("use-case thêm", "U3") in kinds
+    assert not any(d["loai"] in ("thêm", "bỏ") for d in entries)   # không lẫn nhãn FN
+
+
+def test_diff_reports_use_case_description_change():
+    old = [_mk("A", [_mk("A1")])]
+    old[0]["children"][0]["use_cases"] = [_mk_uc("U1", description="cũ")]
+    old = _prepared(old)
+    new = [_mk("A", [_mk("A1")])]
+    new[0]["children"][0]["use_cases"] = [_mk_uc("U1", description="mới")]
+    new = _prepared(new)
+    entry = next(d for d in ft.diff_trees(old, new)
+                 if d["loai"] == "use-case đổi mô tả")
+    assert entry["ten"] == "U1" and entry["cu"] == "cũ" and entry["moi"] == "mới"
+
+
 def test_subtree_leaves_returns_self_when_no_children():
     node = _prepared([_mk("Đăng xuất")])[0]
     assert ft.subtree_leaves(node) == [node]

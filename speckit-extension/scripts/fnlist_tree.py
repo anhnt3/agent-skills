@@ -451,6 +451,28 @@ def carry_status(new_tree, old_tree):
             node["status"] = status
 
 
+def _diff_leaves(old_leaf, new_leaf, old_all_paths, new_all_paths,
+                  added, removed, changed):
+    """So một tầng lá (FN hoặc use-case) giữa hai cây — dùng chung logic
+    thêm/bớt/đổi mô tả, chỉ khác nhãn `loai` truyền vào."""
+    out = []
+    for path, node in new_leaf.items():
+        old = old_leaf.get(path)
+        if old is None:
+            if path not in old_all_paths:
+                out.append({"loai": added, "id": node["id"], "ten": path[-1],
+                            "duong_dan": " / ".join(path), "_node": node})
+        elif (old.get("description") or "") != (node.get("description") or ""):
+            out.append({"loai": changed, "id": node["id"], "ten": path[-1],
+                        "cu": old.get("description", ""),
+                        "moi": node.get("description", "")})
+    for path, old in old_leaf.items():
+        if path not in new_leaf and path not in new_all_paths:
+            out.append({"loai": removed, "id": old["id"], "ten": path[-1],
+                        "duong_dan": " / ".join(path), "_node": old})
+    return out
+
+
 def diff_trees(old_tree, new_tree):
     """So hai cây theo đường dẫn tên. Gọi SAU assign_ids trên cả hai cây.
 
@@ -458,30 +480,33 @@ def diff_trees(old_tree, new_tree):
     là tiêu đề tổ chức, nhóm biến mất/xuất hiện do các lá bên trong đổi chỗ
     không phải là một thay đổi chức năng độc lập cần báo cáo.
 
+    So RIÊNG hai tầng: node lá FN và mục use-case con — nhãn khác nhau
+    (`"use-case thêm"`/`"use-case bỏ"`/`"use-case đổi mô tả"`) để người đọc
+    không lẫn "chức năng thêm/bớt" với "use-case con bên trong một chức năng
+    không đổi". Use-case KHÔNG chạy qua `_merge_moves` (không có nhãn
+    "use-case chuyển nhóm" ở đợt này — xem spec "Ngoài phạm vi").
+
     Một node đổi trạng thái lá giữa hai lần import (từ có con → hết con, hoặc
     ngược lại) không phải là "bỏ"/"thêm" thật — node đó vẫn tồn tại, chỉ đổi
     vai trò. Vì vậy trước khi báo "bỏ"/"thêm" phải kiểm đường dẫn đó có mặt ở
     TOÀN BỘ cây bên kia không (kể cả node không phải lá), có thì bỏ qua."""
-    old_leaf = {name_path(n, p): n for n, p in walk(old_tree or []) if not n.get("children")}
-    new_leaf = {name_path(n, p): n for n, p in walk(new_tree) if not n.get("children")}
     old_all_paths = {name_path(n, p) for n, p in walk(old_tree or [])}
     new_all_paths = {name_path(n, p) for n, p in walk(new_tree)}
-    out = []
-    for path, node in new_leaf.items():
-        old = old_leaf.get(path)
-        if old is None:
-            if path not in old_all_paths:
-                out.append({"loai": "thêm", "id": node["id"], "ten": path[-1],
-                            "duong_dan": " / ".join(path), "_node": node})
-        elif (old.get("description") or "") != (node.get("description") or ""):
-            out.append({"loai": "đổi mô tả", "id": node["id"], "ten": path[-1],
-                        "cu": old.get("description", ""),
-                        "moi": node.get("description", "")})
-    for path, old in old_leaf.items():
-        if path not in new_leaf and path not in new_all_paths:
-            out.append({"loai": "bỏ", "id": old["id"], "ten": path[-1],
-                        "duong_dan": " / ".join(path), "_node": old})
-    return _merge_moves(out)
+
+    old_fn_leaf = {name_path(n, p): n for n, p in walk(old_tree or [])
+                   if not is_use_case(n) and not n["children"]}
+    new_fn_leaf = {name_path(n, p): n for n, p in walk(new_tree)
+                   if not is_use_case(n) and not n["children"]}
+    fn_entries = _diff_leaves(old_fn_leaf, new_fn_leaf, old_all_paths,
+                               new_all_paths, "thêm", "bỏ", "đổi mô tả")
+
+    old_uc = {name_path(n, p): n for n, p in walk(old_tree or []) if is_use_case(n)}
+    new_uc = {name_path(n, p): n for n, p in walk(new_tree) if is_use_case(n)}
+    uc_entries = _diff_leaves(old_uc, new_uc, old_all_paths, new_all_paths,
+                              "use-case thêm", "use-case bỏ", "use-case đổi mô tả")
+
+    return _merge_moves(fn_entries) + [
+        {k: v for k, v in e.items() if k != "_node"} for e in uc_entries]
 
 
 def _merge_moves(entries):
