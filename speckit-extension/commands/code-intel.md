@@ -97,8 +97,8 @@ python .specify/extensions/dft-speckit/scripts/intel_tree.py units \
 Trả về, cho mỗi unit: `path` — đường dẫn FILE `intel.md` đầy đủ (đã có sẵn hậu tố
 `/intel.md`), TƯƠNG ĐỐI so với `.specify/docs/` (ghép `.specify/docs/` + `path` mới ra
 đường dẫn thật trong repo) — và danh sách FN-ID lá thuộc nhánh (kèm `name`/`status` hiện
-tại) — đây là dữ liệu dùng để điền §1 của `intel.md`, không tự đọc lại `functions.json`
-bằng mắt rồi gõ tay.
+tại, và `use_cases[]` nếu leaf đó có — dùng cho §12 đường A ở bước 5) — đây là dữ liệu dùng
+để điền §1 của `intel.md`, không tự đọc lại `functions.json` bằng mắt rồi gõ tay.
 
 ### 3. Chạy song song hay tuần tự?
 
@@ -107,8 +107,10 @@ qua Agent tool) hay tuần tự (xử từng unit một). Đúng 1 unit → ch�
 đây, không hỏi.
 
 Chạy song song: dispatch một Agent riêng cho mỗi unit, giao FN-ID gốc của unit, đường dẫn
-file `intel.md` (`path`, tương đối `.specify/docs/`), danh sách FN-ID kèm status (từ bước
-2), và yêu cầu subagent đọc lại chính file lệnh này
+file `intel.md` (`path`, tương đối `.specify/docs/`), danh sách FN-ID kèm status VÀ
+`use_cases[]` tương ứng (từ bước 2, nguyên vẹn không lọc bớt — subagent không tự gọi lại
+`intel_tree.py units`, đây là nguồn duy nhất nó có để biết leaf nào có `use_cases[]` và
+kích hoạt §12 đường A ở bước 5), và yêu cầu subagent đọc lại chính file lệnh này
 (`.specify/extensions/dft-speckit/commands/code-intel.md`) rồi thực hiện đúng Bước 4–10
 dưới đây cho một unit đó. Không đồng bộ giữa các subagent — hai unit dùng chung một
 entity có thể cite khác nhau, chấp nhận là giới hạn đã biết.
