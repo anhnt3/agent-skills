@@ -88,7 +88,7 @@ Lý do không tự chọn: cột mô tả cũng là cột chữ nên có thể l
 một cột "STT" dạng `1.1` của tài liệu đánh số tay có thể không phải cấu trúc chức năng
 thật. Script không phân biệt được, người dùng thì có.
 
-Ba tình huống sau cũng **bắt buộc hỏi**, không tự chọn — **không chắc một tình huống có
+Bốn tình huống sau cũng **bắt buộc hỏi**, không tự chọn — **không chắc một tình huống có
 thuộc nhóm này hay không thì coi như thuộc**, mặc định là hỏi:
 
 - **Nhiều sheet** — sheet nào là function list thật (không phải sheet ghi chú/phụ lục).
@@ -97,8 +97,22 @@ thuộc nhóm này hay không thì coi như thuộc**, mặc định là hỏi:
   (dòng 0 mọi ô đều có chữ, chỉ là "Mô tả chi tiết chức năng" thay vì "Mô tả") — trường
   hợp sau KHÔNG cần hỏi, tự chọn `first_data_row` = 1 là đủ.
 - **Cột mô tả mơ hồ** — không chắc cột nào là mô tả chức năng hay chỉ là ghi chú/trạng thái.
+- **Có dòng không khớp kiểu phân cấp đã chọn** — hỏi đây có phải "dòng nội dung", gộp vào
+  nhóm cha làm use-case con (`unmatched_rows: "absorb"`), hay đó thật ra là lỗi cấu trúc
+  file (thiếu mã phân cấp ở một dòng đáng ra phải là nhóm) cần người dùng sửa nguồn trước
+  khi import tiếp. Không tự suy luận theo hướng nào — hai khả năng đều hợp lý và hậu quả
+  chọn sai khác nhau hoàn toàn (một bên mất use-case thật, một bên nuốt nhầm lỗi nhập liệu).
 
 Mỗi lượt AskUserQuestion gom 1–4 câu độc lập nhau.
+
+Sau khi chốt cột `name`/`description`/hierarchy, **quét nốt các cột còn lại** trong `head`
+đã in ở bước 1 (không giới hạn ở cột đã dùng) và hỏi có cột nào khớp 1 trong 3 loại: Mức
+quan trọng use case, Loại UC, Thời điểm sử dụng UC. Đây là thông tin nghiệp vụ thuần mà
+không giai đoạn nào sau này của đường ống (đọc code) suy ra lại được — bỏ qua ở đây là mất
+vĩnh viễn, không có cơ hội thứ hai. Không tự đoán tên cột khớp nghĩa gì — `inspect` đã in
+header + N dòng đầu cho mọi cột, việc còn lại là đọc và hỏi xác nhận qua AskUserQuestion,
+không cần thuật toán chấm điểm nào (khác với hierarchy — đây là phân loại ngữ nghĩa tên
+cột, không phải pattern đếm được).
 
 Ghi ánh xạ đã chốt ra `.specify/tmp/fnlist/mapping.json`:
 
@@ -118,6 +132,25 @@ Với `mode: "columns"` thì khai `level_columns` + `style` thay cho `column`, v
 { "hierarchy": { "mode": "columns", "level_columns": [0, 1, 2], "style": "staircase" } }
 ```
 
+Gặp file mà mã phân cấp chỉ đánh ở dòng tiêu đề nhóm, còn dòng nội dung (từng use-case,
+từng giao dịch cụ thể) không mang mã nào — dòng nội dung đó không phải lỗi, nó gộp thành
+một mục trong `use_cases` của nhóm cha gần nhất đang mở. Khai `unmatched_rows: "absorb"`
+trong khối `hierarchy`:
+
+```json
+{
+  "first_data_row": 1,
+  "columns": { "name": 1, "description": 2, "importance": 3 },
+  "hierarchy": { "mode": "outline", "column": 0, "unmatched_rows": "absorb" },
+  "skip_rows": []
+}
+```
+
+Mặc định (`unmatched_rows` vắng mặt) là `"error"` — dòng không đọc được cấp vẫn dừng cứng
+như trước, dùng cho file mà MỌI dòng đều tự khai cấp. Ba khoá tuỳ chọn khác trong `columns`
+— `importance` (Mức quan trọng), `type` (Loại UC), `usage_timing` (Thời điểm sử dụng) —
+chỉ khai khi sheet thật sự có cột tương ứng; xem mục dưới đây về cách hỏi.
+
 `skip_rows` (tuỳ chọn) là danh sách số dòng **1-based** — đúng số dòng người dùng nhìn
 thấy trong Excel, **khác hệ đếm** với `first_data_row`/`columns`/`level_columns`/
 `hierarchy.column` ở trên (0-based). Lẫn hệ đếm ở đây là bỏ nhầm một dòng khác với dòng
@@ -126,18 +159,22 @@ thấy trong Excel, **khác hệ đếm** với `first_data_row`/`columns`/`leve
 ### 3. Xác nhận trước khi ghi (checkpoint bắt buộc)
 
 **Không được bỏ qua bước này dù cảm thấy ánh xạ đã "rõ ràng".** Tự render **cây 5 dòng
-dữ liệu đầu** theo ánh xạ đã chọn, thụt lề theo cấp:
+dữ liệu đầu** theo ánh xạ đã chọn, thụt lề theo cấp. Node lá có use-case con (khi
+`unmatched_rows: "absorb"`) thì in thêm các dòng con thụt sâu hơn, đánh dấu bằng `·` để
+phân biệt trực quan với nhóm/lá:
 
 ```
 Quản lý đơn hàng
   Danh sách đơn — Xem, tìm kiếm đơn hàng
-    Lọc theo trạng thái
+    · Xem đơn — Xem chi tiết đơn (Mức quan trọng: Cao)
+    · Tìm đơn — Tìm theo mã
   Tạo đơn mới
 Quản lý khách hàng
 ```
 
-Cây thụt lề chứ không phải bảng phẳng, vì thứ dễ sai nhất ở lệnh này là **cấp bậc**, và
-bảng phẳng giấu đúng cái đó đi.
+Đây là đúng chỗ dễ sai nhất của trường hợp gộp use-case: gộp nhầm nhiều use-case khác nhau
+thành một, hoặc ngược lại tách nhầm một use-case thành nhiều node lá. Cây có `·` phải cho
+người dùng thấy rõ NHÓM nào gộp bao nhiêu use-case.
 
 Hỏi qua AskUserQuestion: "Cấp bậc và ánh xạ này đúng chưa?" — **chờ phản hồi thật, cấm tự
 tuyên bố người dùng đã đồng ý.** Chưa có phản hồi → DỪNG, không chạy bước 4. Sai → quay
@@ -170,8 +207,10 @@ sai tên (kể cả với CSV) làm script không tìm thấy khoá và dừng v
 sheet đầu tiên trong file, không báo lỗi — nếu đó không phải sheet vừa xác nhận ở bước 3,
 lệnh ghi ra dữ liệu của sheet sai mà không có gì tố cáo.
 
-Script in báo cáo JSON ra stdout: `out`, `written`, `skipped`, `retired`, và (chạy lại
-trên file đã có) `diff`.
+Script in báo cáo JSON ra stdout: `out`, `written` (số node cây FN), `written_use_cases`
+(số use-case đã gộp — có thể lớn hơn nhiều `written` nếu phần lớn dữ liệu là dòng nội
+dung), `skipped`, `retired`, và (chạy lại trên file đã có) `diff`. Đọc cả hai con số —
+`written` nhỏ không có nghĩa là thiếu dữ liệu nếu `written_use_cases` bù lại đủ.
 
 Chạy lại trên `functions.json` đã có thì script **ghi đè tại chỗ** — đúng như thiết kế,
 vì không ai sửa tay file này: ID cũ được giữ theo đường dẫn tên, `status` do
@@ -213,6 +252,10 @@ Trình bảng `diff` cho người dùng. Bốn loại và cách nói về chúng
   thay đổi thường. Nếu chức năng vừa chuyển nhóm vừa đổi mô tả cùng lúc, entry này còn
   kèm mô tả cũ/mới — trình đầy đủ cho người dùng, đừng chỉ báo việc chuyển nhóm mà bỏ
   sót phần đổi mô tả.
+- `use-case thêm` / `use-case bỏ` / `use-case đổi mô tả` — cùng ý nghĩa như trên nhưng cho
+  một use-case con BÊN TRONG một node lá không đổi, tách nhãn riêng để không lẫn với thay
+  đổi ở cấp chức năng. Không có `use-case chuyển nhóm` — use-case đổi node cha hiện ra như
+  một cặp `use-case bỏ` + `use-case thêm` rời rạc, không gộp.
 
 Đổi tên chức năng hiện ra dưới dạng một cặp `bỏ` + `thêm` (khớp cũ↔mới dựa trên tên, nên
 tên đổi là mất dấu vết). Thấy một cặp `bỏ`/`thêm` trông giống nhau về nghiệp vụ → nói
@@ -264,3 +307,16 @@ biết file cũ vẫn còn để `code-intel` chạy tạm được cho tới kh
 - **Nhắc chạy `code-intel` ở bước 7** → hai lệnh đó chưa đọc được `functions.json`.
 - **Sửa tay `functions.json`** → script là chương trình duy nhất được phép ghi; muốn đổi
   `status` thì gọi `fnlist_import.py update`.
+- **Coi dòng nội dung là lỗi cấu trúc khi thật ra file cố ý phân tầng kiểu "chỉ nhóm có
+  mã"** → chọn `unmatched_rows: "error"` sai, dừng nhầm một file hợp lệ.
+- **Ngược lại: chọn `"absorb"` cho một file mà dòng không khớp cấp thật sự là lỗi nhập
+  liệu** → nuốt luôn dòng lỗi vào làm use-case, không ai phát hiện.
+- **Bỏ qua quét cột bổ sung (Mức quan trọng/Loại UC/Thời điểm sử dụng)** → thông tin có sẵn
+  trong Excel nhưng không bao giờ được hỏi, xuống `srs-from-code` lại thành "Chưa có thông
+  tin" — đúng lỗ hổng đang sửa.
+- **Trình checkpoint cây bước 3 mà không hiện use-case con** → giấu đúng chỗ dễ sai nhất
+  của trường hợp gộp.
+- **Cột mã outline có ô chứa giá trị không đúng dạng mã (không rỗng, không phải `1`/`1.1`...)**
+  → giờ dừng với lỗi 'không đọc được cấp của dòng' thay vì âm thầm coi là nhóm cấp 1 như hành
+  vi cũ (đã sửa hành vi ngầm sai này) — đây là thay đổi có thể lộ ra trên cả file KHÔNG dùng
+  `unmatched_rows: "absorb"`, không chỉ file dùng tính năng gộp use-case.

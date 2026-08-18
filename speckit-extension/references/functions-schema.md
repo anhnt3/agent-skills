@@ -80,6 +80,49 @@ subcommand `update`.
 thêm, hoặc xoá một node có con (nhóm cấp cao) không hiện trong `diff` — chỉ các thay đổi
 ở node lá mới được báo cáo.
 
+## `use_cases` — use-case con trong node lá
+
+Một node lá có thể gộp nhiều dòng nội dung (use-case, giao dịch cụ thể — không tự khai cấp
+riêng trong file nguồn) thành mảng `use_cases`. **Vắng mặt** ở node không có dòng nội dung
+nào; một node có thể vừa có `children` vừa có `use_cases`.
+
+```json
+{
+  "id": "FN-01-01",
+  "name": "Nhóm chức năng Quản trị hệ thống và Người dùng",
+  "description": "",
+  "children": [],
+  "use_cases": [
+    {
+      "id": "FN-01-01-UC-01",
+      "name": "Quản lý danh sách người dùng",
+      "description": "1. Quản trị hệ thống thao tác tạo mới...",
+      "importance": "",
+      "type": "",
+      "usage_timing": ""
+    }
+  ]
+}
+```
+
+Trường của một mục `use_cases`:
+
+| Trường | Kiểu | Ý nghĩa |
+|---|---|---|
+| `id` | string | `<id-node-cha>-UC-nn`, xem quy tắc ID bên dưới. |
+| `name` | string | Tên use-case, nguyên văn ô nguồn. |
+| `description` | string | Mô tả, nguyên văn ô nguồn. Không có thì `""`. |
+| `status` | string | Giống `status` của node FN. Vắng mặt = `pending`. |
+| `importance` | string | Mức quan trọng — chỉ ghi khi file nguồn có cột này. |
+| `type` | string | Loại UC theo quy ước BA — chỉ ghi khi file nguồn có cột này. |
+| `usage_timing` | string | Thời điểm sử dụng — chỉ ghi khi file nguồn có cột này. |
+
+`importance`/`type`/`usage_timing` vắng mặt hoàn toàn (không ghi `""`) khi mapping không
+khai cột tương ứng hoặc ô nguồn trống.
+
+`diff` của lệnh `write` cũng so sánh `use_cases` — dưới nhãn riêng `use-case thêm`/
+`use-case bỏ`/`use-case đổi mô tả`, tách khỏi diff cấp node FN.
+
 ## Quy tắc ID
 
 Dạng `FN-01`, `FN-01-01`, `FN-01-01-01` — mỗi cấp hai chữ số, nối bằng `-`. Số
@@ -96,6 +139,11 @@ Số trong ID **không phản ánh thứ tự hiển thị**, và đó là chủ
 5. Node đổi nhóm cha: đường dẫn tên đổi → nhận ID mới. `diff` của lệnh `write`
    gắn nhãn `chuyển nhóm` kèm ID cũ → mới. **Đây là điểm gãy truy vết duy
    nhất** — tài liệu nào đang trỏ ID cũ phải sửa tay.
+
+`use_cases` dùng LẠI đúng 5 luật trên, chỉ đổi phạm vi: đánh số/khớp lại theo **đường dẫn
+tên trong phạm vi node cha** (không phải toàn cây), tiền tố ID là `<id-cha>-UC` thay vì
+`FN`. Không dùng thẳng mã use-case trong file nguồn (nếu có, ví dụ `uc001`) làm `id` — mã
+đó do người nhập tay, không đảm bảo ổn định giữa các lần sửa file nguồn.
 
 ## Đọc và ghi
 
