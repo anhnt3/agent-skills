@@ -105,14 +105,21 @@ thuộc nhóm này hay không thì coi như thuộc**, mặc định là hỏi:
 
 Mỗi lượt AskUserQuestion gom 1–4 câu độc lập nhau.
 
-Sau khi chốt cột `name`/`description`/hierarchy, **quét nốt các cột còn lại** trong `head`
-đã in ở bước 1 (không giới hạn ở cột đã dùng) và hỏi có cột nào khớp 1 trong 3 loại: Mức
-quan trọng use case, Loại UC, Thời điểm sử dụng UC. Đây là thông tin nghiệp vụ thuần mà
-không giai đoạn nào sau này của đường ống (đọc code) suy ra lại được — bỏ qua ở đây là mất
-vĩnh viễn, không có cơ hội thứ hai. Không tự đoán tên cột khớp nghĩa gì — `inspect` đã in
-header + N dòng đầu cho mọi cột, việc còn lại là đọc và hỏi xác nhận qua AskUserQuestion,
-không cần thuật toán chấm điểm nào (khác với hierarchy — đây là phân loại ngữ nghĩa tên
-cột, không phải pattern đếm được).
+**Chỉ áp dụng bước quét dưới đây khi đã xác nhận `unmatched_rows: "absorb"`** (file có dòng
+nội dung cần gộp thành use-case con — xem giải thích `unmatched_rows` bên dưới). Ba trường
+Mức quan trọng/Loại UC/Thời điểm sử dụng chỉ tồn tại trên mục `use_cases[]`, script KHÔNG
+bao giờ ghi chúng vào node cây FN (node FN chỉ đúng 5 trường theo schema) — nếu mapping
+không dùng `"absorb"` thì bỏ qua hẳn bước quét này, hỏi mà không dùng vào đâu chỉ tốn lượt
+người dùng vô ích.
+
+Đã xác nhận `"absorb"` → sau khi chốt cột `name`/`description`/hierarchy, **quét nốt các
+cột còn lại** trong `head` đã in ở bước 1 (không giới hạn ở cột đã dùng) và hỏi có cột nào
+khớp 1 trong 3 loại: Mức quan trọng use case, Loại UC, Thời điểm sử dụng UC. Đây là thông
+tin nghiệp vụ thuần mà không giai đoạn nào sau này của đường ống (đọc code) suy ra lại
+được — bỏ qua ở đây là mất vĩnh viễn, không có cơ hội thứ hai. Không tự đoán tên cột khớp
+nghĩa gì — `inspect` đã in header + N dòng đầu cho mọi cột, việc còn lại là đọc và hỏi xác
+nhận qua AskUserQuestion, không cần thuật toán chấm điểm nào (khác với hierarchy — đây là
+phân loại ngữ nghĩa tên cột, không phải pattern đếm được).
 
 Ghi ánh xạ đã chốt ra `.specify/tmp/fnlist/mapping.json`:
 
@@ -149,7 +156,7 @@ trong khối `hierarchy`:
 Mặc định (`unmatched_rows` vắng mặt) là `"error"` — dòng không đọc được cấp vẫn dừng cứng
 như trước, dùng cho file mà MỌI dòng đều tự khai cấp. Ba khoá tuỳ chọn khác trong `columns`
 — `importance` (Mức quan trọng), `type` (Loại UC), `usage_timing` (Thời điểm sử dụng) —
-chỉ khai khi sheet thật sự có cột tương ứng; xem mục dưới đây về cách hỏi.
+chỉ khai khi sheet thật sự có cột tương ứng; xem mục trên về cách hỏi.
 
 `skip_rows` (tuỳ chọn) là danh sách số dòng **1-based** — đúng số dòng người dùng nhìn
 thấy trong Excel, **khác hệ đếm** với `first_data_row`/`columns`/`level_columns`/
@@ -243,7 +250,8 @@ trông hợp lý đến đâu.
 
 ### 6. Trình `diff` (chỉ khi chạy lại trên file đã có)
 
-Trình bảng `diff` cho người dùng. Bốn loại và cách nói về chúng:
+Trình bảng `diff` cho người dùng. Bảy loại (bốn loại gốc + ba nhãn use-case) và cách nói về
+chúng:
 
 - `thêm` / `bỏ` — chức năng mới xuất hiện / biến mất so với lần import trước.
 - `đổi mô tả` — cùng vị trí trong cây, nội dung mô tả đổi.
@@ -276,7 +284,9 @@ là mới.
 
 ### 7. Kết thúc
 
-Báo: số chức năng đã ghi (`written`), sheet đã dùng, đường dẫn file.
+Báo: số chức năng đã ghi (`written`), số use-case đã gộp (`written_use_cases`), sheet đã
+dùng, đường dẫn file. Báo cả hai con số — chỉ nói `written` dễ khiến người dùng tưởng nhầm
+là mất dữ liệu khi phần lớn nội dung nằm ở `use_cases[]` chứ không phải node cây FN.
 
 **Nói rõ trạng thái đường ống**: `functions.json` đã ghi, nhưng
 `/speckit.dft-speckit.code-intel` và `/speckit.dft-speckit.srs-from-code` **hiện chưa đọc

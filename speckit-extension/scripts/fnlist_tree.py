@@ -379,7 +379,9 @@ def assign_ids(tree, old_tree=None, retired=()):
     """Cấp ID đa cấp, sửa tại chỗ.
 
     Bốn luật, theo đúng thứ tự ưu tiên:
-      1. Node đã có ở bản cũ (khớp theo ĐƯỜNG DẪN TÊN) giữ nguyên ID.
+      1. Node đã có ở bản cũ (khớp theo ĐƯỜNG DẪN TÊN + namespace — node cây
+         FN và use-case cùng tên dưới cùng cha KHÔNG tranh khoá của nhau) giữ
+         nguyên ID.
       2. Node mới lấy số nhỏ nhất chưa dùng trong cùng cha.
       3. Số đã khai tử không bao giờ cấp lại — hai tài liệu ở hai thời điểm
          không được trỏ cùng một ID ra hai chức năng khác nhau.
@@ -395,9 +397,15 @@ def assign_ids(tree, old_tree=None, retired=()):
     từ "toàn cây" thành "trong một node cha" — tiền tố ID là `<id-cha>-UC`
     thay vì `FN`.
     """
+    # Khoá kèm is_use_case(node) — tên chỉ là duy nhất TRONG cùng namespace.
+    # Một cha có cả node FN con và use-case con trùng tên (khớp shape mà
+    # spec §2 yêu cầu hỗ trợ): walk() trả children trước use_cases, nên nếu
+    # khoá chỉ là name_path thì entry use-case ghi đè âm thầm lên entry FN
+    # cùng khoá — lần import sau, node FN tra trúng entry use-case (khác
+    # tiền tố ID), khớp thất bại, và ID của nó bị cấp lại dù nguồn không đổi.
     old_by_path = {}
     for node, parents in walk(old_tree or []):
-        old_by_path[name_path(node, parents)] = node
+        old_by_path[(is_use_case(node),) + name_path(node, parents)] = node
     retired = set(retired)
     # ID nào từng xuất hiện ở cây cũ, dù chưa từng bị khai tử ở lần import
     # trước — số đó có thể vừa chết NGAY TRONG lần chạy này (node bị xoá hoặc
@@ -409,7 +417,7 @@ def assign_ids(tree, old_tree=None, retired=()):
     def recurse(nodes, parents, prefix):
         used = set()
         for node in nodes:
-            key = name_path(node, parents)
+            key = (is_use_case(node),) + name_path(node, parents)
             old = old_by_path.get(key)
             if old and old.get("id", "").rsplit("-", 1)[0] == prefix:
                 node["id"] = old["id"]
@@ -490,19 +498,31 @@ def diff_trees(old_tree, new_tree):
     ngược lại) không phải là "bỏ"/"thêm" thật — node đó vẫn tồn tại, chỉ đổi
     vai trò. Vì vậy trước khi báo "bỏ"/"thêm" phải kiểm đường dẫn đó có mặt ở
     TOÀN BỘ cây bên kia không (kể cả node không phải lá), có thì bỏ qua."""
-    old_all_paths = {name_path(n, p) for n, p in walk(old_tree or [])}
-    new_all_paths = {name_path(n, p) for n, p in walk(new_tree)}
+    # Tách riêng theo NAMESPACE (node cây FN / mục use-case) — gộp chung một
+    # set như trước khiến một dòng đổi VAI TRÒ giữa hai lần import (use-case
+    # được thăng cấp thành node FN lá, hoặc ngược lại node FN lá bị hạ xuống
+    # thành use-case) "biến mất" khỏi bảng diff: đường dẫn tên đó vẫn "tồn tại
+    # ở đâu đó" trong cây kia (chỉ khác namespace), nên phép kiểm tra dưới
+    # nhầm nó là node không đổi thay vì một danh tính mới/cũ.
+    old_all_fn_paths = {name_path(n, p) for n, p in walk(old_tree or [])
+                         if not is_use_case(n)}
+    new_all_fn_paths = {name_path(n, p) for n, p in walk(new_tree)
+                         if not is_use_case(n)}
+    old_all_uc_paths = {name_path(n, p) for n, p in walk(old_tree or [])
+                         if is_use_case(n)}
+    new_all_uc_paths = {name_path(n, p) for n, p in walk(new_tree)
+                         if is_use_case(n)}
 
     old_fn_leaf = {name_path(n, p): n for n, p in walk(old_tree or [])
                    if not is_use_case(n) and not n["children"]}
     new_fn_leaf = {name_path(n, p): n for n, p in walk(new_tree)
                    if not is_use_case(n) and not n["children"]}
-    fn_entries = _diff_leaves(old_fn_leaf, new_fn_leaf, old_all_paths,
-                               new_all_paths, "thêm", "bỏ", "đổi mô tả")
+    fn_entries = _diff_leaves(old_fn_leaf, new_fn_leaf, old_all_fn_paths,
+                               new_all_fn_paths, "thêm", "bỏ", "đổi mô tả")
 
     old_uc = {name_path(n, p): n for n, p in walk(old_tree or []) if is_use_case(n)}
     new_uc = {name_path(n, p): n for n, p in walk(new_tree) if is_use_case(n)}
-    uc_entries = _diff_leaves(old_uc, new_uc, old_all_paths, new_all_paths,
+    uc_entries = _diff_leaves(old_uc, new_uc, old_all_uc_paths, new_all_uc_paths,
                               "use-case thêm", "use-case bỏ", "use-case đổi mô tả")
 
     return _merge_moves(fn_entries) + [

@@ -45,12 +45,12 @@ subcommand `update`.
 | `system` | string | Tên hệ thống, do người dùng xác nhận lúc import. |
 | `source` | object | `file` (đường dẫn file nguồn) + `sheet` (tên sheet đã dùng). |
 | `updated` | string | `YYYY-MM-DD`, ngày chạy lệnh import gần nhất. |
-| `retired_ids` | array | ID của chức năng đã bị xoá. **Không bao giờ cấp lại**. |
+| `retired_ids` | array | ID của chức năng đã bị xoá — gồm cả ID node cây FN lẫn ID use-case (dạng `...-UC-nn`) đã bị xoá. **Không bao giờ cấp lại**. |
 | `functions` | array | Các node gốc, theo đúng thứ tự dòng của file nguồn. |
 
 ## Trường của một node
 
-Đúng năm trường, không hơn.
+Đúng năm trường, không hơn (+ `use_cases` tuỳ chọn — khoá thứ sáu, xem mục dưới).
 
 | Trường | Kiểu | Ý nghĩa |
 |---|---|---|
@@ -115,7 +115,10 @@ Trường của một mục `use_cases`:
 | `usage_timing` | string | Thời điểm sử dụng — chỉ ghi khi file nguồn có cột này. |
 
 `importance`/`type`/`usage_timing` vắng mặt hoàn toàn (không ghi `""`) khi mapping không
-khai cột tương ứng hoặc ô nguồn trống.
+khai cột tương ứng hoặc ô nguồn trống. Ba trường này **chỉ tồn tại trên mục `use_cases`** —
+node cây FN không bao giờ mang chúng (đúng năm trường như bảng ở mục trên), kể cả khi mapping
+có khai cột `importance`/`type`/`usage_timing`: dữ liệu đó chỉ được ghi vào các mục
+`use_cases[]` được gộp qua `unmatched_rows: "absorb"`, không lan sang node FN.
 
 `diff` của lệnh `write` cũng so sánh `use_cases` — dưới nhãn riêng `use-case thêm`/
 `use-case bỏ`/`use-case đổi mô tả`, tách khỏi diff cấp node FN.

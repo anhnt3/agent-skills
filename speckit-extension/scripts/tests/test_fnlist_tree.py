@@ -543,6 +543,30 @@ def test_assign_ids_move_plus_insert_same_run_no_id_collision_or_status_leak():
     assert "status" not in next(n for n, _ in ft.walk(new) if n["name"] == "Y")
 
 
+def test_assign_ids_stable_across_reimport_when_fn_child_and_use_case_share_name():
+    # Cha "A" có cả một node FN con tên "U1" LẪN một use-case con cùng tên
+    # "U1" — khớp shape mà spec §2 yêu cầu hỗ trợ (một node vừa có `children`
+    # vừa có `use_cases`). Nếu old_by_path chỉ khoá theo tên (không phân biệt
+    # namespace FN/use-case), entry use-case ghi đè âm thầm lên entry FN cùng
+    # tên (walk() trả children trước use_cases), và ở lần import lại node FN
+    # con tra trúng entry use-case (khác tiền tố ID), khớp thất bại, ID bị cấp
+    # lại dù nguồn không đổi gì. Chạy hai lần liên tiếp trên cùng một shape
+    # phải cho đúng cùng ID cả hai bên.
+    old = [_mk("A", [_mk("U1")])]
+    old[0]["use_cases"] = [_mk_uc("U1")]
+    ft.assign_ids(old)
+    fn_id_before = old[0]["children"][0]["id"]
+    uc_id_before = old[0]["use_cases"][0]["id"]
+    assert fn_id_before != uc_id_before        # tiền tố khác nhau (FN-.. vs FN-..-UC-..)
+
+    new = [_mk("A", [_mk("U1")])]
+    new[0]["use_cases"] = [_mk_uc("U1")]
+    ft.assign_ids(new, old)
+
+    assert new[0]["children"][0]["id"] == fn_id_before
+    assert new[0]["use_cases"][0]["id"] == uc_id_before
+
+
 def test_assign_ids_assigns_use_case_ids_scoped_to_parent():
     tree = [_mk("A", [_mk("A1")])]
     tree[0]["children"][0]["use_cases"] = [_mk_uc("U1"), _mk_uc("U2")]
@@ -721,6 +745,37 @@ def test_diff_reports_use_case_description_change():
     entry = next(d for d in ft.diff_trees(old, new)
                  if d["loai"] == "use-case đổi mô tả")
     assert entry["ten"] == "U1" and entry["cu"] == "cũ" and entry["moi"] == "mới"
+
+
+def test_diff_reports_use_case_promoted_to_fn_child_as_flip_not_swallowed():
+    # Cùng một dòng nguồn, "Lá gộp" giữ nguyên vị trí, nhưng U1 đổi VAI TRÒ:
+    # ở bản cũ nó là use-case con (không mã outline), ở bản mới nó có mã
+    # outline riêng nên trở thành node FN con thật sự. Danh tính cũ (use-case)
+    # và danh tính mới (FN) phải cùng hiện ra — không được "biến mất" chỉ vì
+    # đường dẫn tên đó vẫn tồn tại ở namespace khác trong cây kia.
+    old = [_mk("A", [_mk("Lá gộp")])]
+    old[0]["children"][0]["use_cases"] = [_mk_uc("U1")]
+    old = _prepared(old)
+    new = [_mk("A", [_mk("Lá gộp", [_mk("U1")])])]
+    new = _prepared(new)
+    entries = ft.diff_trees(old, new)
+    kinds = {(d["loai"], d["ten"]) for d in entries}
+    assert ("use-case bỏ", "U1") in kinds     # danh tính cũ (use-case) mất đi
+    assert ("thêm", "U1") in kinds            # danh tính mới (node FN) xuất hiện
+
+
+def test_diff_reports_fn_child_demoted_to_use_case_as_flip_not_swallowed():
+    # Chiều ngược lại: U1 là node FN con ở bản cũ, mất mã outline riêng ở bản
+    # mới nên bị gộp thành use-case con của "Lá gộp".
+    old = [_mk("A", [_mk("Lá gộp", [_mk("U1")])])]
+    old = _prepared(old)
+    new = [_mk("A", [_mk("Lá gộp")])]
+    new[0]["children"][0]["use_cases"] = [_mk_uc("U1")]
+    new = _prepared(new)
+    entries = ft.diff_trees(old, new)
+    kinds = {(d["loai"], d["ten"]) for d in entries}
+    assert ("bỏ", "U1") in kinds              # danh tính cũ (node FN) mất đi
+    assert ("use-case thêm", "U1") in kinds   # danh tính mới (use-case) xuất hiện
 
 
 def test_subtree_leaves_returns_self_when_no_children():
