@@ -345,6 +345,71 @@ def test_build_tree_staircase_rejects_multiple_filled_columns():
     assert "nhiều hơn một cột" in str(e.value)
 
 
+GRID_OUTLINE_WITH_CONTENT = [
+    ["STT", "Tên", "Mô tả", "Mức quan trọng"],
+    ["1", "Nhóm A", "", ""],
+    ["1.1", "Lá gộp", "", ""],
+    ["uc001", "UC1", "mô tả 1", "Cao"],
+    ["uc002", "UC2", "mô tả 2", ""],
+    ["1.2", "Lá đơn", "mô tả riêng", ""],
+]
+
+MAP_ABSORB = {
+    "first_data_row": 1,
+    "columns": {"name": 1, "description": 2, "importance": 3},
+    "hierarchy": {"mode": "outline", "column": 0, "unmatched_rows": "absorb"},
+}
+
+
+def test_build_tree_absorbs_unmatched_rows_as_use_cases():
+    tree, skipped = ft.build_tree(GRID_OUTLINE_WITH_CONTENT, MAP_ABSORB)
+    assert skipped == []
+    la_gop = tree[0]["children"][0]
+    assert la_gop["name"] == "Lá gộp"
+    assert [u["name"] for u in la_gop["use_cases"]] == ["UC1", "UC2"]
+    assert la_gop["use_cases"][0]["description"] == "mô tả 1"
+    assert la_gop["use_cases"][0]["importance"] == "Cao"
+    assert "importance" not in la_gop["use_cases"][1]     # ô trống -> không ghi
+    la_don = tree[0]["children"][1]
+    assert la_don.get("use_cases") is None
+    assert la_don["description"] == "mô tả riêng"
+
+
+def test_build_tree_unmatched_rows_default_is_error():
+    grid = [["STT", "Tên", "Mô tả"],
+            ["1", "Nhóm A", ""],
+            ["uc001", "UC1", ""]]
+    mapping = {"first_data_row": 1, "columns": {"name": 1, "description": 2},
+               "hierarchy": {"mode": "outline", "column": 0}}   # không khai unmatched_rows
+    with pytest.raises(ValueError) as e:
+        ft.build_tree(grid, mapping)
+    assert "không đọc được cấp" in str(e.value)
+
+
+def test_build_tree_absorb_without_open_group_errors_clearly():
+    grid = [["STT", "Tên", "Mô tả"], ["uc001", "UC1", ""]]
+    mapping = {"first_data_row": 1, "columns": {"name": 1, "description": 2},
+               "hierarchy": {"mode": "outline", "column": 0, "unmatched_rows": "absorb"}}
+    with pytest.raises(ValueError) as e:
+        ft.build_tree(grid, mapping)
+    assert "không có nhóm cha" in str(e.value)
+
+
+def test_build_tree_node_can_have_both_children_and_use_cases():
+    grid = [
+        ["STT", "Tên", "Mô tả"],
+        ["1", "Nhóm A", ""],
+        ["uc001", "UC rời", "mô tả rời"],
+        ["1.1", "Nhóm con", ""],
+    ]
+    mapping = {"first_data_row": 1, "columns": {"name": 1, "description": 2},
+               "hierarchy": {"mode": "outline", "column": 0, "unmatched_rows": "absorb"}}
+    tree, _ = ft.build_tree(grid, mapping)
+    node = tree[0]
+    assert [u["name"] for u in node["use_cases"]] == ["UC rời"]
+    assert [c["name"] for c in node["children"]] == ["Nhóm con"]
+
+
 def _mk(name, children=(), description=""):
     return {"name": name, "description": description,
             "children": [dict(c) for c in children]}

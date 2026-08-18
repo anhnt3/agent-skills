@@ -225,7 +225,9 @@ def _level_and_name(raw, mapping, rowno=None):
     name = _cell(raw, cols.get("name"))
     if mode == "outline":
         code = _cell(raw, h["column"]).rstrip(".")
-        return (code.count(".") + 1 if code else None), name
+        if code and OUTLINE_RE.match(code):
+            return (code.count(".") + 1), name
+        return (None, name)
     if mode == "level":
         value = _cell(raw, h["column"])
         return (int(value) if value.isdigit() else None), name
@@ -259,8 +261,28 @@ def _iter_data_rows(grid, mapping, skipped):
         yield rowno, raw
 
 
+UC_EXTRA_FIELDS = ("importance", "type", "usage_timing")
+
+
+def _use_case_extra(raw, mapping):
+    """Các trường bổ sung (Mức quan trọng/Loại UC/Thời điểm sử dụng) cho một
+    dòng use-case — chỉ ghi khi mapping có khai cột VÀ ô đó có giá trị."""
+    cols = mapping.get("columns") or {}
+    out = {}
+    for key in UC_EXTRA_FIELDS:
+        col = cols.get(key)
+        if col is None:
+            continue
+        val = _cell(raw, col)
+        if val:
+            out[key] = val
+    return out
+
+
 def _build_leveled(grid, mapping):
     desc_col = (mapping.get("columns") or {}).get("description")
+    h = mapping.get("hierarchy") or {}
+    unmatched = h.get("unmatched_rows", "error")
     roots, skipped, stack = [], [], []
     for rowno, raw in _iter_data_rows(grid, mapping, skipped):
         level, name = _level_and_name(raw, mapping, rowno)
@@ -269,6 +291,17 @@ def _build_leveled(grid, mapping):
                             "raw": raw[:6]})
             continue
         if level is None:
+            if unmatched == "absorb":
+                if not stack:
+                    raise ValueError(
+                        f"Dòng {rowno} ('{name}'): không có nhóm cha nào đang "
+                        "mở để gắn làm use-case con — kiểm lại dòng đầu file "
+                        "nguồn hoặc mapping.")
+                stack[-1].setdefault("use_cases", []).append({
+                    "name": name, "description": _cell(raw, desc_col),
+                    "row": rowno, **_use_case_extra(raw, mapping),
+                })
+                continue
             raise ValueError(
                 f"Dòng {rowno} ('{name}'): không đọc được cấp của dòng — "
                 "kiểm lại khối hierarchy trong mapping.")
