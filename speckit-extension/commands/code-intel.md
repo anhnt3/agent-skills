@@ -239,9 +239,9 @@ hai ngoài phạm vi đó.
 - **Tìm thấy** màn hình/luồng khớp → field như đường B dưới đây: `Màn hình` nguyên văn từ
   §2, `Người dùng` suy từ §6/§2, `Người sử dụng và yêu cầu`/`Mô tả tóm tắt`/`Luồng sự kiện
   chuẩn`/`Luồng sự kiện nhỏ` từ §5, cite đầy đủ.
-- **Không tìm thấy** → `Màn hình` VÀ bốn field còn lại (`Người sử dụng và yêu cầu`/`Mô tả
-  tóm tắt`/`Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ`) đều ghi đúng nguyên văn "Chưa tìm
-  thấy hiện thực trong mã nguồn." — **KHÔNG bịa nội dung từ mô tả `use_cases[].description`
+- **Không tìm thấy** → `Màn hình` VÀ năm field còn lại (`Người dùng`/`Người sử dụng và yêu
+  cầu`/`Mô tả tóm tắt`/`Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ`) đều ghi đúng nguyên văn
+  "Chưa tìm thấy hiện thực trong mã nguồn." — **KHÔNG bịa nội dung từ mô tả `use_cases[].description`
   của Excel** (kỷ luật ba dạng vẫn áp dụng nguyên vẹn: không có căn cứ code thì không
   viết, mô tả Excel không phải một nguồn hợp lệ để thay). **KHÔNG đưa xuống §8** — đây là
   kết luận "chưa hiện thực", không phải câu hỏi, cùng tinh thần với "Chưa tìm thấy hiện
