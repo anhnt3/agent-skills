@@ -258,9 +258,9 @@ hai ngoài phạm vi đó.
 - Quét thấy MỘT màn hình/luồng thật có use case rõ ràng nhưng KHÔNG khớp bất kỳ
   `use_cases[]` nào đã khai (code làm nhiều hơn Excel liệt kê) → vẫn dựng thêm khối
   `### [Tên tự đặt từ màn hình/luồng đó]` như đường B (tự khám phá), đặt SAU các khối
-  theo `use_cases[]`, và ghi nhớ đây là nhánh phát sinh thêm — bước 11 sẽ gộp báo cáo toàn
-  bộ nhánh phát sinh thêm của unit thành **một lượt hỏi duy nhất** ở cuối, KHÔNG dừng lại
-  hỏi ngay tại đây (mâu thuẫn với "bước 5-8 không AskUserQuestion").
+  theo `use_cases[]`, và ghi nhớ đây là nhánh phát sinh thêm — phần Kết thúc sẽ gộp báo
+  cáo toàn bộ nhánh phát sinh thêm của unit thành **một lượt hỏi duy nhất** ở cuối, KHÔNG
+  dừng lại hỏi ngay tại đây (mâu thuẫn với "bước 5-8 không AskUserQuestion").
 
 **B. Leaf không có `use_cases[]`** — giữ nguyên hành vi hiện tại, không đổi gì: với mỗi
 màn hình đã có ở §2, dựng một khối `### [Tên Use Case]`, KHÔNG quét code lần hai — tái
@@ -499,6 +499,6 @@ BLOCKING mà không tự sửa được).
 - **Đưa nhánh `use_cases[]` không tìm thấy code xuống §8** → đây là kết luận "chưa hiện
   thực", không phải câu hỏi chờ trả lời; ghi ngay tại nhánh, không đưa xuống §8.
 - **Dừng lại hỏi AskUserQuestion ngay khi thấy nhánh `S-n` phát sinh thêm (code nhiều hơn
-  Excel khai)** → gộp vào đúng một lượt ở bước 11 cuối cùng, không hỏi giữa lúc sinh.
+  Excel khai)** → gộp vào đúng một lượt ở phần Kết thúc cuối cùng, không hỏi giữa lúc sinh.
 - **Quên set status cho ID `use_cases[]` item ở bước 10, chỉ set FN-ID leaf** → tiến độ
   của riêng use-case đó không được ghi nhận dù đã xử lý xong ở §12.
