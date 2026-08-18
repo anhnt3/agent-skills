@@ -664,7 +664,9 @@ BLOCKING mà không tự sửa được.
 - **Ghi thẳng `file:dòng` hoặc tên class/hàm từ intel sang srs** → phá ranh giới nội bộ/
   giao khách.
 - **Bịa `Mức quan trọng`/`Loại UC`/`Thời điểm sử dụng` ở mục `d.`** thay vì ghi "Chưa có
-  thông tin" → đây là phân loại nghiệp vụ thuần, không có căn cứ code nào trả lời được.
+  thông tin" → đây là phân loại nghiệp vụ thuần, không có căn cứ code nào trả lời được —
+  nhưng nếu `intel §12` đã ghi giá trị thật cho field này thì rót nguyên văn giá trị đó
+  (xem bước 5), "Chưa có thông tin" chỉ đúng khi `intel §12` cũng ghi vậy.
 - **Tự vẽ mockup hoặc mô tả bố cục cho phần ảnh của mục `f. Thiết kế UX/UI và Mô tả điều
   khiển`** → luôn ghi cố định `_(cần chèn ảnh — không tự sinh)_`, `intel.md` không quét bố
   cục UI. (Phần BẢNG điều khiển của cùng mục này thì có nguồn thật là `intel §11` — rót
