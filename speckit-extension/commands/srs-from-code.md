@@ -63,7 +63,30 @@ python .specify/extensions/dft-speckit/scripts/intel_tree.py propose \
 
 In ra danh sách unit đề xuất (mặc định: node có tất cả con đều là lá, hoặc node không
 có con đứng một mình) kèm cây thụt lề có đánh dấu `[UNIT]`. Trình nguyên văn cây này cho
-người dùng qua AskUserQuestion: xác nhận đúng ranh giới, hay muốn gộp/tách lại?
+người dùng qua AskUserQuestion — **gộp đúng một lượt hỏi** gồm hai câu, không tách thành
+hai lượt riêng:
+
+1. Xác nhận đúng ranh giới, hay muốn gộp/tách lại?
+2. Dự án đích có tài liệu quy ước UI/giao diện riêng không (style guide, coding convention
+   nội bộ…)? Diễn đạt đúng hai lựa chọn rời rạc (khớp cơ chế `AskUserQuestion` — mỗi câu
+   cần 2-4 option, dùng "Other" cho nhập tự do, KHÔNG hỏi tự do ngoài khuôn này):
+   - "Không có tài liệu quy ước riêng" (mặc định nếu không chắc).
+   - "Có — dán đường dẫn vào Other" (đường dẫn thật nhận qua lựa chọn "Other" của chính
+     câu này, không mở thêm câu/lượt hỏi nào khác để xin đường dẫn).
+   Chọn "Có" nhưng "Other" bỏ trống hoặc không phải một đường dẫn → xử như "Không có", KHÔNG
+   hỏi lại lượt hai (giữ đúng "gộp một lượt hỏi" ở trên).
+
+   Có đường dẫn hợp lệ về mặt cú pháp → **kiểm tồn tại ngay tại đây** (agent cha, một lần,
+   trước khi sang bước 2): file không tồn tại → in cảnh báo ngay tại chỗ, chốt kết quả cho
+   cả batch là "không có" (không mang cảnh báo "path không tồn tại" xuống bước 3/6 — không
+   có mục nào ở bước 3/11 để trình bày loại cảnh báo này, mang xuống là để nó biến mất khi
+   chạy song song). File tồn tại → chốt đường dẫn, dùng ở bước 6 khi viết mục
+   `f. Thiết kế UX/UI và Mô tả điều khiển` để tránh lặp lại những chi tiết đã là quy ước
+   chung của dự án. Kết quả (đường dẫn hợp lệ, hoặc "không có") chốt **một lần cho cả batch**
+   (mọi unit runnable của lượt chạy này, kể cả khi dispatch song song ở bước 3). Câu hỏi này
+   hỏi lại mỗi lần lệnh chạy (không có nơi lưu câu trả lời cũ giữa hai lần chạy) — trả lời
+   khác nhau giữa hai lần chạy trên cùng dự án làm độ chi tiết của bảng điều khiển đổi theo,
+   đây là giới hạn đã biết, không phải lỗi no-clobber ở bước 4.
 
 - Điều chỉnh hợp lệ: chọn một tập node KHÁC làm root của unit (sâu hơn hoặc cao hơn đề
   xuất), miễn mỗi root vẫn là một nhánh cây hợp lệ (không lẫn hai node không phải anh em
@@ -138,7 +161,10 @@ Chạy song song: dispatch một Agent riêng cho mỗi unit runnable, giao FN-I
 đường dẫn `srs.md` đã suy ở bước 2, đường dẫn `intel.md` tương ứng, danh sách FN-ID kèm
 status (từ bước 2), cờ **có phải là unit mang marker "Giao tiếp trong hệ thống" hay không**
 (đã resolve một lần ở bước 2 — chỉ đúng một subagent trong cả đợt dispatch nhận cờ `có`,
-mọi subagent còn lại nhận cờ `không`), và yêu cầu subagent đọc lại chính file lệnh này
+mọi subagent còn lại nhận cờ `không`), **đường dẫn tài liệu quy ước UI riêng của dự án
+đích đã chốt VÀ đã kiểm tồn tại ở bước 1** (hoặc "không có" — dùng chung cho mọi subagent,
+subagent không tự hỏi lại câu này, cũng không tự kiểm tồn tại lại), và yêu cầu subagent
+đọc lại chính file lệnh này
 (`.specify/extensions/dft-speckit/commands/srs-from-code.md`) rồi thực hiện đúng Bước
 4–11 dưới đây cho một unit đó. Không đồng bộ giữa các subagent — hai unit dùng chung một
 entity có thể diễn giải khác nhau, chấp nhận là giới hạn đã biết (giống hệt `code-intel`).
@@ -152,7 +178,7 @@ tất, gom toàn bộ cặp `FN-ID=srs` và `use_cases[]`=srs từ mọi subagen
 `fnlist_import.py update` **đúng một lần** với đầy đủ các `--set`.
 
 Cùng lúc báo cáo cặp `FN-ID=srs`, subagent **cũng báo cáo lại** — không tự trình bày,
-không tự hỏi người dùng — hai thứ nữa:
+không tự hỏi người dùng — ba thứ nữa:
 
 - Danh sách các dòng `intel §10` đang `đang chờ` của unit mình (mô tả + nguồn `file:dòng`
   + đường dẫn `intel.md`): subagent không có lượt tương tác tiếp theo của riêng nó để
@@ -163,10 +189,14 @@ không tự hỏi người dùng — hai thứ nữa:
   (không được im lặng bỏ qua), nhưng **việc trình bày cho người dùng vẫn phải xảy ra**,
   và subagent không có ai để trình bày trực tiếp. Không báo cáo mục này = warnings của
   unit đó biến mất hoàn toàn khỏi mọi báo cáo mà người dùng thấy được.
+- **Danh sách control đã bị rút gọn câu (1) `Hình thức & Vị trí` theo quy ước UI dự án**
+  (nếu có dùng cơ chế này ở bước 6): tên control + quy tắc cụ thể đã dựa vào để bỏ. Cùng lý
+  do với warnings — subagent không có ai để trình bày, không báo cáo mục này = không ai
+  spot-check được liệu rút gọn có đúng căn cứ hay không.
 
 Agent cha gom các danh sách này từ mọi subagent, gộp vào ĐÚNG MỘT lượt hỏi người dùng ở
-cuối (cho §10) và ĐÚNG MỘT phần trình bày warnings gộp theo unit (bước 11 phần 1), rồi tự
-ghi ngược
+cuối (cho §10) và ĐÚNG MỘT phần trình bày warnings + danh sách control đã rút gọn, gộp
+theo unit (bước 11 phần 1), rồi tự ghi ngược
 `intel.md` §10 theo từng unit sau khi có câu trả lời.
 
 Chạy tuần tự: lặp qua từng unit runnable, thực hiện Bước 4–11 cho unit đó xong mới sang
@@ -214,7 +244,7 @@ trong `intel.md` không có thì mục `srs.md` tương ứng cũng không có g
 | §6 Phân quyền | mục `a. Đối tượng tham gia`, `b. Điều kiện thực hiện` |
 | §7 Tích hợp ngoài, tác vụ nền, sự kiện | rải vào mục `g. Yêu cầu nghiệp vụ` |
 | §9 Thông báo hiển thị | rải vào mục `g. Yêu cầu nghiệp vụ` |
-| §11 Điều khiển giao diện | phần BẢNG của mục `f. Thiết kế UX/UI và Mô tả điều khiển` (bảng Tên điều khiển/Mô tả điều khiển, khớp cột `Màn hình` của §11 với màn hình hiện thực leaf đang viết) |
+| §11 Điều khiển giao diện | phần BẢNG của mục `f. Thiết kế UX/UI và Mô tả điều khiển` (bảng giao khách vẫn ĐÚNG HAI cột `Tên điều khiển`/`Mô tả điều khiển` như `srs-template.md` — ba cột nguồn `Hình thức & Vị trí`/`Ràng buộc & Mặc định`/`Hành vi khi tương tác` của §11 GHÉP lại thành nội dung cột `Mô tả điều khiển`, xem thứ tự ghép + luật rút gọn theo quy ước dự án ở bước 6; khớp cột `Màn hình` của §11 với màn hình hiện thực leaf đang viết) |
 | §12 Kịch bản Use Case | mục `d. Kịch bản trường hợp sử dụng` — **ĐÚNG MỘT bảng cho cả mục** (một khối `#####` = một use case): `Tên Use Case` = tên leaf (tiêu đề khối `#####`), 8 field còn lại là hàng bảng, xem quy ước bảng HTML ở bước 8. Nhiều khối `###` của §12 cùng ứng với leaf này → chúng là các CHỨC NĂNG NHỎ, gộp thành các nhánh `S-1`, `S-2`… trong `Luồng sự kiện chuẩn`/`Luồng sự kiện nhỏ` của bảng duy nhất đó, KHÔNG viết thành nhiều bảng. **Chọn đúng khối §12 thuộc leaf đang viết**: khối CÓ comment `<!-- use-case-id: <id> -->` ngay dưới heading (đường A, `code-intel` bước 5 phần A) → chọn theo khoá này, khối thuộc leaf có FN-ID là TIỀN TỐ của `<id>` (vd marker `FN-01-01-UC-01` thuộc leaf `FN-01-01`) — dùng khoá này bất kể `Màn hình` của khối là tên màn hình thật hay câu sentinel "Chưa tìm thấy hiện thực trong mã nguồn." (ca không tìm thấy). Khối KHÔNG có marker (đường B, tự khám phá) → chọn như cũ, khớp `Màn hình` với §2. Field `Màn hình` (khi dùng làm khoá) KHÔNG copy vào `d.` + mục `c. Mô hình Usecase` (mermaid, dựng từ Tên Use Case + Người dùng của §12) |
 | §10 Phát hiện logic/bảo mật | **Không rót vào `srs.md`** — chỉ dùng ở bước 11 để hỏi người dùng |
 
@@ -299,9 +329,12 @@ Không tự suy nội dung cho ba mục này từ bất kỳ nguồn nào — kh
   → **bỏ qua khối đó, không vẽ actor/use case cho nó** — không vẽ một actor tên là câu
   sentinel đó.
 
-**`###### f. Thiết kế UX/UI và Mô tả điều khiển`**: MỘT mục gộp, **CHIA THEO TỪNG USE
-NĂNG NHỎ**. Mỗi nhánh `S-n` ở mục `d.` là một đầu mục lớn `**[Tên chức năng nhỏ]**` ở đây
-(cùng tên, cùng thứ tự, đúng bằng số nhánh `S-n` ở `d.`), bên dưới nó theo đúng thứ tự:
+**`###### f. Thiết kế UX/UI và Mô tả điều khiển`**: MỘT mục gộp, **CHIA THEO TỪNG CHỨC
+NĂNG NHỎ**. Có câu tham chiếu quy ước UI (điều kiện kích hoạt + nội dung xem bước 6) →
+câu đó đứng NGAY DƯỚI heading `f.`, TRƯỚC đầu mục `**[Tên chức năng nhỏ]**` đầu tiên — một
+lần cho cả khối leaf, không lặp lại ở từng chức năng nhỏ. Sau đó, mỗi nhánh `S-n` ở mục
+`d.` là một đầu mục lớn `**[Tên chức năng nhỏ]**` ở đây (cùng tên, cùng thứ tự, đúng bằng
+số nhánh `S-n` ở `d.`), bên dưới nó theo đúng thứ tự:
 (1) placeholder ảnh của các màn liên quan RIÊNG chức năng nhỏ đó — luôn ghi cố định
 `_(cần chèn ảnh — không tự sinh)_`, không bao giờ tự vẽ mockup hay mô tả bố cục
 (`intel.md` không quét bố cục UI); (2) ngay dưới là bảng điều khiển RIÊNG của chức năng
@@ -366,11 +399,50 @@ Văn phong rót giữ nguyên toàn bộ quy ước đã chốt ở spec đợt 
   > nhưng chắc chắn không bị bỏ) cho tới khi có đường xuất khác xử lý được HTML thô.
 - **Bảng điều khiển trong `f. Thiết kế UX/UI và Mô tả điều khiển`**: MỖI chức năng nhỏ một
   bảng riêng, đặt NGAY DƯỚI placeholder ảnh của chính chức năng nhỏ đó (không tách heading
-  `######` riêng — đầu mục chỉ là dòng in đậm `**[Tên chức năng nhỏ]**`). Cột `Tên điều khiển` viết dạng
-  `**[Loại] "[nhãn hiển thị đúng nguyên văn trên UI]"**` — IN ĐẬM cả ô (`**...**`), đúng
-  như tài liệu ban hành thật. Cột `Mô tả điều khiển` giữ văn xuôi thường (không in đậm),
-  2-3 câu tách dòng riêng theo thứ tự: (1) hình thức + vị trí hiển thị, (2) ràng buộc ngắn
-  gọn nếu có (câu độc lập "Trường bắt buộc."), (3) hành vi/mục đích khi tương tác.
+  `######` riêng — đầu mục chỉ là dòng in đậm `**[Tên chức năng nhỏ]**`). Bảng giao khách
+  giữ ĐÚNG HAI cột như `srs-template.md`: `Tên điều khiển` | `Mô tả điều khiển` — không
+  thêm cột dù `intel §11` (nguồn) đã tách ba cột riêng để dễ trích xuất (xem bước 5).
+  Cột `Tên điều khiển` viết dạng `**[Loại] "[nhãn hiển thị đúng nguyên văn trên UI]"**` —
+  IN ĐẬM cả ô (`**...**`), đúng như tài liệu ban hành thật.
+
+  Cột `Mô tả điều khiển` GHÉP ba cột nguồn của `intel §11` thành văn xuôi thường (không in
+  đậm), mỗi cột nguồn một câu — BA câu nối liền nhau trong CÙNG MỘT DÒNG của ô bảng (bảng
+  markdown thuần `| --- | --- |`, xuống dòng thật trong ô sẽ phá bảng; không dùng `<br>`),
+  đúng thứ tự: (1) `Hình thức & Vị trí` —
+  hình thức + vị trí hiển thị (bỏ câu này nếu nguồn ghi "—"), (2) `Ràng buộc & Mặc định` —
+  ràng buộc/mặc định ngắn gọn (bỏ câu này nếu nguồn ghi "—"), (3) `Hành vi khi tương tác` —
+  hành vi/mục đích khi tương tác (câu này KHÔNG BAO GIỜ được bỏ hay để "—", kể cả control
+  chỉ hiển thị/không thao tác thì viết "Chỉ hiển thị, không thao tác."). Không tự suy thêm
+  chi tiết ngoài ba cột nguồn — thiếu thì bỏ câu đó, không bịa cho đủ ba câu.
+  **`intel §11` chỉ có một cột `Mô tả` chung** (bảng sinh từ `code-intel` bản trước thay đổi
+  này, chưa có ba cột) → rót nguyên văn cột đó làm cả nội dung `Mô tả điều khiển`, không tự
+  tách/không tự bịa thêm câu cho đủ ba; muốn có mô tả đầy đủ thì chạy lại `code-intel` cho
+  unit đó trước.
+
+  **Có tài liệu quy ước UI riêng của dự án đích** (đường dẫn đã chốt ở bước 1, đọc một
+  lần): CHỈ được rút gọn câu **(1) `Hình thức & Vị trí`** — TUYỆT ĐỐI không đụng tới câu (2)
+  `Ràng buộc & Mặc định` dù nó cũng trùng quy ước chung, vì mục `g. Yêu cầu nghiệp vụ` dưới
+  đây đã có luật BỎ ràng buộc định dạng/bắt buộc với lý do "đã nằm ở cột `Mô tả điều khiển`
+  mục `f.`" — bỏ luôn ở cả hai chỗ làm ràng buộc biến mất khỏi toàn bộ tài liệu, không cổng
+  nào bắt được. Với câu (1) của MỖI control: nếu nội dung chỉ lặp lại đúng một quy tắc CHUNG
+  mà tài liệu đó đã nêu cho MỌI control cùng loại (vd "mọi nút hành động chính nền xanh đậm
+  chữ trắng") → bỏ câu (1), chỉ giữ phần khác biệt/đặc thù riêng của chính control này nếu
+  có. Không suy đoán quy ước — chỉ bỏ khi tài liệu đó THẬT SỰ nêu đúng quy tắc đang định bỏ;
+  đọc sai/không chắc thì giữ nguyên câu, không bỏ. Một bảng mà **quá 2/3 số control** bị bỏ
+  câu (1) → dừng lại rà soát có đang bỏ tràn lan không có căn cứ hay không trước khi ghi.
+  Bằng chứng cho việc rút gọn KHÔNG viết vào `srs.md` (tài liệu giao khách, xem luật đầu bước
+  6) — thay vào đó, mỗi lần bỏ câu (1) của một control, tự ghi nhớ (tên control + quy tắc cụ
+  thể đã dựa vào) để liệt kê ở phần 1 "Số liệu" của bước 11 (chạy song song thì đây là một
+  trong ba thứ subagent phải báo cáo lại ở bước 3, cùng chỗ với warnings và §10).
+
+  Bỏ được ít nhất một câu (1) trong khối leaf → thêm ĐÚNG MỘT câu tham chiếu cố định ngay
+  dưới heading `###### f. Thiết kế UX/UI và Mô tả điều khiển` của khối đó (một lần cho cả
+  khối, KHÔNG lặp lại trước mỗi bảng chức năng nhỏ, KHÔNG nêu tên/đường dẫn tài liệu quy
+  ước — viết đúng nguyên văn, không thêm bớt): "Điều khiển tuân theo quy ước UI chung của dự
+  án đã cung cấp; dưới đây chỉ nêu phần hình thức khác biệt hoặc bổ sung so với quy ước đó."
+  Không có câu (1) nào bị bỏ trong khối leaf → không thêm câu tham chiếu này.
+  **Không có tài liệu quy ước** (chốt "không có" ở bước 1) → giữ đầy đủ cả ba câu như mô tả
+  ở trên cho mọi control, không rút gọn gì, không thêm câu tham chiếu.
 - **`g. Yêu cầu nghiệp vụ`**: CÓ quy tắc thật → danh sách gạch đầu dòng (`- `), MỖI quy
   tắc/ràng buộc một dòng riêng — không gộp nhiều quy tắc thành đoạn văn nhiều câu. Mỗi
   dòng vẫn là câu ghép "Khi người dùng [hành động], hệ thống [phản ứng], đồng thời [phản
@@ -389,7 +461,12 @@ Văn phong rót giữ nguyên toàn bộ quy ước đã chốt ở spec đợt 
     ghi lại ở đây là trùng lặp; nguyên văn câu thông báo lỗi/thành công; hành vi CRUD/UI
     thông thường (đóng hộp thoại sau khi lưu, tải lại danh sách, khoá nút khi đang gửi,
     phân trang/sắp xếp mặc định, độ trễ gõ phím, loại bản ghi đã xoá khỏi truy vấn, ghi
-    nhật ký thao tác).
+    nhật ký thao tác). **Ngoại lệ**: mục `f.` của leaf này KHÔNG có bảng điều khiển nào —
+    hoặc vì §11 `Loại = không-có-UI` (mục `f.` ghi "Chưa có thông tin", xem bước 8), hoặc vì
+    §11 không có dòng nào cho màn hình của leaf này (`man-hinh-thieu-dieu-khien` ở
+    `intel_verify.py`) — nên lý do BỎ "đã nằm ở cột `Mô tả điều khiển` mục `f.`" không áp
+    được — GIỮ nguyên ràng buộc định dạng/độ dài/bắt buộc quan trọng ở `g.` cho leaf đó,
+    không bỏ theo mặc định trên.
   - **GIỮ**: quy tắc duy nhất/trùng lặp và phạm vi áp dụng; phân quyền và phạm vi dữ liệu
     (ai được thấy/thao tác cái gì); vòng đời trạng thái và điều kiện chuyển trạng thái;
     ràng buộc liên trường/liên thực thể, quy tắc tính toán; giao dịch/hoàn tác và tính
@@ -566,9 +643,10 @@ sinh `srs.md` thì không có gì để so, bỏ cờ này. Đọc JSON trả v�
   thật hay chỉ là nội dung để trống hợp lệ (vd không có luồng §12 cho mermaid `c.`).
   `yeu-cau-nghiep-vu-dai` nghĩa là mục `g.` của một khối leaf vượt ngưỡng mềm 15 gạch đầu
   dòng — soát lại theo đúng danh sách BỎ/GIỮ ở bước 6 (bỏ ràng buộc định dạng từng trường,
-  nguyên văn thông báo, hành vi CRUD/UI thông thường; giữ nguyên quy tắc phân quyền/trạng
-  thái/ngưỡng nghiệp vụ). Chức năng phức tạp thật sự vượt ngưỡng là hợp lệ — nhưng phải nêu
-  rõ đã soát và vì sao giữ, không được im lặng bỏ qua.
+  nguyên văn thông báo, hành vi CRUD/UI thông thường — trừ leaf có ngoại lệ "mục `f.` không
+  có bảng điều khiển" ở bước 6, KHÔNG bỏ ràng buộc định dạng cho leaf đó; giữ nguyên quy tắc
+  phân quyền/trạng thái/ngưỡng nghiệp vụ). Chức năng phức tạp thật sự vượt ngưỡng là hợp lệ
+  — nhưng phải nêu rõ đã soát và vì sao giữ, không được im lặng bỏ qua.
   `nghi-duong-dan-code` có thể là báo nhầm (tên file nghiệp vụ hợp lệ trong mô tả); chọn
   "đây là báo nhầm" thì phải nêu đích danh từng chuỗi + lý do cụ thể. Không được im lặng
   bỏ qua bất kỳ warning nào.
@@ -621,6 +699,10 @@ chung thành một danh sách phẳng:
    bước 9 rồi, phần này với chạy tuần tự chỉ là nhắc lại gọn; **chạy song song thì đây là
    LẦN DUY NHẤT warnings của unit đó tới được người dùng** — dùng đúng nội dung subagent
    đã báo cáo lại (bước 3), không được chỉ dán số `M` mà bỏ qua nội dung.
+   Có rút gọn câu `Hình thức & Vị trí` theo quy ước UI dự án ở bước 6 → liệt kê ngay tại
+   đây danh sách control + quy tắc đã dựa vào (tuần tự tự có; chạy song song dùng đúng nội
+   dung subagent đã báo cáo lại) — để người dùng spot-check việc rút gọn có đúng căn cứ hay
+   không. Không rút gọn gì (không dùng cơ chế này) → bỏ hẳn mục nhỏ này.
 
 2. **Phát hiện cần bạn xác nhận** — chỉ liệt kê các mục `intel §10` có cột `Kết luận` =
    `đang chờ` (mục đã có kết luận `cố ý`/`bug` từ lần trước thì bỏ qua, không hỏi lại).
@@ -727,8 +809,9 @@ BLOCKING mà không tự sửa được.
 - **Chạy song song mà subagent không báo cáo lại `warnings` của unit mình** → warnings
   của unit đó biến mất khỏi mọi báo cáo (subagent không có ai để "trình bày" trực tiếp
   theo nghĩa bước 9, agent cha không tự sinh lại được nội dung nó không hề nhận). Bước 3
-  yêu cầu subagent báo cáo cả `FN-ID=srs`, dòng `intel §10` đang chờ, LẪN nguyên văn
-  `warnings` — thiếu bất kỳ phần nào trong ba phần đó là bỏ sót âm thầm.
+  yêu cầu subagent báo cáo cả `FN-ID=srs`, dòng `intel §10` đang chờ, nguyên văn `warnings`,
+  LẪN danh sách control đã rút gọn theo quy ước UI (nếu có dùng cơ chế đó) — thiếu bất kỳ
+  phần nào trong bốn phần đó là bỏ sót âm thầm.
 - **Tự bịa lại "Chưa có thông tin" cho `Mức quan trọng`/`Loại UC`/`Thời điểm sử dụng` dù
   `intel §12` đã ghi giá trị thật** → rót nguyên văn những gì `intel.md` có, không tự ý
   ghi đè bằng "Chưa có thông tin" theo thói quen cũ.

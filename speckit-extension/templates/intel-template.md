@@ -145,9 +145,9 @@
 
 ## 11. Điều khiển giao diện
 
-| Màn hình | Tên điều khiển | Loại | Mô tả | Nguồn |
-| --- | --- | --- | --- | --- |
-| [tên màn hình đúng như §2] | [nhãn hiển thị] | [Textbox/Button/…] | [hành vi, ràng buộc] | [file:dòng] |
+| Màn hình | Tên điều khiển | Loại | Hình thức & Vị trí | Ràng buộc & Mặc định | Hành vi khi tương tác | Nguồn |
+| --- | --- | --- | --- | --- | --- | --- |
+| [tên màn hình đúng như §2] | [nhãn hiển thị] | [Textbox/Button/…] | [icon nếu có + màu/style rõ nghĩa + vị trí bố cục, hoặc "—"] | [bắt buộc/tuỳ chọn, readonly, định dạng/độ dài, placeholder, giá trị mặc định, hoặc "—"] | [điều gì xảy ra khi click/nhập/chọn] | [file:dòng] |
 
 <!-- Cột `Màn hình` PHẢI khớp nguyên văn cột "Màn hình / endpoint" của §2 — đây là khoá
      liên kết duy nhất giữa hai mục, dùng bởi srs-from-code (đợt sau) để lọc ra bảng điều
@@ -157,14 +157,32 @@
      Passwordbox, Checkbox, Dropdown, Datepicker, Button, Link, Label (chỉ xem) — không
      đặt bộ mới. Loại thật không nằm trong danh sách đó thì ghi tên loại đó nguyên văn.
 
-     Màn hình/điểm vào ở §2 thật sự không có giao diện (endpoint REST thuần, job nền,
-     CLI, message consumer) → ghi ĐÚNG MỘT dòng với Loại = không-có-UI, cột Mô tả nêu rõ
-     lý do cụ thể (loại điểm vào là gì), kèm cite. Đây là giải trình có căn cứ, không
-     phải ô trống — cùng tinh thần với nhãn [chính sách nghiệp vụ] ở §8.
+     BA cột nội dung tách theo đúng cấu trúc câu mà srs-from-code (đợt sau) ghép lại
+     thành mô tả điều khiển giao khách — không tự gộp lại một cột "Mô tả" chung chung:
+       - `Hình thức & Vị trí`: icon (tên/thư viện nếu import có tên rõ — không đoán icon
+         không thấy), màu/style (CHỈ dịch khi class có nghĩa rõ ràng, vd `bg-blue-600`,
+         `btn-primary`, `text-danger` — class vô nghĩa kiểu hash CSS-module/styled-
+         components thì bỏ qua phần màu, không bịa), vị trí bố cục (suy từ cấu trúc JSX
+         cha — nằm trong toolbar/action-bar/popover/dialog-footer — hoặc class định vị rõ
+         nghĩa như `justify-end`/`ml-auto`/`order-last`). Control không có gì đáng nói ở
+         cột này (label/hiển-thị-thuần) → ghi "—".
+       - `Ràng buộc & Mặc định`: bắt buộc/tuỳ chọn (`required`), readonly/disabled, định
+         dạng/độ dài dữ liệu nhập (`maxLength`, `pattern`, kiểu input), `placeholder`,
+         giá trị/trạng thái mặc định (`defaultValue`, `defaultChecked`). Không có ràng
+         buộc/mặc định nào đáng nói → ghi "—".
+       - `Hành vi khi tương tác`: điều gì xảy ra khi click/nhập/chọn (điều hướng, mở
+         dialog, gọi API, cập nhật state...). Cột này KHÔNG BAO GIỜ ghi "—" — control chỉ
+         hiển thị/không thao tác (vd `Label`) thì ghi "Chỉ hiển thị, không thao tác."
+     `Hình thức & Vị trí` và `Ràng buộc & Mặc định` áp đúng kỷ luật ba dạng như mọi cột
+     khác — đọc thẳng khi tín hiệu nằm rõ trong khai báo (import icon, class định vị/màu rõ
+     nghĩa, attribute ràng buộc); suy đoán → đánh dấu (suy đoán); không có căn cứ → bỏ trống
+     ("—"), không bịa cho đầy ô.
 
-     Giữ nguyên kỷ luật ba dạng đang áp cho §2–§7, §9 — không nới riêng cho §11: đọc
-     thẳng từ khai báo control → ghi bình thường kèm cite; suy đoán → đánh dấu (suy
-     đoán); không có căn cứ → không ghi, đưa xuống §8. -->
+     Màn hình/điểm vào ở §2 thật sự không có giao diện (endpoint REST thuần, job nền,
+     CLI, message consumer) → ghi ĐÚNG MỘT dòng với Loại = không-có-UI, cột `Hình thức &
+     Vị trí` và `Ràng buộc & Mặc định` ghi "—", cột `Hành vi khi tương tác` nêu rõ lý do
+     cụ thể (loại điểm vào là gì), kèm cite. Đây là giải trình có căn cứ, không phải ô
+     trống — cùng tinh thần với nhãn [chính sách nghiệp vụ] ở §8. -->
 
 ## 12. Kịch bản Use Case
 

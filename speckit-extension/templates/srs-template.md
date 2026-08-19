@@ -247,7 +247,16 @@ sequenceDiagram
 
      Ảnh: luôn ghi cố định "_(cần chèn ảnh — không tự sinh)_" (không tự vẽ mockup, không mô
      tả bố cục). Bảng: cột "Tên điều khiển" IN ĐẬM cả ô (`**[Loại] "[nhãn]"**`), cột "Mô tả
-     điều khiển" giữ văn xuôi thường, không in đậm. -->
+     điều khiển" giữ văn xuôi thường, không in đậm.
+
+     Có rút gọn mô tả điều khiển theo quy ước UI riêng của dự án đích (xem srs-from-code
+     bước 6) → thêm ĐÚNG MỘT câu tham chiếu cố định NGAY DƯỚI heading `f.` này, TRƯỚC đầu
+     mục chức năng nhỏ đầu tiên (không lặp lại ở từng chức năng nhỏ), nguyên văn: "Điều
+     khiển tuân theo quy ước UI chung của dự án đã cung cấp; dưới đây chỉ nêu phần hình
+     thức khác biệt hoặc bổ sung so với quy ước đó." KHÔNG rút gọn gì (không có tài liệu
+     quy ước, hoặc không control nào khớp quy ước) → KHÔNG thêm câu này, đi thẳng vào đầu
+     mục chức năng nhỏ đầu tiên — câu này không phải khung cố định luôn có mặt như ảnh hay
+     bảng bên dưới. -->
 
 **[Tên chức năng nhỏ 1 — trùng tên nhánh S-1 ở mục d.]**
 
@@ -280,6 +289,9 @@ _(cần chèn ảnh — không tự sinh)_
        - Ràng buộc định dạng/độ dài từng trường (tối đa N ký tự, đúng định dạng email/số
          điện thoại, mật khẩu phải có chữ hoa/số/ký tự đặc biệt), "trường bắt buộc" ->
          những thứ này ĐÃ nằm ở cột "Mô tả điều khiển" mục f., ghi lại là trùng lặp.
+         NGOẠI LỆ: mục f. của leaf này không có bảng điều khiển nào (Loại = không-có-UI,
+         hoặc §11 không có dòng cho màn hình của leaf) -> lý do BỎ này không áp được, GIỮ
+         nguyên các ràng buộc định dạng/bắt buộc quan trọng ở g. cho leaf đó.
        - Nguyên văn câu thông báo lỗi/thành công.
        - Hành vi CRUD/UI thông thường: đóng hộp thoại sau khi lưu, tải lại danh sách, khoá
          nút khi đang gửi, phân trang/sắp xếp mặc định, độ trễ gõ phím, loại bản ghi đã

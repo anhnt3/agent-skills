@@ -219,6 +219,41 @@ không nới riêng cho §11: đọc thẳng từ khai báo control → ghi bìn
 dòng khai báo; suy đoán (vd đoán nhãn hiển thị vì nhãn nằm ở file ngôn ngữ chưa tìm ra) →
 đánh dấu `(suy đoán)`; không có căn cứ → không ghi, đưa xuống §8.
 
+**Đừng chỉ ghi loại control + nhãn** — bảng điều khiển giao khách ở `srs.md` (đợt sau) cần
+mô tả đủ để hình dung được control trên màn hình thật, giống tài liệu ban hành thật (mỗi
+control có câu tả hình thức/vị trí + ràng buộc + hành vi, không phải một dòng trống trơn
+"Button, click để lưu"). Với MỖI control, ngoài `Loại`/`Tên điều khiển`, chủ động tìm bốn
+nhóm tín hiệu sau ngay trong cùng file component (không cần quét thêm ngoài phạm vi đang
+mở) — ba nhóm đầu rót vào cột `Hình thức & Vị trí`, nhóm cuối rót vào cột
+`Ràng buộc & Mặc định`:
+
+- **Icon** (→ `Hình thức & Vị trí`) — tên component/import icon nếu JSX dùng
+  (`<UploadIcon />`, `icon="pi-upload"`…). Không thấy import icon nào → không suy có icon.
+- **Vị trí bố cục** (→ `Hình thức & Vị trí`) — suy từ vị trí trong cây JSX cha (control nằm
+  trong khối toolbar/action-bar/table-footer/dialog-footer/popover nào) hoặc class định vị
+  rõ nghĩa (`justify-end`, `ml-auto`, `order-last`, `absolute right-0`…). Không có tín hiệu
+  nào rõ → bỏ, không đoán theo cảm quan thiết kế.
+- **Màu/style** (→ `Hình thức & Vị trí`) — CHỈ dịch sang tên màu tiếng Việt khi nghĩa nằm
+  ngay trong tên class (`bg-blue-600`, `btn-primary`, `text-danger`) hoặc trong một file
+  cấu hình/theme design system **đã thật sự mở trong phiên này** (token tra được, cite kèm
+  `file:dòng` của định nghĩa token đó). Component wrapper nội bộ dự án bọc màu/vị trí sẵn
+  (`<PrimaryButton>`, `<Toolbar>`…) → được mở thêm ĐÚNG file khai báo component đó (vẫn
+  trong phạm vi "màn hình đang xét", không lan sang quét toàn bộ thư viện UI). Token không
+  tra được nguồn nào ở trên (hash CSS-module, styled-components hash, tên biến mơ hồ) → bỏ
+  qua phần màu, KHÔNG suy theo kinh nghiệm chung ("primary thường là xanh") — đúng dạng suy
+  đoán vô căn cứ mà kỷ luật ba dạng cấm.
+- **Ràng buộc & Mặc định** (→ cột cùng tên) — attribute `required`/`readOnly`/`disabled`,
+  định dạng/độ dài (`maxLength`, `pattern`, `type`), `placeholder`, giá trị/trạng thái mặc
+  định (`defaultValue`, `defaultChecked`, giá trị khởi tạo trong state).
+
+Icon + Vị trí bố cục + Màu/style gộp thành MỘT câu văn xuôi ở cột `Hình thức & Vị trí` (xem
+cấu trúc cột đầy đủ + ví dụ ở `intel-template.md`); cột `Hành vi khi tương tác` giữ đúng ý
+cột "Mô tả" cũ — điều gì xảy ra khi click/nhập/chọn. Control nào thật sự không có gì đáng
+nói ở CỘT `Hình thức & Vị trí` hoặc `Ràng buộc & Mặc định` (vd `Label` chỉ hiển thị, không
+icon không ràng buộc) → ghi "—" ở đúng cột đó, không bỏ trống ô hay bịa cho đầy. Cột
+`Hành vi khi tương tác` KHÔNG BAO GIỜ ghi "—" — control chỉ hiển thị/không thao tác thì ghi
+"Chỉ hiển thị, không thao tác." (đúng câu `srs-from-code` đợt sau dùng lại nguyên văn).
+
 Cột `Màn hình` của §11 phải khớp **nguyên văn** giá trị cột `Màn hình / endpoint` tương
 ứng ở §2 — đây là khoá liên kết duy nhất giữa hai mục mà `srs-from-code` đợt sau dùng để
 dựng bảng điều khiển cho từng màn hình. Sai một ký tự là mất liên kết.
@@ -228,10 +263,11 @@ Cột `Loại` dùng lại đúng bộ từ vựng "Loại trường điều khi
 `Label (chỉ xem)`; loại thật không nằm trong danh sách thì ghi tên loại đó nguyên văn.
 
 Màn hình/điểm vào ở §2 **thật sự không có giao diện** (endpoint REST thuần, job nền, CLI,
-message consumer) → ghi **đúng một dòng** §11 với `Loại = không-có-UI`, cột `Mô tả` nêu
-rõ **lý do cụ thể** (loại điểm vào là gì), kèm cite — đây là giải trình có căn cứ, không
-phải ô trống. `intel_verify.py` ở bước 9 cảnh báo (WARNING) nếu một màn hình ở §2 không
-có dòng §11 nào (kể cả dòng `không-có-UI`), hoặc nếu §11 có tên màn hình không khớp §2.
+message consumer) → ghi **đúng một dòng** §11 với `Loại = không-có-UI`, cột `Hình thức &
+Vị trí` và `Ràng buộc & Mặc định` ghi "—", cột `Hành vi khi tương tác` nêu rõ **lý do cụ
+thể** (loại điểm vào là gì), kèm cite — đây là giải trình có căn cứ, không phải ô trống.
+`intel_verify.py` ở bước 9 cảnh báo (WARNING) nếu một màn hình ở §2 không có dòng §11 nào
+(kể cả dòng `không-có-UI`), hoặc nếu §11 có tên màn hình không khớp §2.
 
 **Kịch bản Use Case (§12)** — sau khi §2 và §5 đã ghi xong (mục này phụ thuộc cả hai).
 Leaf đang xử lý **có `use_cases[]`** (đã xác nhận ở bước 1, lấy từ `fn_ids[].use_cases`
