@@ -50,7 +50,7 @@ Tự tìm trong repo, KHÔNG giả định đường dẫn cố định. Với *
   | Không mục nào lặp | **Không theo khuôn** | coi như im lặng toàn bộ — chạy đủ sàn GĐ2/GĐ3; `M = 0` |
 
   - [ ] Ghi sổ mục `Khuôn BRD`; đếm `M` = số mục khuôn bỏ trống. Mỗi mục → một dòng `⏳` vào GĐ2 (thuộc màn) / GĐ3 (nghiệp vụ nền), `Nguồn = khuôn BRD`. **Neo: GĐ2+GĐ3 có ≥ `M` dòng `Nguồn = khuôn BRD`** — nạp thiếu là vi phạm gate.
-  - [ ] Mục khuôn trùng mục sàn → `✅ (đã phủ tại sàn GĐ<x> mục <n>)` chỉ khi dòng sàn đã `✅`; phần khuôn nêu mà sàn chưa trả lời → thêm `⏳`. CẤM `N/A vì đã có ở dòng sàn`.
+  - [ ] Mục khuôn trùng mục sàn → VẪN TẠO DÒNG RIÊNG mang `Nguồn = khuôn BRD` (đếm vào `M`), trạng thái `✅ (đã phủ tại sàn GĐ<x> mục <n>)` chỉ khi dòng sàn đã `✅`; phần khuôn nêu mà sàn chưa trả lời → thêm `⏳`. CẤM `N/A vì đã có ở dòng sàn`, CẤM chỉ ghi chú vào dòng sàn thay vì tạo dòng (M sẽ không bao giờ đạt).
 
   **Quét xung đột BRD ↔ quy ước chung** (không tìm thấy file quy ước → hỏi một lần trong lượt gộp GĐ1; không có → bỏ, không nhắc lại). Quét cơ học, không đọc hiểu:
 
@@ -120,7 +120,7 @@ Cơ chế ép phủ hết bằng phép đếm + hồ sơ bền ngoài hội tho�
      - `T` = `S` — số section đánh số của file quy ước, đếm bằng `grep -cE '^## [0-9]+\. '` (xem GĐ1); bảng quét xung đột phải đủ `T` dòng. Không có file quy ước → `T = 0`, ghi rõ.
      - `S` = số section của **file quy ước chung** (sàn GĐ3 mục 10). Đối chiếu: bảng ở mục `Quy ước chung áp dụng` có đúng `S` dòng. Không có file → `S = 0`, ghi rõ.
      - `J` = số job nền đếm từ file cấu hình scheduler (sàn GĐ3 mục 8), nếu dự án có.
-   - **In một BẢNG NEO duy nhất ở đầu mỗi giai đoạn** thay vì rải neo: `| Ký hiệu | Nguồn đếm | Giá trị | Đã có trong bảng |`. Bảy ký hiệu tối đa: `K · N · M · T · S · J · P/Q`. Ký hiệu không áp dụng → ghi `0` kèm lý do, CẤM bỏ dòng.
+   - **In một BẢNG NEO duy nhất ở đầu mỗi giai đoạn** thay vì rải neo: `| Ký hiệu | Nguồn đếm | Giá trị | Đã có trong bảng |`. Bảy ký hiệu tối đa: `K · N · M · T · S · J · P/Q`. `T` và `S` CÙNG GIÁ TRỊ (cùng lệnh đếm trên file quy ước) nhưng kiểm HAI bảng khác nhau — `T`: bảng quét xung đột GĐ1, `S`: bảng mục 10 GĐ3; đừng nhầm `S` (neo đếm) với tiền tố bước `S-<n>`. Ký hiệu không áp dụng → ghi `0` kèm lý do, CẤM bỏ dòng.
 2. **Bảng**: `| # | Nhánh | Tầng | Nguồn | Trạng thái | Ghi chú |` — **cột `Nguồn` bắt buộc cho CẢ GĐ2 và GĐ3** (neo `M` đếm theo cột này; GĐ2 thiếu cột thì không đếm được). Tầng ∈ `trọng yếu` · `thứ yếu` (theo Bất biến #3). Nguồn ∈ `khuôn BRD` · `BRD <cite>` · `domain doc` · `liên hệ GĐ1` · `nợ kỹ thuật` · `GĐ2` · `sàn` · `phán đoán BA`. Trạng thái ∈ `⏳ chờ` · `💡 đề xuất` (chỉ cho nhánh thứ yếu; Ghi chú chứa giá trị đề xuất + căn cứ) · `✅ đã chốt` · `N/A vì <lý do cụ thể gắn feature>`. (GĐ4 dùng bộ trạng thái riêng, xem GĐ4.)
 3. **Điều kiện đánh `✅`**: (a) nhánh đã có ≥1 câu AskUserQuestion nhận được phản hồi; HOẶC (b) suy trực tiếp từ fact tra cứu (ghi rõ nguồn) — gồm dòng lấy từ BRD **đã** qua bảng `BRD đã chốt sẵn` ở GĐ1, Ghi chú phải mang cite `docs/brd/…md#<mục>`; HOẶC (c) dòng `💡` đã qua duyệt gộp ở recap cuối giai đoạn (§8); HOẶC (d) dòng khuôn BRD trùng một mục sàn — ghi `✅ (đã phủ tại sàn GĐ<x> mục <n>)`, **chỉ hợp lệ khi dòng sàn được trỏ tới đã `✅`**, và phải rà phần khuôn nêu mà dòng sàn chưa trả lời. Cấm tự đánh `✅` ngoài bốn đường này — đọc thấy trong BRD nhưng chưa qua bảng duyệt GĐ1 thì **chưa** được `✅`.
 4. **`N/A` phải kiểm chứng được**: lý do cụ thể gắn với chính feature này (vd "N/A vì màn chỉ hiển thị tĩnh, không ghi dữ liệu"). CẤM `N/A` trống, chung chung, hoặc `N/A vì đã hỏi ở giai đoạn khác` để né hỏi.
@@ -131,6 +131,7 @@ Cơ chế ép phủ hết bằng phép đếm + hồ sơ bền ngoài hội tho�
 9. **GATE (không cảm tính) — đủ cả hai mới được in recap xin xác nhận**:
    (a) **đối chiếu số đếm — in TỪNG dòng, cấm viết "mọi neo đều đạt"**:
    ```
+   Dòng bảng: <số dòng thực>/<neo dòng giai đoạn — GĐ2: ≥6K · GĐ3: ≥P+Q · GĐ4: =N> (vế trái đếm SỐ DÒNG của bảng, KHÔNG đếm số màn/số mục)
    K: <đếm>/<K>   ·   M (Nguồn=khuôn BRD): <đếm>/<M>   ·   T: <đếm>/<T>
    S (bảng mục `Quy ước chung áp dụng`): <đếm>/<S>   ·   J: <đếm>/<J>   ·   P+Q: <đếm>
    ```
@@ -216,8 +217,8 @@ Giao diện chỉ kể ra thứ **có pixel**. GĐ3 vét phần còn lại: nh�
     | Maintainability | mặc định `Bỏ` — mối quan tâm của `/speckit.plan`; chỉ hỏi khi lòi ra ràng buộc kiến trúc |
     | Flexibility | có dự kiến mở rộng cấu hình/loại đối tượng |
 
-    - Bắn → hỏi một câu: *"feature này có gì khác mặc định hệ thống không?"*; không khác → `theo mặc định` + trỏ nguồn mặc định.
-    - Không bắn → `Bỏ` + lý do gắn feature. CẤM `Bỏ` trống/chung chung. Thiếu dòng nào trong 9 = vi phạm gate.
+    - Bắn → TRA giá trị mặc định cụ thể (hiến chương / file quy ước / tài liệu NFR dự án) rồi hỏi KÈM MỐC: *"Mặc định hệ thống: <giá trị + nguồn>. Feature này có cần khác không?"* — option `(Recommended)` = theo mặc định. KHÔNG tra được mặc định cụ thể → `Bỏ` + lý do NÊU CÁC FILE ĐÃ TRA (vd `đã tra hiến chương + quy-uoc-chung.md — không có mặc định về hiệu năng danh sách`), KHÔNG tốn lượt hỏi. CẤM hỏi chay trục 25010 không kèm mốc — người trả lời nghiệp vụ không thể trả lời, đáp án sẽ là dấu cao su.
+    - Không bắn → `Bỏ` + lý do gắn feature. CẤM `Bỏ` trống/chung chung. Thiếu dòng nào trong 9 = vi phạm gate. Cuối bảng in `Bỏ vì không có mặc định: <n>/9` — `n` cao bất thường = chưa tra thật.
 13. **Thang thuộc tính yêu cầu** *(chuẩn bị `Ưu tiên` + `Cách kiểm` cho bước "Gán thuộc tính cho từng FR" ở "Sau khi ghi spec"; giá trị `Cách kiểm` sau đó gắn vào dòng `QT-<nn>` của BRD — 29148 §5.2.8)* — GĐ3 chưa có mã `FR-###` (core sinh sau GĐ4) → **chỉ chốt THANG, không gán từng FR**:
     - Thang `Ưu tiên` (vd `Cao · Trung bình · Thấp`) + tiêu chí phân mức; tập `Cách kiểm`: `kiểm thử` · `thanh tra` · `phân tích` · `trình diễn`. Cả hai `💡`, duyệt gộp recap GĐ3.
     - Gán cho từng FR làm ở "Sau khi ghi spec". CẤM gán ở đây.
@@ -248,7 +249,7 @@ Phần core bên dưới có luật riêng — **preset ghi đè các luật sau
 
 - **Clarification**: Core "Make informed guesses / tối đa 3 [NEEDS CLARIFICATION] / hỏi gộp dạng bảng markdown" → **BỎ.** Đã phỏng vấn cạn kiệt ở GĐ2–GĐ4, nên tới bước Specification Quality Validation của core: vẫn **QUÉT spec thật** tìm marker `[NEEDS CLARIFICATION]` — mỗi marker còn sót → hỏi bằng AskUserQuestion (KHÔNG áp trần 3 marker của core, KHÔNG informed-guess những quyết định thuộc về người dùng theo ranh giới ở Bất biến #2), đưa về **0 marker thật** rồi mới tick mục "No [NEEDS CLARIFICATION] markers remain" — CẤM tick khi chưa quét. KHÔNG bày lại bảng clarification của core; quyết định chưa chốt = quay lại hỏi, không tự đoán. Bỏ luôn phần core "For AI Generation / reasonable defaults (don't ask about these)": các mục đó (auth, retention, performance...) nếu là **quyết định** của người dùng thì vẫn phải hỏi hoặc đề-xuất-rồi-duyệt theo Bất biến #3, không tự mặc định ngầm.
 - **Hook tạo branch — vá xung đột tường minh**: Khi tới mục **"Pre-Execution Checks"** của core bên dưới, với hook `before_specify` (git extension): **KHÔNG emit `EXECUTE_COMMAND`, KHÔNG invoke hook, KHÔNG tạo branch** — kể cả khi core ghi `optional: false`, "Automatic Pre-Hook" hay "MUST invoke". Coi như hook `before_specify` không tồn tại; giữ nguyên branch hiện tại của người dùng. Nếu môi trường bắt buộc chạy hook không bỏ được → dừng, báo người dùng tự tắt hook `before_specify` trong `.specify/extensions.yml`. Vẫn tạo `spec.md` + thư mục `specs/<...>/` + `feature.json` như thường (chúng do lệnh core tạo, không phải hook).
-- **Completion Report / "Done When" của core**: KHÔNG được báo hoàn tất khi chưa làm xong mục **"Sau khi ghi spec"** của preset (nằm DƯỚI phần core bên dưới) — coi các việc trong đó là các dòng bổ sung bắt buộc của "Done When": mục `## Đặc tả màn hình` đã điền đủ (mỗi màn trong phạm vi có một khối `### Màn` khai đủ theo khung, hoặc ghi "Không có màn" nếu `K = 0`), section `Ràng buộc kỹ thuật kế thừa` đã có trong `spec.md`, `interview-notes.md` đã chuyển, nợ roadmap đã ghi, và — nếu item có `Nguồn` trỏ `docs/brd/…` — **BRD đã qua mục "Bổ sung BRD": bản gốc đã sao lưu, cổng 3 lớp đã in NGUYÊN OUTPUT và khớp (lớp 1 `MẤT` = 0 · lớp 2 `LẶP` = 0 · lớp 3 đủ)**; mục `Xung đột BRD chờ BA` trong `interview-notes.md` (nếu có) đã báo người dùng.
+- **Completion Report / "Done When" của core**: KHÔNG được báo hoàn tất khi chưa làm xong mục **"Sau khi ghi spec"** của preset (nằm DƯỚI phần core bên dưới) — coi các việc trong đó là các dòng bổ sung bắt buộc của "Done When": mục `## Đặc tả màn hình` đã điền đủ (mỗi màn trong phạm vi có một khối `### Màn` khai đủ theo khung, hoặc ghi "Không có màn" nếu `K = 0`), section `Ràng buộc kỹ thuật kế thừa` đã có trong `spec.md`, `interview-notes.md` đã chuyển, **file scan đã chuyển thành `specs/<thư-mục-feature>/scan-xung-dot-quy-uoc.md` và mọi link trích dẫn qua `test -f`**, **bảng `Thuộc tính FR` đã duyệt và nằm trong `interview-notes.md`**, nợ roadmap đã ghi, và — nếu item có `Nguồn` trỏ `docs/brd/…` — **BRD đã qua mục "Bổ sung BRD": bản gốc đã sao lưu, cổng 3 lớp đã in NGUYÊN OUTPUT và khớp (lớp 1 `MẤT` = 0 · lớp 2 `LẶP` = 0 · lớp 3 đủ)**; mục `Xung đột BRD chờ BA` trong `interview-notes.md` (nếu có) đã báo người dùng.
 - Mọi phần khác của core (tạo thư mục/feature.json, quality checklist, hooks khác) giữ nguyên.
 
 {CORE_TEMPLATE}
@@ -261,7 +262,7 @@ Phần core bên dưới có luật riêng — **preset ghi đè các luật sau
   - **CẤM dùng ngoặc vuông `[...]` trong dòng nợ** (vd `[2026-08-17, từ specify RM-002]`): `check_placeholders` của `brd_roadmap.py` coi mọi span `[...]` không phải link markdown là **placeholder chưa điền** → `verify` exit ≠ 0. Dùng ngoặc tròn: `(2026-08-17 · từ specify RM-XXX)`.
   - Sửa cả trường `**Phụ thuộc**` nếu phỏng vấn lòi ra phụ thuộc mà roadmap ghi `N/A` — nợ không chỉ là bullet.
   - Chạy lại `brd_roadmap.py verify` **sau khi** ghi nợ; exit ≠ 0 → sửa ngay, đừng để lại roadmap gãy.
-- **Gán thuộc tính cho từng FR (làm TRƯỚC khi Bổ sung BRD)**: `spec.md` đã có mã `FR-###`, giờ mới gán được. Với **mỗi** FR, đề xuất `Ưu tiên` + `Cách kiểm` theo thang đã chốt ở sàn GĐ3 mục 13, kèm căn cứ ngắn; **trình một bảng duy nhất để duyệt gộp một lượt** — CẤM hỏi từng FR (20 FR là 40 lượt). Người dùng chỉnh dòng nào thì chốt theo bản chỉnh; **bảng đã duyệt ghi vào `interview-notes.md` mục `Thuộc tính FR`** — Bước 1 của Bổ sung BRD đọc từ đó, không đọc từ trí nhớ. Đây là **thẩm quyền thật** mà lệnh QA dựa vào để chọn tầng test; model tự điền là biến phỏng đoán thành thẩm quyền giả.
+- **Gán thuộc tính cho từng FR (làm TRƯỚC khi Bổ sung BRD)**: `spec.md` đã có mã `FR-###`, giờ mới gán được. Với **mỗi** FR, đề xuất `Ưu tiên` + `Cách kiểm` theo thang đã chốt ở sàn GĐ3 mục 13, kèm căn cứ ngắn (gợi ý đề xuất: hành vi quan sát được trên giao diện = `kiểm thử`; `thanh tra` khi phải soi dữ liệu/log; `phân tích` khi không chạy được trong phân hệ này — đây là ĐỀ XUẤT chờ duyệt, không phải giá trị tự điền); **trình một bảng duy nhất để duyệt gộp một lượt** — CẤM hỏi từng FR (20 FR là 40 lượt). Người dùng chỉnh dòng nào thì chốt theo bản chỉnh; **bảng đã duyệt ghi vào `interview-notes.md` mục `Thuộc tính FR`** — Bước 1 của Bổ sung BRD đọc từ đó, không đọc từ trí nhớ. Đây là **thẩm quyền thật** mà lệnh QA dựa vào để chọn tầng test; model tự điền là biến phỏng đoán thành thẩm quyền giả.
 - **Bổ sung BRD**: chạy mục "Bổ sung BRD" bên dưới (nếu item có `Nguồn` trỏ `docs/brd/…`). Làm **sau** khi `spec.md` đã ghi xong — bước này chèn nội dung rút từ spec, spec chưa xong thì chèn bản dở.
 - Mỗi kết luận trong spec giữ dấu nguồn `[từ khảo sát]`/`[suy luận]`/`[cần bạn quyết]` khi phù hợp.
 - Quyết định wire UI/code hiện có → backend ghi vào requirements theo từng màn (nếu áp dụng).
@@ -273,9 +274,9 @@ Phần core bên dưới có luật riêng — **preset ghi đè các luật sau
 **Chuẩn ghép**: Cockburn *fully dressed* / RUP Use-Case Spec · ISO/IEC/IEEE 29148:2018 §5.2.8 · ISO/IEC 25010 · Gherkin.
 **Quyền hạn — CHỈ CHÈN**: CẤM dời mục, CẤM viết lại/tóm tắt câu BA, CẤM gom nội dung BA xuống phụ lục.
 Chép một nội dung BA sang chỗ thứ hai = **lặp**. Cổng lớp 2 chỉ bắt bản sao NGUYÊN VĂN — **diễn đạt lại nội dung BA ở mục mới cũng là lặp và bị CẤM dù cổng không đo được**: mục mới chỉ được TRỎ neo (`xem QT-05`), không phát biểu lại. Ngoại lệ duy nhất: khối `Đặc tả màn hình` chép nguyên văn từ `spec.md` vì nó mang trạng thái/lọc/quyền mà mục thiết kế của BA bỏ trống — nhưng nút/cột đã có trong mục điều khiển của BA thì CHỈ TRỎ, không mô tả lại.
-Sửa một dòng BA có sẵn = phải khai `Danh sách sửa` (Bước 0 việc 8).
+Sửa một dòng BA có sẵn = phải khai `Danh sách sửa` (Bước 0 việc 9).
 **BỎ QUA** (ghi lý do vào `interview-notes.md`) khi thiếu một trong: (a) item có `Nguồn` trỏ `docs/brd/…`; (b) có người trả lời thật (Bất biến #7).
-**Chạy lại RIÊNG mục này được** (không phỏng vấn lại) khi `spec.md` đổi sau lần bổ sung trước — vào thẳng Bước 0; việc 4 xử lý file đã bổ sung.
+**Chạy lại RIÊNG mục này được** (không phỏng vấn lại) khi `spec.md` đổi sau lần bổ sung trước — vào thẳng Bước 0; việc 5 xử lý file đã bổ sung.
 `Nguồn` trỏ **thư mục** có nhiều file → hỏi người dùng file nào là BRD của item trước khi vào Bước 0, CẤM tự chọn.
 
 > Vì sao CHỈ CHÈN: mọi thiết kế vừa-sắp-xếp-lại vừa-giữ-nguyên-văn đều sinh HAI bản của cùng nội dung
@@ -284,12 +285,16 @@ Sửa một dòng BA có sẵn = phải khai `Danh sách sửa` (Bước 0 việ
 ### Bước 0 — Lưới an toàn (đúng thứ tự — đảo là mất dữ liệu)
 
 1. [ ] `Nguồn` mang `#<anchor>` trỏ vào FILE → **HALT**, báo người dùng bỏ anchor (giữ path) rồi chạy lại — đánh số heading làm anchor chết, `verify` exit ≠ 0. Anchor trỏ thư mục = vô hại, đi tiếp.
-2. [ ] Sao lưu bản GỐC: `mkdir -p` rồi copy → `.specify/brd-backup/<đường-dẫn>.$(date +%F-%H%M%S).goc.md` — bắt buộc giờ-phút-giây (chạy lại cùng ngày mà thiếu thì lần 2 đè bản gốc BA). Không sao lưu được → **HALT, chưa chạm file**.
-3. [ ] Di trú: file có `<!-- SPEC:BEGIN` hoặc mục `## 11. Thiết kế tham chiếu` (dấu vết bản tái-cấu-trúc đời cũ) → **HALT**, báo người dùng `git checkout <commit trước khi tái cấu trúc> -- <file>` rồi chạy lại. CẤM tự gỡ — bản đời cũ đã trộn lời BA với lời máy, không tách được bằng lệnh.
-4. [ ] File đã có mục `## Nhật ký cập nhật` (đã bổ sung ở item/lượt trước — KHÔNG phải dấu vết đời cũ ở việc 3) → **CHẾ ĐỘ CẬP NHẬT**: không tạo lại mục đã có, chỉ chèn nội dung mới vào mục sẵn có; MỌI đơn vị mới đều mang nhãn RM: hàng bảng (`TR-`, quy ước, NFR) gắn cột `RM` (thêm cột nếu chưa có); khối/dòng phi-bảng gắn hậu tố `*(RM-<nnn>)*` — `### Màn: <tên> *(RM-002)*`, `**SC-07** *(RM-002)*`, mỗi kịch bản Given/When/Then, mỗi dòng `Tình huống biên`; SC trùng số giữa hai RM → giữ nguyên số, phân biệt bằng nhãn. CẤM xoá/sửa hàng/khối mang RM khác.
-5. [ ] Sao lưu bản BA → `….ba.md` (cùng nội dung `.goc.md` tại thời điểm chụp — hai VAI TRÒ của một bản chụp: **`.ba.md` là đơn vị so của toàn bộ Bước 2**, `.goc.md` chỉ để khôi phục). Ở chế độ cập nhật, `.ba.md` gồm cả nội dung đã chèn lượt trước — CHỦ Ý: nó là mốc bất khả xâm phạm của lượt này, CẤM lọc bớt.
-6. [ ] Đơn vị so = **thân câu sau khi bóc bullet + tiền tố đánh số** (`^\s*(S-)?\d+[a-z]?[.:)]\s*`). Gắn thêm tiền tố ID (`**QT-05** · `) hay đánh số heading ≠ sửa, KHÔNG khai; đổi bất kỳ chữ nào trong thân câu = sửa, PHẢI khai.
-7. [ ] Chụp số đo trên `.ba.md` bằng ĐÚNG các lệnh sau — đã kiểm chứng 0 dương tính giả trên BRD pandoc thật, CẤM chế biến thể:
+2. [ ] `git status --porcelain <file BRD>` phải SẠCH — file đang có thay đổi chưa commit (của người khác/lượt trước) → HALT, báo người dùng commit/stash trước; không sạch thì `git diff` ở "Sau khi ghi" trộn hai nguồn, hết giá trị kiểm.
+3. [ ] Sao lưu bản GỐC: `mkdir -p` rồi copy → `.specify/brd-backup/<đường-dẫn>.$(date +%F-%H%M%S).goc.md` — bắt buộc giờ-phút-giây (chạy lại cùng ngày mà thiếu thì lần 2 đè bản gốc BA). Không sao lưu được → **HALT, chưa chạm file**.
+4. [ ] Di trú: file có `<!-- SPEC:BEGIN` hoặc mục `## 11. Thiết kế tham chiếu` (dấu vết bản tái-cấu-trúc đời cũ) → **HALT**, báo người dùng `git checkout <commit trước khi tái cấu trúc> -- <file>` rồi chạy lại. CẤM tự gỡ — bản đời cũ đã trộn lời BA với lời máy, không tách được bằng lệnh.
+5. [ ] File đã có mục `## Nhật ký cập nhật` (đã bổ sung ở item/lượt trước — KHÔNG phải dấu vết đời cũ ở việc 4) → **CHẾ ĐỘ CẬP NHẬT**:
+   - Hai nhánh dưới áp **ĐỒNG THỜI** khi nhật ký có nhiều entry: dựng lại phần của entry trùng spec, giữ nguyên phần của entry khác. Khối không mang nhãn RM thuộc về entry **CŨ NHẤT** (lượt đầu chưa gắn nhãn).
+   - Entry nhật ký có `Nguồn spec` TRÙNG spec hiện tại (chạy lại cùng RM) → mục/khối do công cụ chèn lượt trước thuộc entry đó được **DỰNG LẠI** từ `spec.md` hiện tại — thay nguyên khối, CẤM chèn bản thứ hai.
+   - Entry khác RM (BRD dùng chung) → không tạo lại mục đã có, chỉ chèn nội dung mới vào mục sẵn có; MỌI đơn vị mới đều mang nhãn RM: hàng bảng (`TR-`, quy ước, NFR) gắn cột `RM` (thêm cột nếu chưa có); khối/dòng phi-bảng gắn hậu tố `*(RM-<nnn>)*` — `### Màn: <tên> *(RM-002)*`, `**SC-007** *(RM-002)*`, mỗi kịch bản Given/When/Then, mỗi dòng `Tình huống biên`; SC trùng số giữa hai RM → giữ nguyên số, phân biệt bằng nhãn. CẤM xoá/sửa hàng/khối mang RM khác.
+6. [ ] Sao lưu bản BA → `….ba.md` (**`.ba.md` là đơn vị so của toàn bộ Bước 2**, `.goc.md` chỉ để khôi phục; lượt đầu hai file cùng nội dung). **Ở chế độ cập nhật, `.ba.md` = phần BA + phần của entry KHÁC**: trước khi chụp số đo, loại khỏi nó CHỈ các mục/khối thuộc **entry có `Nguồn spec` trùng spec hiện tại** (những thứ sắp được dựng lại — tên đọc từ `Mục mới chèn` của entry đó + khối chèn trong mục gốc); mục/khối của entry KHÁC **giữ nguyên trong `.ba.md`** để lớp 1 vẫn canh chúng — xoá phần của RM khác sẽ bắn `MẤT` như xoá lời BA.
+7. [ ] Đơn vị so = **thân câu sau khi bóc bullet + tiền tố đánh số** (`^\s*(S-)?\d+[a-z]?[.:)]\s*`). Gắn thêm tiền tố ID (`**QT-05** · `) hay đánh số heading ≠ sửa, KHÔNG khai; đổi bất kỳ chữ nào trong thân câu = sửa, PHẢI khai.
+8. [ ] Chụp số đo trên `.ba.md` bằng ĐÚNG các lệnh sau — đã kiểm chứng 0 dương tính giả trên BRD pandoc thật, CẤM chế biến thể:
 
    ```bash
    BA=<đường-dẫn .ba.md>;  OUT=.specify/interviews/<slug>
@@ -300,7 +305,7 @@ Sửa một dòng BA có sẵn = phải khai `Danh sách sửa` (Bước 0 việ
    # Long — câu ≥60 byte (awk đếm byte, ~40 ký tự tiếng Việt — lệch về phía chặt hơn), ĐƠN VỊ CỦA CỔNG LẶP (ngắn hơn là mảnh từ vựng chung, đếm sẽ dương tính giả)
    awk 'length($0)>=60' "$OUT.sent.txt" > "$OUT.long.txt"
    # Str — chuỗi trong nháy (cả nháy cong); bỏ frontmatter/thẻ/CSS/đường dẫn ảnh
-   sed '1{/^---$/,/^---$/d;}' "$BA" | sed 's/<[^>]*>//g' | grep -o '["“][^"”]*["”]' \
+   awk 'NR==1&&/^---$/{f=1;next} f&&/^---$/{f=0;next} !f' "$BA" | sed 's/<[^>]*>//g' | grep -o '["“][^"”]*["”]' \
      | grep -vE '\.(png|jpe?g|webp)"|width:|height:|^"\.\.' | sort -u > "$OUT.str.txt"
    # Img
    grep -o 'src="[^"]*"' "$BA" | sort -u > "$OUT.img.txt"
@@ -319,8 +324,8 @@ Sửa một dòng BA có sẵn = phải khai `Danh sách sửa` (Bước 0 việ
    # Bản phẳng của BA — mẫu số của cổng lặp
    sed 's/<[^>]*>//g' "$BA" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g' > "$OUT.ba-flat.txt"
    ```
-8. [ ] `Danh sách sửa`: mỗi dòng đủ `đang có` → `sẽ thành` + lý do **trỏ về một phân xử đã chốt** (đúng `§` bảng xung đột GĐ1 / đúng câu hỏi GĐ2–GĐ3); không trỏ được → không được vào danh sách. **Trình bằng AskUserQuestion, có xác nhận tường minh rồi mới đi tiếp** (Bất biến #6). Khung chèn-thêm thường có `Danh sách sửa` **rỗng** — rỗng là bình thường, không phải dấu hiệu bỏ sót.
-9. [ ] Thiếu bất kỳ việc nào trên → CẤM vào Bước 1.
+9. [ ] `Danh sách sửa`: mỗi dòng đủ `đang có` → `sẽ thành` + lý do **trỏ về một phân xử đã chốt** (đúng `§` bảng xung đột GĐ1 / đúng câu hỏi GĐ2–GĐ3); không trỏ được → không được vào danh sách. **Trình bằng AskUserQuestion, có xác nhận tường minh rồi mới đi tiếp** (Bất biến #6). **Chốt tại đây và ĐÓNG BĂNG**: sau khi lớp 1 đã chạy, CẤM thêm dòng để hợp lệ hoá `MẤT` vừa lộ — `MẤT` không có sẵn trong danh sách = khôi phục, muốn sửa thật thì khôi phục xong quay lại việc này với xác nhận mới. Khung chèn-thêm thường có `Danh sách sửa` **rỗng** — rỗng là bình thường, không phải dấu hiệu bỏ sót.
+10. [ ] Thiếu bất kỳ việc nào trên → CẤM vào Bước 1.
 
 ### Bước 1 — Chèn mục mới + gắn ID
 
@@ -332,7 +337,7 @@ Khuôn BRD mỗi dự án một khác (đo ở GĐ1) — CẤM áp cứng danh s
 | Tiền điều kiện · Hậu điều kiện thành công · Bảo đảm tối thiểu | cuối mục **điều kiện** của BA | tạo mục `Điều kiện` ngay sau mục đầu tiên |
 | `### Luồng ngoại lệ` (`S-3a`, `S-6b`… neo vào bước có sẵn) | mục con cuối của mục **kịch bản/luồng** | tạo mục `Luồng sự kiện` sau mục usecase |
 | `Từ điển dữ liệu` | H2 mới ngay **sau** mục **mô tả điều khiển** | cuối cụm mục thiết kế |
-| `QT-<nn>` + ` · *Cách kiểm: <tầng>*` | gắn vào **từng gạch đầu dòng sẵn có** của mục **quy tắc/yêu cầu nghiệp vụ**; luật còn thiếu ghi dưới `#### Bổ sung từ phỏng vấn`. Giá trị `Cách kiểm` lấy từ **bảng `Thuộc tính FR` đã duyệt trong `interview-notes.md`**, CẤM tự điền; hành vi quan sát được trên giao diện = `kiểm thử` — `thanh tra` chỉ khi phải soi dữ liệu/log, `phân tích` chỉ khi không chạy được trong phân hệ này | tạo mục `Quy tắc nghiệp vụ` sau `Từ điển dữ liệu` |
+| `QT-<nn>` + ` · *Cách kiểm: <tầng>*` | gắn vào **từng gạch đầu dòng sẵn có** của mục **quy tắc/yêu cầu nghiệp vụ**; luật còn thiếu ghi dưới `#### Bổ sung từ phỏng vấn`. Giá trị `Cách kiểm` lấy từ **bảng `Thuộc tính FR` đã duyệt trong `interview-notes.md`**, CẤM tự điền; `QT` không ánh xạ được về FR nào trong bảng → ghi `Cách kiểm: chưa chốt` + một dòng vào mục `QT chưa gán Cách kiểm` của `interview-notes.md` (mục riêng — KHÔNG dồn vào `Xung đột BRD chờ BA`, đó là chỗ chờ BA duyệt nội dung), CẤM đoán tầng | tạo mục `Quy tắc nghiệp vụ` sau `Từ điển dữ liệu` |
 | `Đặc tả màn hình` · `Quy ước chung áp dụng` · `Chất lượng phi chức năng` · `Tiêu chí chấp nhận` · `Giả định · Phụ thuộc · Ngoài phạm vi` · `Nhật ký cập nhật` | H2 mới, nối **sau** mục quy tắc, đúng thứ tự này | — |
 
 **Nội dung từng mục mới** (lấy từ sàn phỏng vấn, CẤM bịa):
@@ -343,18 +348,19 @@ Khuôn BRD mỗi dự án một khác (đo ở GĐ1) — CẤM áp cứng danh s
 | Quy ước chung áp dụng | sàn GĐ3 mục 10 | dòng đầu = path file quy ước; bảng đúng `S` dòng `§ · Tên mục · Áp/Ngoại lệ · Lý do` |
 | Chất lượng phi chức năng | sàn GĐ3 mục 12 | bảng 9 trục 25010; trục theo mặc định ghi `Theo mặc định — <nguồn>`, CẤM bỏ dòng |
 | Đặc tả màn hình | `## Đặc tả màn hình` của `spec.md` | chép nguyên khối, mỗi màn một `### Màn` — nguồn của họ case trạng thái UI khi QA đọc BRD; mỗi khối PHẢI giữ đủ dòng trạng thái + quyền của spec (khối rỗng/chỉ-một-dòng-trỏ = vi phạm lớp 3); phần nút/cột đã có ở mục điều khiển của BA → chỉ trỏ, không mô tả lại; `FR-###` trong khối đổi theo luật (1) hàng dưới; `K = 0` → một dòng `Không có màn` |
-| Tiêu chí chấp nhận | `spec.md` | `Given/When/Then` + mục con `### Tình huống biên` (chép NGUYÊN VĂN từng dòng `### Edge Cases` của spec) + tiêu chí đo được `SC-<nn>`. **Hai luật khi chép**: (1) thay mọi `FR-###` trong văn spec bằng neo `QT/TR/S-` tương ứng — BRD không có bảng FR, giữ FR là con trỏ gãy; (2) xem luật hộp cảnh báo ở hàng dưới |
+| Tiêu chí chấp nhận | `spec.md` | `Given/When/Then` + mục con `### Tình huống biên` (chép NGUYÊN VĂN từng dòng `### Edge Cases` của spec) + tiêu chí đo được `SC-` — **mã `SC-` chép NGUYÊN VĂN từ `spec.md` (template dùng `SC-001` ba chữ số), CẤM đánh số lại** (cổng tươi-mới của lệnh QA so TẬP chuỗi nguyên văn hai bên). **Hai luật khi chép**: (1) thay mọi `FR-###` trong văn spec bằng neo `QT/TR/S-` tương ứng — BRD không có bảng FR, giữ FR là con trỏ gãy; (2) xem luật hộp cảnh báo ở hàng dưới |
 | **Hộp cảnh báo nhãn lệch** | bảng xung đột GĐ1 | Chèn hộp `> ⚠️` **ngay đầu mục mô tả điều khiển** (tại chỗ nhãn sai nằm — đặt ở mục khác là tester đọc bảng điều khiển không thấy, đã gặp báo lỗi ngược). Số hàng = dòng tổng **`Điểm lệch còn lại sau phân xử`** của bảng scan GĐ1 (đã loại dương tính giả). MỖI điểm lệch một hàng `nhãn BA → nhãn quy ước` + bên thắng + nơi phân xử — **CẤM nén phần dư thành văn xuôi** (câu gộp không nói nhãn đúng là gì = vô dụng cho kiểm thử; đã gặp: 9 hàng / 31 điểm lệch). Điểm lệch không phải nhãn (thiếu control · thiếu tiêu đề dialog · sai định dạng tệp xuất) vẫn một hàng riêng, cột đích ghi thứ phải có |
 | Giả định · Phụ thuộc · Ngoài phạm vi | `## Assumptions` của `spec.md` + sổ phỏng vấn | Giả định = chép nguyên văn `## Assumptions`; Phụ thuộc = ranh giới liên hệ GĐ1 + trường `Phụ thuộc` của item roadmap; Ngoài phạm vi = phạm vi item roadmap + `Nợ chờ ghi`. Khối không chốt được ở phỏng vấn → ghi `Chưa chốt ở phỏng vấn <ngày>`, CẤM bịa. `Ngoài phạm vi` là rào chắn chống lượt QA sau tự bịa case ngoài đợt — CẤM bỏ mục |
 | Nhật ký cập nhật | Bước 3 | **luôn là mục cuối cùng** |
 
-**Ba luật gắn ID** (vi phạm là cổng lớp 2 bắt):
+**Bốn luật gắn ID** (vi phạm là cổng lớp 2 bắt):
 1. Gắn ID = **thêm tiền tố/hậu tố vào dòng có sẵn**, thân câu không đổi một chữ. CẤM viết lại câu BA cho "gọn hơn".
 2. **KHÔNG tạo mục `Yêu cầu chức năng (FR)`.** Neo truy vết là `S-<n><a>` (bước/ngoại lệ) · `QT-<nn>` (quy tắc) · `TR-<nn>` (trường). Một mục FR chỉ diễn đạt lại ba thứ đó bằng chữ khác = nguồn lặp lớn nhất.
 3. **Ma trận truy vết `FR ↔ neo BRD` ghi vào `interview-notes.md`, KHÔNG vào BRD.** BRD là tài liệu đọc, không phải bảng đối soát. Neo phải **mang đúng nội dung** của FR, không chỉ tồn tại: FR về thuật ngữ → QT thuật ngữ (không phải QT phân quyền); FR về vòng đời trạng thái → QT vòng đời. FR không có QT/TR/S nào chứa nội dung nó → **thêm QT vào `Bổ sung từ phỏng vấn`**, CẤM gán bừa vào neo gần nghĩa.
 4. **Một luật một nhà — áp cho cả phần chèn.** Cổng LẶP chỉ canh câu BA, không canh phần công cụ viết, nên tự giữ: ca của `Luồng ngoại lệ` đã có trong `Tình huống biên` → dòng ngoại lệ chỉ giữ ID + một dòng tham chiếu (`**S-6b** — xem Tình huống biên, mục Tiêu chí chấp nhận`), nội dung đầy đủ ở MỘT nơi; luật chuẩn hoá/bất biến của trường chỉ ở bảng Từ điển — dòng `S-` trỏ `TR-<nn>`, không phát biểu lại. `Luồng ngoại lệ` viết đầy đủ CHỈ cho ca không có nhà khác (hỏng hạ tầng, phiên, giới hạn tệp).
 
 - Mục mới không có nội dung → một dòng lý do gắn feature (vd `Không có giao diện ngoài — không gọi hệ thống nào khác`). CẤM bỏ trắng, CẤM xoá mục.
+- **Ghi `$OUT.allow-dup.txt` NGAY TẠI ĐÂY** (không phải lúc chạy cổng): mỗi câu chép-nguyên-văn-từ-spec mà trùng câu BA → một dòng. File này ĐÓNG BĂNG khi vào Bước 2 — cổng sẽ kiểm từng dòng có thật trong `spec.md`.
 - Frontmatter (`brd_id` · `title` · `breadcrumb`) + H1: **giữ nguyên vẹn** — `verify` khớp anchor theo heading, manifest khoá theo `title`.
 - Tự kiểm cuối Bước 1: `grep -c '^## [0-9]\+\. ' <file BRD>` = (số H2 gốc của BA) + (số mục mới đã chèn). In cả hai số.
 
@@ -385,8 +391,12 @@ awk 'length($0)>=40' "$OUT.ctrl.txt" | dup "LẶP-CTRL"
 
 - `grep -qF --` bắt buộc có `--` — câu bắt đầu bằng `-` sẽ bị đọc thành option, báo mất giả hàng loạt.
 - **In nguyên output cả hai lớp, CẤM tóm tắt.** Điều kiện qua: **0 dòng `MẤT[...]`** ngoài `Danh sách sửa` **VÀ 0 dòng `LẶP`/`LẶP-CTRL`** (trừ ngoại lệ allow-dup dưới đây).
-- **Ngoại lệ allow-dup**: câu thuộc khối chép-nguyên-văn-từ-spec (Given/When/Then · `### Tình huống biên` · `Đặc tả màn hình` · `## Assumptions`) trùng câu BA → được phép `n2 = n1 + 1`. Khi chèn, ghi các câu đó vào `$OUT.allow-dup.txt`; dòng `LẶP` có câu nằm trong file này và `n2 ≤ n1+1` → bỏ qua; vượt → vẫn là LẶP.
-- `MẤT` không khớp `Danh sách sửa` → khôi phục `.goc.md`. `LẶP` → xoá bản sao ở mục MỚI (không bao giờ xoá ở mục gốc của BA), chạy lại cổng. CẤM "ghi tạm sửa sau".
+- **Ngoại lệ allow-dup**: câu thuộc khối chép-nguyên-văn-từ-spec (Given/When/Then · `### Tình huống biên` · `Đặc tả màn hình` · `## Assumptions`) trùng câu BA → được phép `n2 = n1 + 1`. `$OUT.allow-dup.txt` đã ghi và ĐÓNG BĂNG từ Bước 1 — CẤM thêm dòng sau khi thấy output `LẶP`; dòng `LẶP` có câu nằm trong file này và `n2 ≤ n1+1` → bỏ qua; vượt → vẫn là LẶP. Kiểm file không bịa (phải 0 dòng):
+
+  ```bash
+  while IFS= read -r c; do grep -qF -- "$c" <spec.md> || echo "ALLOW-DUP GIẢ: $c"; done < "$OUT.allow-dup.txt"
+  ```
+- `MẤT` không khớp `Danh sách sửa` → khôi phục từ `.goc.md` **đúng timestamp của lượt này** (ghi ở việc 3 — file mới nhất có thể là bản đã hỏng của lượt sau). `LẶP` → xoá bản sao ở mục MỚI (không bao giờ xoá ở mục gốc của BA), chạy lại cổng. CẤM "ghi tạm sửa sau".
 - Lớp 2 đã kiểm chứng: bản gốc so chính nó = 0 · bản gốc + mục mới hợp lệ = 0 · bản tái-cấu-trúc-đời-cũ = 41 LẶP.
 
 **LỚP 3 — đủ nội dung sinh testcase. Đếm bằng lệnh, in output, CẤM tự nhẩm:**
@@ -400,7 +410,8 @@ awk 'length($0)>=40' "$OUT.ctrl.txt" | dup "LẶP-CTRL"
 | số khối `### Màn` ở `Đặc tả màn hình` (khối thiếu dòng trạng thái hoặc dòng quyền → KHÔNG tính) | | | **=** |
 | số dòng bảng Quy ước | *(`S` — sàn GĐ3 mục 10)* | | **= `S`** |
 | số trục NFR đã xét | *(9 — sàn GĐ3 mục 12)* | | **= 9** |
-| `QT-###` có `Cách kiểm` | — | | **100%** |
+| `QT-###` có `Cách kiểm` | — | | **100%** (`chưa chốt` hợp lệ nếu có dòng tương ứng trong `QT chưa gán Cách kiểm`) |
+| `QT chưa chốt` | *(trần = số QT không được FR nào trỏ tới trong ma trận `FR ↔ neo BRD`)* | | **≤ trần** — vượt = né bảng `Thuộc tính FR`, in `<n>/<tổng QT>` |
 | `FR-###` của spec có neo BRD trong `interview-notes.md` | | | **100%** |
 | số hàng trong hộp cảnh báo nhãn lệch | *(dòng `Điểm lệch còn lại sau phân xử` của bảng scan GĐ1)* | | **=** |
 
@@ -413,17 +424,17 @@ awk 'length($0)>=40' "$OUT.ctrl.txt" | dup "LẶP-CTRL"
         grep -qF -- "$(echo "$e" | cut -c1-45)" /tmp/brd-plain.md || echo "THIẾU: $e"
       done
   ```
-- Hai dòng cuối phải đếm bằng ĐÚNG lệnh sau — đếm theo dòng là sai, cả hai đối tượng đều **trải nhiều dòng**:
+- Dòng `QT-### có Cách kiểm` và neo `S` (số mục file quy ước) phải đếm bằng ĐÚNG lệnh sau — đếm theo dòng là sai, cả hai đối tượng đều **trải nhiều dòng**:
 
   ```bash
   # QT có `Cách kiểm` — gộp file thành một dòng rồi cắt theo mốc `- **QT-`
   tr '\n' ' ' < <file BRD> | sed 's/- \*\*QT-/\n- **QT-/g' | grep '^- \*\*QT-' \
-    | awk '{id=substr($0,index($0,"QT-"),5); if(index($0,"Cách kiểm")==0) print "THIẾU Cách kiểm: " id}'
+    | awk '{match($0,/QT-[0-9]+/); id=substr($0,RSTART,RLENGTH); if(index($0,"Cách kiểm")==0) print "THIẾU Cách kiểm: " id}'
   # S = số mục ĐÁNH SỐ của bộ quy ước; `## Mục lục` KHÔNG phải một mục quy ước
   grep -cE '^## [0-9]+\. ' <file quy ước chung>
   ```
 - Mọi dòng khác = bằng tuyệt đối. CẤM suy rộng `≥`.
-- CHẾ ĐỘ CẬP NHẬT (Bước 0 việc 4): hàng/khối/dòng không mang RM hiện tại → LOẠI khỏi mọi phép đếm lớp 3, CẤM xoá — lệch do đếm lẫn RM khác là lỗi đếm, không phải lỗi tài liệu.
+- CHẾ ĐỘ CẬP NHẬT (Bước 0 việc 5): hàng/khối/dòng mang nhãn RM KHÁC → LOẠI khỏi mọi phép đếm lớp 3, CẤM xoá — lệch do đếm lẫn RM khác là lỗi đếm, không phải lỗi tài liệu; khối của lượt trước CÙNG RM đã được DỰNG LẠI ở Bước 1, đếm như bình thường.
 - Lệch → **kiểm lệnh đếm trước khi sửa tài liệu**: hai lỗi đếm đã gặp thật là (a) đếm QT theo dòng trong khi luật của BA dài nhiều dòng, (b) lấy `S` bằng số `^## ` thay vì số mục đánh số. Xác nhận lệnh đúng rồi mới kết luận tài liệu lệch. Đối chiếu cả **danh sách ID**, không chỉ số lượng.
 
 ### Bước 3 — Nhật ký
@@ -434,7 +445,8 @@ Append vào mục `Nhật ký cập nhật`, mới nhất trên cùng. Ngày = o
 ### <YYYY-MM-DD> — <RM-ID> (/speckit.specify)
 - **Loại**: bổ sung theo chuẩn (Cockburn/RUP + 29148 + 25010 + Gherkin) — chèn-thêm, không tái cấu trúc
 - **Bản sao lưu**: .specify/brd-backup/<đường-dẫn>.<YYYY-MM-DD-HHMMSS>.goc.md + ….ba.md
-- **Mục BA giữ nguyên**: <n> · **Mục mới chèn**: <n> (<liệt kê tên>)
+- **Mục BA giữ nguyên**: <n>
+- **Mục mới chèn**: <n> — <liệt kê tên, phân tách bằng ` · `>
 - **Nguồn spec**: specs/<thư-mục-feature>/spec.md
 - **spec.md sha1**: <output `shasum <spec.md> | cut -d" " -f1`> — cổng tươi-mới của lệnh QA, CẤM bỏ; neo NỘI DUNG, không neo mtime (git clone đặt lại mtime)
 - **Hồ sơ phỏng vấn**: specs/<thư-mục-feature>/interview-notes.md
