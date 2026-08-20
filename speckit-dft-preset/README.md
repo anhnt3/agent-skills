@@ -68,7 +68,7 @@ specify preset remove dft-preset
 Từ GitHub release (sau khi publish):
 
 ```bash
-specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-preset-v0.0.7/dft-preset-0.0.7.zip
+specify preset add --from https://github.com/anhnt3/agent-skills/releases/download/dft-preset-v0.2.0/dft-preset-0.2.0.zip
 ```
 
 ## Publish (GitHub release zip — thủ công, chủ đích)
