@@ -48,6 +48,7 @@ find scripts -type f \
   ! -name '*.pyc' \
   ! -path '*/__pycache__/*' \
   ! -path 'scripts/tests/*' \
+  ! -path 'scripts/.pytest_cache/*' \
   ! -name '*-config.local.yml' \
   -exec sh -c 'mkdir -p "$2/$(dirname "$1")"; cp "$1" "$2/$1"' _ {} "$dest" \;
 
@@ -55,6 +56,7 @@ find scripts -type f \
 # cả những thứ git bỏ qua: AGENTS.md (deepinit), .omc/ (OMC ghi session state vào
 # mọi thư mục con), .DS_Store. Không dọn ở đây = rác lọt vào zip lẫn bản cài.
 find "$dest" -name 'AGENTS.md' -delete
+find "$dest" -type d -name '.pytest_cache' -prune -exec rm -rf {} +
 find "$dest" -type d -name '.omc' -prune -exec rm -rf {} +
 find "$dest" -name '.DS_Store' -delete
 

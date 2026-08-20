@@ -38,8 +38,10 @@ cp -R commands "$dest/"
 cp -R templates "$dest/"
 
 # Loại rác runtime/OS lỡ nằm trong commands/ hoặc templates/ (.omc là state của OMC,
-# bị gitignore nên không thấy trong git status nhưng vẫn bị `cp -R` kéo vào zip).
+# AGENTS.md là ghi chú nội bộ do deepinit sinh — cả hai bị gitignore nên không thấy
+# trong git status nhưng vẫn bị `cp -R` kéo vào zip).
 find "$dest" -name '.omc' -type d -prune -exec rm -rf {} +
+find "$dest" -name 'AGENTS.md' -type f -delete
 find "$dest" -name '.DS_Store' -type f -delete
 
 ( cd "$stage" && zip -rq "$out" "$pkg" )
