@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "dft-preset"
   name: "DFT Spec Kit Preset"
-  version: "0.0.7"
+  version: "0.2.0"
   description: "Override speckit.constitution/specify/plan theo quy trình BA phỏng vấn tiếng Việt qua AskUserQuestion; replace spec-template + tasks-template để thêm mục 'Đặc tả màn hình' per-screen. Chi tiết xem README."
   author: "Nguyen Tuan Anh"
   repository: "https://github.com/anhnt3/agent-skills"
@@ -38,7 +38,7 @@ provides:
     - type: "command"
       name: "speckit.specify"
       file: "commands/speckit.specify.md"
-      description: "Wrap specify: khảo sát repo + nợ kỹ thuật + BRD gốc của item (lần theo trường Nguồn của roadmap tới docs/brd/, cite từng thứ rút ra; BRD ghi rõ → duyệt gộp một lượt ở cuối GĐ1 thay vì hỏi lại, BRD mơ hồ/lệch → vẫn hỏi, BRD im lặng ≠ N/A), phỏng vấn theo trục nghiệp vụ (trên màn hình → nghiệp vụ nền) — gom 1–4 câu độc lập/lượt, quyết định trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp; sổ theo dõi vét cạn persist ra .specify/interviews/; đối chiếu constitution như vòng kiểm; ràng buộc kỹ thuật bàn giao cho plan qua section trong spec.md; rót kết quả GĐ2 vào mục '## Đặc tả màn hình' của spec-template (preset replace); ghi ngược BRD sau khi spec xong — gom trong sổ rồi ghi một lượt qua bảng duyệt, bắt buộc nhật ký + tên người cập nhật ở cuối file BRD, dòng 'thay đổi' (xoá/sửa chữ đang có hoặc mâu thuẫn) phải có BA duyệt kèm tên, chưa duyệt thì CẤM sửa và chuyển sang danh sách chờ; cấm đổi tiêu đề/frontmatter vì manifest khoá theo title."
+      description: "Wrap specify: khảo sát repo + nợ kỹ thuật + BRD gốc của item (lần theo trường Nguồn của roadmap tới docs/brd/, cite từng thứ rút ra; BRD ghi rõ → duyệt gộp một lượt ở cuối GĐ1 thay vì hỏi lại, BRD mơ hồ/lệch → vẫn hỏi, BRD im lặng ≠ N/A), phỏng vấn theo trục nghiệp vụ (trên màn hình → nghiệp vụ nền) — gom 1–4 câu độc lập/lượt, quyết định trọng yếu hỏi từng câu, thứ yếu đề-xuất-rồi-duyệt-gộp; sổ theo dõi vét cạn persist ra .specify/interviews/; đối chiếu constitution như vòng kiểm; ràng buộc kỹ thuật bàn giao cho plan qua section trong spec.md; rót kết quả GĐ2 vào mục '## Đặc tả màn hình' của spec-template (preset replace); nhận dạng KHUÔN của BRD qua dấu vân tay H2 lặp để biết trước khuôn đó bỏ trống mục nào rồi nạp thành dòng sổ; quét cơ học xung đột BRD ↔ bộ quy ước chung rồi hỏi phân xử theo nhóm; sàn GĐ3 phủ cả quy ước chung áp dụng, hỏng hạ tầng, và chất lượng phi chức năng theo 9 trục ISO 25010 (trigger theo thành phần feature, không hỏi tràn); sau khi spec xong BỔ SUNG file BRD theo chuẩn quốc tế — Cockburn/RUP use-case spec + ISO/IEC/IEEE 29148 §5.2.8 (mỗi quy tắc QT-nn mang Cách kiểm) + NFR ISO/IEC 25010 + tiêu chí chấp nhận Gherkin — quyền hạn CHỈ CHÈN: giữ nguyên vị trí + câu chữ mọi mục BA, KHÔNG tạo mục FR (neo truy vết là S/QT/TR), để lệnh QA sinh testcase từ docs/brd thay vì spec.md; lưới an toàn: sao lưu bản gốc + cổng 3 lớp (MẤT — không rơi câu/chuỗi/control/ảnh của BA · LẶP — không chép lời BA sang chỗ thứ hai · ĐỦ — đếm nội dung sinh testcase so với spec.md), không qua thì khôi phục từ backup; cấm đổi tiêu đề/frontmatter vì manifest khoá theo title."
       strategy: "wrap"
 
     - type: "command"
