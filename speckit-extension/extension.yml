@@ -41,6 +41,18 @@ provides:
       file: "commands/brd-import.md"
       description: "Bẻ một file BRD .docx lớn thành cây markdown nhỏ phản chiếu navigation pane của Word — mỗi mục ở cấp đã chọn là một file, kèm brd.manifest.yml, media/ và reference.docx. Dò cấu trúc 6 bậc (Heading style, style tự chế có outlineLvl, mục lục, đánh số gõ tay, cỡ chữ, LLM phán đoán); LLM chỉ quyết ranh giới, script chép nguyên văn. Kiểm chứng bằng ghép ngược byte-for-byte — lệch 1 byte là không ghi gì. Chạy lại khi đã có docs/brd/ thì xuất ra docs/brd.new/ kèm bảng khác biệt, không đè lên bản BA đã sửa."
 
+    - name: "speckit.dft-speckit.fnlist-import"
+      file: "commands/fnlist-import.md"
+      description: "Nhập function list (.xlsx/.csv) đã dùng nghiệm thu thành .specify/docs/functions.json — cây chức năng có ID đa cấp FN-01-01 ổn định làm điểm neo truy vết. Script chép nguyên văn và độc quyền ghi file; LLM chỉ quyết ánh xạ cột + kiểu phân cấp (columns/outline/level) rồi xác nhận với người dùng qua checkpoint cây thụt lề. Chạy lại giữ nguyên ID theo đường dẫn tên và giữ tiến độ status, báo diff kèm nhãn chuyển-nhóm cho ca ID buộc phải đổi."
+
+    - name: "speckit.dft-speckit.code-intel"
+      file: "commands/code-intel.md"
+      description: "Rút đặc tả đủ sâu từ codebase theo cây functions.json, ghi .specify/docs/<đường-dẫn-cây>/intel.md kèm nguồn file:dòng. Tham số là một FN-ID đánh dấu điểm bắt đầu quét (trống = toàn dự án); intel_tree.py đề xuất unit theo luật cha-trực-tiếp-của-lá, LLM trình cây thụt lề xác nhận, rồi quét (hỏi song song qua subagent hay tuần tự khi có nhiều unit). intel_verify.py chấm gate BLOCKING (phủ §1, trần §8, no-clobber §8/§10) + WARNING (phủ §2↔§11) trước khi ghi ngược status qua fnlist_import.py update. Tài liệu nội bộ: khẳng định đọc thẳng từ code ghi kèm nguồn, suy đoán đánh dấu, không căn cứ thì xuống mục câu hỏi. Ghi thêm §10 (phát hiện logic mâu thuẫn/lỗ hổng bảo mật) và §11 (điều khiển giao diện từng màn hình, liên kết §2 qua tên) để srs-from-code đợt sau dùng."
+
+    - name: "speckit.dft-speckit.srs-from-code"
+      file: "commands/srs-from-code.md"
+      description: "Sinh .specify/docs/<đường-dẫn-cây>/srs.md theo cấu trúc 4 cấp của tài liệu ban hành thật (Nhóm→Chức năng→Sơ đồ/Mục đích/Mô tả chức năng→khối leaf 1-1 với FN-ID function list→a.-g.) từ intel.md và functions.json — nhận một FN-ID gốc (trống = toàn dự án), tái dùng intel_tree.py để đề xuất/xác nhận unit rồi sinh SRS theo batch (song song/tuần tự), chỉ ghi nội dung phản ánh đúng những gì code thật sự làm, thông tin hành chính thiếu thì ghi 'Chưa có thông tin', và tổng hợp một lượt cuối cùng những phát hiện logic/bảo mật đáng chú ý để hỏi người dùng. Chốt bằng cổng srs_verify.py (comment ẩn <!-- FN: ... --> thay cho ma trận truy vết cũ); không còn cờ --template, khung cố định theo đúng một cấu trúc tài liệu ban hành."
+
   templates:
     - name: "roadmap-template"
       file: "templates/roadmap-template.md"
@@ -49,6 +61,14 @@ provides:
     - name: "domain-template"
       file: "templates/domain-template.md"
       description: "Khung cố định cho docs/domain/<module>.md — entity, field chính, FK/quan hệ, enum/error code, rule chung, câu hỏi mở."
+
+    - name: "srs-template"
+      file: "templates/srs-template.md"
+      description: "Khung mẫu cho .specify/docs/<đường-dẫn-cây>/srs.md, mô phỏng cấu trúc 4 cấp cố định của tài liệu ban hành thật (Nhóm → Chức năng → Sơ đồ/Mục đích/Mô tả chức năng → một khối cho MỖI leaf FN-ID của function list → a.-g., luôn ở cấp heading 6). Hai điểm cố ý lệch docx gốc: khối cấp 5 chia theo leaf FN-ID (không nhóm theo màn hình) để đối chiếu 1-1 với function list, và mục 'Thiết kế UX/UI' + 'Mô tả điều khiển' gộp làm một mục f. để ảnh và bảng điều khiển của cùng một màn nằm cạnh nhau ('Yêu cầu nghiệp vụ' vì vậy là g., tổng bảy mục). Không còn khung I-VI tuỳ biến hay ma trận truy vết cũ; FN-ID kiểm qua comment ẩn <!-- FN: ... --> cấp Chức năng và <!-- FN-leaf: ... --> từng khối. Không còn khung riêng theo khách qua --template."
+
+    - name: "intel-template"
+      file: "templates/intel-template.md"
+      description: "Khung cho .specify/docs/<đường-dẫn-cây>/intel.md — tài liệu nội bộ rút từ codebase theo một unit của cây functions.json, giữ nguồn file:dòng. Mười hai mục: phủ chức năng, màn hình/điểm vào, thực thể và trường, kiểm tra hợp lệ, luồng nghiệp vụ, phân quyền, tích hợp ngoài, câu hỏi chưa suy được từ code (gắn nhãn loại), thông báo hiển thị, phát hiện logic mâu thuẫn/lỗ hổng bảo mật cần người quyết định, điều khiển giao diện từng màn hình, và kịch bản use case (liên kết §2/§11/§12 qua tên màn hình)."
 
 tags:
   - dft
