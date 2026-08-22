@@ -342,6 +342,11 @@ def write_xlsx(header, rows, matrix, out_path, sheet_name="Testcases",
     if last >= 2:
         dv.add(f"N2:N{last}")
     ws.freeze_panes = "A2"
+    # Cột 3 `Nhóm` được bán là "để lọc/sort" trong manual-xlsx-format.md; không bật
+    # autofilter thì lời hứa đó sai và tester không có cách tự xoay khi thứ tự xấu.
+    # Vùng dừng ở `last` để không nuốt dòng "Chú thích:" bên dưới.
+    if last >= 2:
+        ws.auto_filter.ref = f"A1:{get_column_letter(len(header))}{last}"
     lr = last + 2
     ws.cell(row=lr, column=1, value="Chú thích:").font = Font(bold=True)
     ws.cell(row=lr, column=2, value="Cột xanh = kết quả tự động (chỉ đọc)").fill = auto_fill

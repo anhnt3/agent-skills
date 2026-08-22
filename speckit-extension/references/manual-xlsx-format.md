@@ -20,7 +20,7 @@ lượng field trên bất kỳ dòng nào.
 |---|-----|---------|---------|
 | 1 | `ID` | Command | `TC-<PREFIX>-001`, `TC-<PREFIX>-002`, ... — `<PREFIX>` là mã ngắn viết hoa của feature/module (vd `TC-LOGIN-001`). Không trùng, không nhảy số vô lý. |
 | 2 | `Tiêu đề` | Command | Câu ngắn mô tả case, tiếng Việt, không lặp lại ID. |
-| 3 | `Nhóm` | Command | Nhóm chức năng/màn hình con để lọc/sort (vd `Đăng nhập`, `Danh sách thiết bị`). |
+| 3 | `Nhóm` | Command | **Một trục duy nhất: MÀN HÌNH** (không phải "chức năng", không phải nguồn sinh case). Lấy nguyên văn tên `### Màn` của mục `Đặc tả màn hình` trong spec/BRD (vd `Đăng nhập`, `Danh sách thiết bị`); màn nhiều case thì tách nhóm con dạng `<Màn> — <nhóm item>` (vd `Đăng nhập — Ô Tài khoản`). CẤM nhãn theo mối quan tâm kỹ thuật (`— Xác thực`, `— Validation`), theo tên tính năng (`Lưu đăng nhập`) hay theo nguồn sinh case (`Quy ước chung`, `Từ điển dữ liệu`). Case không gắn được màn nào → nhóm xuyên suốt đặt CUỐI file (`Phân quyền`, `Dấu vết hoạt động`, `Phiên & điều hướng`). Thứ tự dòng theo §3.1 — xlsx có bật autofilter trên cột này. |
 | 4 | `Ưu tiên` | Command | Chỉ nhận `P1` \| `P2` \| `P3`. P1 = chặn release nếu fail. |
 | 5 | `Loại` | Command | Chỉ nhận một trong: `Happy path`, `Negative`, `Boundary`, `Security`, `State transition`, `Edge case`. |
 | 6 | `Tiền điều kiện` | Command | Trạng thái hệ thống/dữ liệu/quyền cần có trước khi chạy case. |
@@ -75,6 +75,31 @@ nhìn theo từng dòng case, không phải tra chéo.
   đánh số trong cùng 1 cell), phải bọc cell đó bằng dấu `"` và giữ ký tự xuống dòng bên trong theo đúng
   chuẩn CSV (RFC 4180) — không escape thủ công bằng `\n` dạng text, để `csv.reader` parse đúng số field
   trên mỗi dòng.
+
+### 3.1. Thứ tự dòng & gom nhóm (cột 3 `Nhóm`)
+
+Thứ tự **dòng** trong file là hợp đồng bàn giao cho tester: họ chạy từ trên xuống, mỗi lần đổi màn là
+một lần dựng lại bối cảnh. **ID không phải trục sắp xếp** — script ghi dòng theo đúng thứ tự input và
+ghép dữ liệu tester theo *khoá* ID, nên ID nhảy số bên trong một nhóm là hợp lệ và không mất dữ liệu.
+
+Ba tầng, đúng thứ tự này:
+
+1. **L1 — Màn hình.** Theo thứ tự người dùng điều hướng, tên lấy nguyên văn từ `### Màn` của nguồn.
+   Không tự đẻ màn, không gộp hai màn, không xé một màn thành nhiều nhóm ngang cấp bằng nhãn tự nghĩ.
+2. **L2 — Item trong màn**, theo thứ tự tester thao tác: mở màn/trạng thái tải → từng điều khiển theo
+   đúng thứ tự xuất hiện trên màn (mỗi điều khiển chạy hết vòng: hiển thị/nhãn/mặc định → nhập/đổi giá
+   trị → validation → biên) → từng nút/liên kết → trạng thái sau hành động → luồng end-to-end.
+   **Mọi case của cùng một điều khiển phải liền nhau**; case biên/âm nằm ngay tại điều khiển sinh ra nó.
+3. **L3 — Nhóm xuyên suốt, đặt cuối file**, chỉ cho case không gắn được màn nào (phân quyền toàn cục,
+   dấu vết hoạt động, phiên & điều hướng). Case gắn được màn thì phải nằm ở màn đó — kể cả case sinh từ
+   đối chiếu quy ước chung (Pha 4b); cột 17 `QUCTHT §<n>` đã đánh dấu nguồn, không cần nhóm riêng.
+
+Màn dạng danh sách/CRUD thì L2 của màn đó chạy `Danh sách → Xem → Tạo mới → Chỉnh sửa → Xoá →
+Nhập/Xuất`. Đây là ví dụ cho màn CRUD, không phải thang áp cho mọi feature.
+
+**Tự kiểm** (ghi bảng `| Nhóm | Màn | Dải dòng | số case |` vào `qa-run.md`): mọi `### Màn` của nguồn
+xuất hiện ≥1 lần · các nhóm cùng màn liền nhau và case cùng màn liền **dòng** (không xét ID) · nhóm L3
+nằm sau toàn bộ nhóm màn.
 
 ## 4. Chạy script sinh xlsx
 
