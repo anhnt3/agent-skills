@@ -66,7 +66,9 @@ theo nội dung/locale, xpath theo cấu trúc DOM) để định vị phần t�
 nào để assert/interact.
 
 **Recommended:** thêm test id vào phần tử liên quan, theo đúng **chiến lược selector** đã khai báo trong
-`.agents/qa-context.md` (mục *Đủ-để-chạy → Selector*, vd quy ước đặt tên, thuộc tính dùng).
+`.agents/qa-context.md` (mục *Đủ-để-chạy → Selector*, vd quy ước đặt tên, thuộc tính dùng). qa-context
+chưa khai → mặc định `data-testid`, kebab-case phân cấp `<màn>-<vùng>-<phần tử>[-<hành động>]`, hàng
+động ghép khoá nghiệp vụ (`<màn>-row-<id>`, không ghép index).
 
 **Lý do:** test id là hợp đồng tường minh giữa test và UI — tách rời khỏi style/nội dung nên không vỡ
 khi refactor CSS hay đổi copy; nhất quán với chiến lược sẵn có trong qa-context thay vì mỗi lần bịa một
@@ -82,9 +84,12 @@ hành vi/markup khác), và **chờ duyệt** trước khi sửa hàng loạt.
 1. Xác định phần tử cần selector ổn định.
 2. Thêm test id đúng quy ước qa-context, không đổi behavior/style của phần tử.
 3. Cập nhật test dùng test id mới.
-4. Nếu qa-context chưa có mục *Selector* → suy ra từ selector đã tồn tại trong codebase (nếu có), ghi lại
-   quy ước vào qa-context; hoàn toàn chưa có tiền lệ nào → escalate hỏi chọn quy ước trước khi thêm hàng
-   loạt.
+4. Nếu qa-context chưa có mục *Selector* → suy ra từ testid đã tồn tại trong codebase
+   (`grep -rhoE 'data-testid="[a-z0-9-]*"|attr\.data-testid' <src>` — nhánh thứ hai bắt testid ghép động,
+   thiếu nó thì repo toàn hàng-động bị chẩn nhầm là chưa có tiền lệ), ghi lại quy ước vào qa-context; hoàn toàn chưa có tiền
+   lệ nào → dùng **mặc định `data-testid` kebab phân cấp** ở trên (khớp agent frontend DFT) và ghi vào
+   qa-context — không cần escalate chỉ để chọn quy ước; escalate vẫn giữ nguyên cho ca **sửa lan nhiều
+   file sản phẩm** ở gate trên.
 
 ## Blocker 3: Thiếu cấu hình test framework (chưa cài, chưa init, thiếu config chạy được)
 

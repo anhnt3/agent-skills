@@ -12,11 +12,12 @@ diễn.
 
 1. [Bước 1 — Compile / type-check](#bước-1--compile--type-check)
 2. [Bước 2 — Grep selector/endpoint tồn tại trong source](#bước-2--grep-selectorendpoint-tồn-tại-trong-source)
-3. [Bước 3 — Chặn assertion tầm thường (trivial)](#bước-3--chặn-assertion-tầm-thường-trivial)
-4. [Kết quả gate](#kết-quả-gate)
+3. [Bước 2b — Quét locator cấm trong test E2E (chiều nghịch)](#bước-2b--quét-locator-cấm-trong-test-e2e-chiều-nghịch)
+4. [Bước 3 — Chặn assertion tầm thường (trivial)](#bước-3--chặn-assertion-tầm-thường-trivial)
+5. [Kết quả gate](#kết-quả-gate)
 
-**Nguyên tắc:** bất kỳ selector/endpoint MISSING nào, hoặc lỗi compile/type-check, đều coi là ảo giác
-(hallucination) → phải sửa trước khi chạy suite hoặc trình bày kết quả. Không được present kết quả khi
+**Nguyên tắc:** bất kỳ selector/endpoint MISSING nào, **bất kỳ locator giòn nào không giải trình được**
+(Bước 2b), hoặc lỗi compile/type-check, đều coi là ảo giác (hallucination) → phải sửa trước khi chạy suite hoặc trình bày kết quả. Không được present kết quả khi
 gate chưa xanh.
 
 ## Bước 1 — Compile / type-check
@@ -38,7 +39,7 @@ sự tồn tại trong source code**, không phải suy đoán từ tên biến 
 
 **Thuật toán (agnostic):**
 1. Trích danh sách selector/test-id và endpoint/route được tham chiếu trong các file test vừa sinh (regex
-   theo pattern selector của project, tra ở qa-context — vd `data-testid="..."`, `getByTestId(...)`, path
+   theo pattern selector của project, tra ở qa-context — **mặc định `data-testid="..."` / `getByTestId(...)`**, path
    string dạng `/api/...`).
 2. Với mỗi giá trị trích được, grep trong thư mục source (không phải thư mục test) xem có định nghĩa
    khớp không.
@@ -76,12 +77,37 @@ tương ứng cho từng tầng.
 **Ví dụ (một repo ABP + Angular — selector FE):**
 
 ```bash
-grep -rhoE 'data-testid="[a-z0-9-]+"' angular/e2e | sort -u | sed -E 's/.*"(.*)"/\1/' | while read -r sel; do
-  if ! grep -rq "data-testid=\"$sel\"" angular/src; then
-    echo "MISSING: $sel"
-  fi
+#!/usr/bin/env bash
+# `grep -E` KHÔNG có backreference \1 — đừng viết getByTestId\((["'])…\1\)
+E=angular/e2e; S=angular/src
+# 1. Trích cả hai cách test tham chiếu testid: thuộc tính thô và API getByTestId
+#    ([^)a-zA-Z] nhận MỌI loại quote kể cả backtick `` `row-${id}` ``; đồng thời loại getByTestId(bienTran)).
+{ grep -rhoE 'data-testid="[a-z0-9-]+"' "$E" | sed -E 's/.*"([a-z0-9-]+)"/\1/'
+  grep -rhoE 'getByTestId\([^)a-zA-Z][a-z0-9-]+' "$E" | sed -E 's/^getByTestId\(.//' ; } | sort -u | while read -r sel; do
+  grep -rqE "data-testid=\"$sel\"" "$S" && continue          # khớp tĩnh trong source -> hợp lệ
+  hit=""; pre="$sel"                                          # không khớp tĩnh -> dò prefix testid ghép động
+  while [ "$(echo "$pre" | tr -cd - | wc -c)" -ge 2 ]; do      # chỉ nhận prefix >= 2 đoạn, tránh khớp bừa
+    pre="${pre%-*}"
+    # Prefix phải đứng NGAY TRƯỚC quote hoặc ${ — tức đúng là literal của chuỗi ghép động.
+    grep -rqE -- "$pre-(['\"\`]|\\\$\{)" "$S" && { hit="$pre-"; break; }
+  done
+  if [ -n "$hit" ]; then echo "DYNAMIC?: $sel (prefix $hit — mở source xác nhận theo Caveat trên)"
+  else echo "MISSING: $sel"; fi
 done
 ```
+
+Bốn cái bẫy lệnh này tránh, tất cả đều đã kiểm bằng **chạy thật** (bịa `course-list-delete-all` → `MISSING`;
+`` `course-list-row-${id}-edit` `` → `DYNAMIC?`; testid tĩnh có thật → im lặng):
+
+- Chỉ trích `data-testid="…"` mà bỏ `getByTestId(…)` là Bước 2 **rỗng** với stack mặc định (test Playwright
+  viết `getByTestId`) — testid **bịa** sẽ không bị bắt, mà Bước 2b chỉ bắt *né* testid chứ không bắt *bịa*.
+- Chỉ nhận quote `'`/`"` mà bỏ **backtick**: testid hàng động — đúng pattern lệnh này khuyến nghị —
+  viết là `` getByTestId(`course-list-row-${id}`) ``, thoát cả Bước 2 lẫn Bước 2b nếu regex bỏ backtick.
+- Cho `attr.data-testid` (có mặt ở bất kỳ đâu trong source) làm điều kiện khớp thì **mọi** testid bịa đều
+  pass — phải dò đúng **prefix** của chuỗi ghép động, và ra `DYNAMIC?` để xác nhận, không im lặng cho qua.
+- Dò prefix bằng match trần (`grep -q "$pre-"`) thì prefix nằm trong một testid **tĩnh** khác cũng khớp:
+  mọi testid bịa cùng màn (`course-list-…`) đều tụt xuống `DYNAMIC?` thay vì `MISSING` — tức cổng máy tự
+  hạ về tự giác đúng ở ca hallucination phổ biến nhất. Vì thế mới có nhánh ``(['"`]|${)``.
 
 **Ví dụ (một repo ABP + Angular — endpoint BE, ABP auto-route theo AppService method):**
 
@@ -96,6 +122,46 @@ done
 
 (Điều chỉnh regex/thư mục cụ thể theo cấu trúc thật của project — mẫu trên minh hoạ ý tưởng, không phải
 lệnh cố định.)
+
+## Bước 2b — Quét locator cấm trong test E2E (chiều nghịch)
+
+Bước 2 chỉ kiểm **chiều thuận**: testid mà test *có* tham chiếu thì phải tồn tại trong source. Test viết
+bằng CSS class / xpath / text **không tham chiếu testid nào** → không sinh dòng `MISSING` nào → gate xanh
+rỗng, đúng kiểu cổng mù. Bước này quét chiều nghịch: test có đang **né** testid không.
+
+```bash
+# Điều chỉnh regex theo API của framework E2E khai trong qa-context.
+grep -rnE "\.nth\(|\.first\(|\.last\(|hasText|xpath=|text=|locator\(['\"\`][^[]|getByRole\(|getByText\(|getByLabel\(|getByPlaceholder\(|:has-text\(|By\.css\(|By\.xpath\(" <e2e-dir>
+```
+
+Regex bắt theo chuỗi nên **có nhiễu** (comment, API trùng tên) — phân loại từng dòng khớp vào đúng một
+trong bốn nhóm, **ghi rõ nhóm nào** trong artifact của pha. Cấm bỏ qua im lặng, cũng cấm fail máy móc:
+
+0. **Không phải locator**: dòng khớp nằm trong comment / chuỗi văn bản, hoặc là API trùng tên ngoài
+   framework E2E (vd `_.nth(rows, 1)` của lodash trên mảng JS thường) → hợp lệ, ghi chú `non-locator`.
+1. **Khớp text bên trong `expect(...)`**: `getByText` / `:has-text` / `text=` dùng để **đọc và so** với
+   chuỗi nguyên văn QUCTHT → hợp lệ. **CSS class / xpath / `#id` nằm trong `expect(...)` KHÔNG thuộc
+   nhóm này** — định vị giòn để assert thì vẫn là định vị giòn, vẫn vỡ khi đổi style → xếp nhóm 3.
+2. Phần tử **ngoài source project**: DOM nội bộ của component thư viện bên thứ ba, dialog native của
+   trình duyệt → hợp lệ, phải ghi **tên thư viện/thành phần** kèm dòng đó. Trừ ngoại lệ cấu hình ở đoạn dưới, đây là ô
+   duy nhất `getByRole(` được chấp nhận (vd toast của thư viện → `getByRole('alert')`); `getByRole` trỏ
+   phần tử **trong** source project → nhóm 3, vì accessible name đổi theo nhãn QUCTHT thì test vẫn vỡ.
+3. Còn lại → **gate FAIL**: phần tử thuộc source project đang bị định vị bằng selector giòn. Xử lý theo
+   Blocker 2 (`blocker-playbook.md`) — thêm testid vào source rồi sửa test, KHÔNG hợp thức hoá bằng một
+   dòng lý do trong `qa-run.md`.
+
+**Ngoại lệ cấu hình cho `getByRole(`**: qa-context đã khai override role-based hợp lệ (chiến lược **đã chạy
+sẵn** trong project, có lý do trong `qa-run.md` — xem `test-generation.md`) → **bỏ `getByRole\(` khỏi regex
+quét**; mọi pattern cấm còn lại vẫn quét như thường. Không có khai báo đó thì không có ngoại lệ, và ngoại lệ
+này KHÔNG mở rộng sang CSS/xpath/text.
+
+`.nth(i)` / `.first()` / `.last()` gọi **trên một locator/element** (không phải mảng JS thường — đó là
+nhóm 0) không bao giờ thuộc nhóm 1 hoặc 2: luôn FAIL, vì thứ tự hàng đổi theo lọc/sắp xếp/phân trang nên
+lượt chạy lại tác động nhầm hàng. `.filter({ hasText })` cũng vậy — nó là "khớp text trần để định vị"
+dưới một API khác, chỉ hợp lệ khi nằm trong `expect(...)` (nhóm 1).
+
+Không có thư mục E2E (project chưa có tầng E2E) → bước này `N/A`, ghi vào artifact; **không** được coi là
+PASS ngầm.
 
 ## Bước 3 — Chặn assertion tầm thường (trivial)
 
@@ -118,9 +184,11 @@ cụ thể theo acceptance criteria).
 
 ## Kết quả gate
 
-Tổng hợp 3 bước thành một trạng thái duy nhất, ghi vào `qa-run.md` (Pha 6):
+Tổng hợp 4 bước thành một trạng thái duy nhất, ghi vào `qa-run.md` (Pha 6):
 
-- **PASS** — compile/type-check xanh, không có dòng `MISSING`, không còn assertion tầm thường trơ trọi.
-- **FAIL** — liệt kê cụ thể: lỗi compile (nếu có), từng dòng `MISSING`, từng vị trí assertion tầm
-  thường. Quay lại Pha 5 sửa, chạy lại gate — **không tiến sang Pha 7/8 khi gate còn FAIL**, và không
+- **PASS** — compile/type-check xanh; không còn dòng `MISSING` (mọi dòng `DYNAMIC?` đã mở source xác nhận
+  theo Caveat); mọi dòng khớp ở Bước 2b đã xếp vào nhóm 0, 1 hoặc 2 kèm ghi chú; không còn assertion tầm
+  thường trơ trọi.
+- **FAIL** — liệt kê cụ thể: lỗi compile (nếu có), từng dòng `MISSING`, từng dòng locator giòn nhóm 3,
+  từng vị trí assertion tầm thường. Quay lại Pha 5 sửa, chạy lại gate — **không tiến sang Pha 7/8 khi gate còn FAIL**, và không
   present kết quả dựa trên test chưa qua gate.

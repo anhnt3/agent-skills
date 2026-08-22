@@ -78,7 +78,7 @@ tầng. Đây là bug thật của sản phẩm.
 | Symptom quan sát được | Lớp | Hành động |
 |---|---|---|
 | Assert sai giá trị/format nhưng app trả đúng theo spec | test-defect | Trích FR/AC chứng minh app đúng + auto-fix test + log diff vào `qa-run.md` |
-| Selector không khớp DOM hiện tại (đổi cấu trúc) nhưng phần tử vẫn ở đúng chỗ, hành vi đúng | test-defect | Trích FR/AC chứng minh app đúng + auto-fix test (chọn lại selector) + log diff vào `qa-run.md` |
+| Selector không khớp DOM hiện tại (đổi cấu trúc) nhưng phần tử vẫn ở đúng chỗ, hành vi đúng | test-defect | Trích FR/AC chứng minh app đúng + auto-fix test **theo đúng thang ưu tiên locator Pha 5** (chọn lại bằng `data-testid`; phần tử thiếu testid → Blocker 2, CẤM vá bằng CSS/xpath/text — vá kiểu đó là tái tạo đúng lỗi vừa sửa) + log diff vào `qa-run.md` |
 | Test giả định thứ tự/dữ liệu không có trong spec | test-defect | Trích FR/AC chứng minh app đúng + auto-fix test (sửa oracle) + log diff vào `qa-run.md` |
 | Redirect login / 401 / 403 ngay đầu kịch bản | infra-blocker | Auto-fix theo Blocker 1 (`blocker-playbook.md`) |
 | Không tìm được phần tử ổn định để định vị | infra-blocker | Auto-fix theo Blocker 2, theo đúng gate nếu lan nhiều file |
