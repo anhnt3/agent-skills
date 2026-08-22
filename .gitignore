@@ -7,3 +7,6 @@ AGENTS.md
 speckit-extension/scripts/tests/fixtures/*.docx
 docs/brd/
 docs/brd.new/
+# Ngoại lệ: AGENTS.md của references là chỉ mục dev-side của extension, phải theo repo
+# (nó mô tả hợp đồng 17 cột + số hiệu pha; lệch bản là agent viết input sai và script hard-fail).
+!speckit-extension/references/AGENTS.md

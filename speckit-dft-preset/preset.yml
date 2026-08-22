@@ -13,6 +13,7 @@ requires:
   # >=0.6.0: bản đầu tiên các preset khác dựa vào để dùng AskUserQuestion trên Claude Code.
   # Đã kiểm tương thích với spec-kit 0.12.11 (neo section core xác minh nguyên văn —
   # xem docs/research/speckit-addon-review-2026-07-11.md; re-check bằng scripts/check-core-anchors.sh).
+  # 2026-08-22: check-core-anchors.sh chạy trên bản cài thật spec-kit 0.16.5 → 14/14 neo còn nguyên.
   speckit_version: ">=0.6.0"
 
 provides:
