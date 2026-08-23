@@ -55,7 +55,9 @@ trị thật đã scan/hỏi được. Không được để lại `<placeholder
 | E2E / API | <framework> | <thư mục test> | <lệnh chạy> |
 
 ## Đủ-để-chạy
-- Selector: <chiến lược chọn selector, vd data-testid kebab-case>.
+- Selector: <chiến lược chọn selector — MẶC ĐỊNH `data-testid`, kebab-case `<màn>-<vùng>-<phần tử>`; hàng bảng ghép khoá nghiệp vụ, không ghép index>.
+- Recorder E2E: <lệnh record/codegen + cấu hình thuộc tính test-id trỏ `data-testid` (vd `testIdAttribute`) — để kịch bản tester record ra dùng test id, chạy lại không vỡ>.
+- Tiền điều kiện dữ liệu khi replay: <kịch bản record chạy lại trên dữ liệu đã reset (trỏ mục Seed) HAY tham số hoá giá trị duy-nhất-mỗi-lượt — chọn một; không khai thì lượt chạy lại vỡ vì check trùng §17 dù selector đúng>.
 - Seed: <cách seed dữ liệu test + cách dọn>.
 - Auth E2E: <cơ chế session/storage-state + cách lấy token/login của project>.
 - Base URL: <FE base URL> / <API base URL>.
@@ -145,8 +147,18 @@ Recommended lên đầu kèm lý do**. Gợi ý bộ câu hỏi theo từng kh�
 
 ### Đủ-để-chạy
 - **Q:** "Chiến lược chọn selector cho E2E là gì (data-testid, role/text, CSS class)?"
-  **Recommended:** `data-testid` — lý do: bền hơn khi refactor UI, không phụ thuộc CSS/text đổi theo
-  locale.
+  **Recommended:** `data-testid` — **mặc định cứng**, chỉ đổi khi project đã có chiến lược khác chạy sẵn.
+  Lý do: bền khi refactor UI, không phụ thuộc CSS/text đổi theo locale hay theo quy ước nhãn; dev DFT
+  (agent `frontend-angular`) đã gắn sẵn testid cho phần tử tương tác, bảng, trạng thái màn, toast, dialog.
+  Repo chưa có testid nào → vẫn chọn `data-testid` và bổ sung dần qua Blocker 2, KHÔNG rơi về CSS/text.
+- **Q:** "Framework E2E có chế độ record/codegen không, và đã trỏ đúng `data-testid` chưa?"
+  **Recommended:** bật record + cấu hình thuộc tính test-id = `data-testid` — lý do: tester thủ công
+  record một lượt là ra kịch bản định vị bằng test id, chạy lại bền; không cấu hình thì recorder sinh
+  selector CSS/text giòn.
+- **Q:** "Kịch bản record chạy lại lần 2 lấy dữ liệu ở đâu — reset về seed, hay tham số hoá giá trị mỗi lượt?"
+  **Recommended:** reset về seed nếu project đã có script seed; chưa có → tham số hoá giá trị duy nhất
+  (hậu tố timestamp/uuid) — lý do: selector bền vẫn không cứu được lượt chạy lại nếu bản ghi vừa tạo làm
+  lượt sau vướng luật trùng dữ liệu (§17).
 - **Q:** "Dữ liệu test được seed và dọn dẹp thế nào (seed script, migration seed, fixture per-test)?"
   **Recommended:** script seed đã có trong repo (nếu scan thấy migrator/seed command) — lý do: tránh
   hai nguồn seed khác nhau gây lệch dữ liệu.

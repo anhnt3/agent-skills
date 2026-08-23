@@ -168,8 +168,22 @@ it('maps ABP {items,totalCount} response to the existing signal shape without ch
 
 - Chỉ cho critical journey + vài negative chính theo ma trận (Pha 3 đã lọc — nếu thấy đang viết E2E lặp
   lại thứ integration đã chứng minh, đó là dấu hiệu sai tầng, quay lại ma trận).
-- Selector theo đúng chiến lược trong qa-context (vd data-testid) — không tự chọn selector khác (text
-  match dễ vỡ khi đổi ngôn ngữ/copy) trừ khi qa-context cho phép.
+- **Locator theo thang ưu tiên, mặc định cứng là `data-testid`**: (1) test-id API của framework
+  (`getByTestId`/tương đương); (2) `getByRole` + accessible name — cách **duy nhất** được dùng nhãn để
+  định vị (neo ngữ nghĩa ARIA, không phải chuỗi trần); (3) hết — CẤM CSS class, xpath theo cấu trúc DOM,
+  `getByLabel`/`getByPlaceholder`, khớp text trần (`getByText`/`:has-text`/`text=`) làm locator (đổi style /
+  đổi DOM / đổi copy theo quy ước là vỡ hàng loạt; nhãn vẫn được **assert**, còn định vị bằng nhãn chỉ hợp
+  lệ qua bậc (2) role + accessible name).
+- **Giới hạn quyền override của qa-context**: qa-context chỉ được đổi sang một **thuộc tính test-id khác**
+  đã chạy sẵn trong project (`data-cy`, `data-test`, `automation-id`) hoặc chiến lược role-based **đã chạy
+  sẵn trong project** — CSS class / xpath / text **vẫn cấm bất kể qa-context khai gì**. Override sang
+  role-based không nới ca tụt bậc ở bullet dưới: vẫn phải khai trong qa-context trước, không tự chọn giữa chừng. Có override → ghi lý do vào `qa-run.md`.
+- **Tụt xuống bậc (2) chỉ hợp lệ một ca**: phần tử ngoài source project (DOM nội bộ của thư viện bên thứ
+  ba, dialog native trình duyệt). Phần tử trong source project thiếu testid → Blocker 2, không tụt bậc.
+- **Hàng trong bảng/danh sách**: testid ghép **khoá nghiệp vụ** (`<màn>-row-<id>`), **CẤM `.nth(i)`/index** —
+  lọc/sắp xếp/phân trang đổi thứ tự là test tác động nhầm hàng, fail ngẫu nhiên khi chạy lại.
+- Phần tử cần thao tác chưa có testid → **không hạ bậc selector**: ghi lại và xử lý theo Blocker 2 trong
+  `blocker-playbook.md` (thêm testid vào source).
 - Auth: dùng cơ chế session/storage-state đã định nghĩa trong qa-context, không tự chế login flow riêng
   cho từng test (chậm, dễ vỡ, không nhất quán).
 - Assert trên trạng thái hiển thị cuối cùng người dùng thấy được (nội dung, điều hướng, thông báo lỗi

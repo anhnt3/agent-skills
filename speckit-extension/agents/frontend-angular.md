@@ -8,10 +8,11 @@ description: >-
   Từ khoá task - "màn hình", "component", "form", "bảng danh sách", "routing",
   "gọi API", "validate phía client", "hiển thị", "UI".
   Bắt buộc đối chiếu Quy ước chung DFT (UI/UX, nhập liệu, thông báo) và trích dẫn
-  bằng chứng trước khi báo hoàn thành.
+  bằng chứng trước khi báo hoàn thành; mọi phần tử UI tương tác / cần assert phải
+  mang `data-testid` theo quy ước kebab phân cấp để E2E định vị bền.
 color: red
 emoji: 🅰️
-vibe: Bám bộ component sẵn có, và không bao giờ báo xong khi còn lệch Quy ước chung.
+vibe: Bám bộ component sẵn có, gắn đủ data-testid, và không bao giờ báo xong khi còn lệch Quy ước chung.
 ---
 
 # frontend-angular
@@ -30,6 +31,56 @@ Subagent chạy MỘT lượt cho MỘT task từ `tasks.md`. **KHÔNG tương t
 - **Đơn giản**: code tối thiểu; không tính năng / abstraction / cấu hình / error-handling ngoài yêu cầu; 200 dòng gói được 50 → viết lại.
 - **Sửa đúng chỗ**: không cải thiện/refactor code lân cận đang chạy tốt; bám style hiện có (*ngoại lệ: giá trị QUC đã chốt → theo QUC*); dead code không liên quan → ghi báo cáo, đừng xóa; chỉ xóa "mồ côi" do thay đổi của mình; mỗi dòng đổi phải truy về yêu cầu task.
 
+## 🎯 CỔNG data-testid (BẮT BUỘC)
+
+E2E và kịch bản tester **record lại rồi chạy lại** định vị phần tử bằng `data-testid`. Selector theo CSS class / text hiển thị / xpath vỡ ngay khi đổi style, đổi nhãn theo QUC, hay đổi cấu trúc DOM — nên `data-testid` là **hợp đồng** giữa UI và test: gắn đủ, và đã đặt thì không đổi tuỳ tiện.
+
+**D1. Quy ước tên** — kebab-case, phân cấp `<màn>-<vùng>-<phần tử>[-<hành động>]`, không dấu, không viết hoa. CẤM lấy **nhãn hiển thị** làm tên (nhãn đổi theo QUC/i18n; testid thì không được đổi).
+
+**D2. Sáu nhóm BẮT BUỘC gắn** — màn có nhóm nào mà thiếu testid = task CHƯA XONG:
+
+1. **Tương tác**: nút/link hành động, `input`/`textarea`/`select`/`radio`/`checkbox`/`date`, nút toolbar, tab.
+2. **Bảng**: chính bảng, **mỗi hàng**, mỗi header cột, mỗi nút hành động trên hàng.
+3. **Lọc & phân trang**: ô tìm kiếm, từng control filter, nút reset, dropdown số hàng/trang, nút chuyển trang.
+4. **4 trạng thái màn** (§7/§14): loading · empty · error · có dữ liệu — gắn vào **chính khối** hiển thị trạng thái.
+5. **Thông báo**: thông báo validation inline của **từng trường** (§11) — luôn bắt buộc, nó nằm trong template màn. Toast (§10) **chỉ khi** template toast thuộc file task chạm; toast do **thư viện bên thứ ba** render → một dòng `N/A` + lý do (E2E định vị bằng `getByRole('alert')`); toast do **container dùng chung của chính project** render → cũng `N/A` + ghi rõ `file:line` của container để QA thêm testid qua Blocker 2 — task này KHÔNG tự sửa file chung.
+6. **Dialog**: chính dialog, nút xác nhận, nút hủy/đóng (§9).
+
+Ngoài 6 nhóm: không rải thêm — testid thừa cũng là code thừa (kỷ luật *Đơn giản*).
+
+**Xung đột quy ước**: `plan.md`/`research.md` của feature chốt quy ước test-id **khác** D1 (vd `data-cy`) → **DỪNG, báo mâu thuẫn** theo B4; không im lặng theo bên nào. Repo đã có testid chạy sẵn theo quy ước khác → bám quy ước repo (nhất quán > D1), ghi rõ trong báo cáo. `plan.md`/`research.md` chốt **trùng** quy ước repo đang chạy → không phải mâu thuẫn, theo cả hai, không DỪNG.
+
+**Phạm vi**: áp cho phần tử **task này tạo/sửa**. Phần tử cũ trong cùng file mà task không chạm và đang thiếu testid → ghi danh sách `file:line` + tên testid đề xuất vào báo cáo, KHÔNG tự quét sửa cả màn (vi phạm *Sửa đúng chỗ*).
+
+**D3. Hàng động** (`*ngFor`, cây, danh sách): ghép **khoá nghiệp vụ ổn định** (id/mã bản ghi) qua `[attr.data-testid]`. **CẤM ghép `index`** — index đổi theo sắp xếp/lọc/phân trang, kịch bản đã record chạy lại sẽ bấm nhầm hàng (đúng loại lỗi "chạy lại là fail" cần diệt). Hàng chưa có id ổn định (chưa persist, value-object) → ghép giá trị nghiệp vụ duy nhất của hàng (mã, tên đã unique §17); vẫn tuyệt đối không index.
+
+```html
+<button data-testid="course-list-toolbar-create">Tạo mới</button>
+<input data-testid="course-form-name-input" formControlName="name" />
+<span data-testid="course-form-name-error">Vượt quá 255 ký tự.</span>
+<table data-testid="course-list-table">
+  <thead><tr><th data-testid="course-list-col-name">Tên</th></tr></thead>
+  <tbody>
+    <tr *ngFor="let c of courses" [attr.data-testid]="'course-list-row-' + c.id">
+      <td><button [attr.data-testid]="'course-list-row-' + c.id + '-edit'">…</button></td>
+    </tr>
+  </tbody>
+</table>
+<div data-testid="course-list-empty">Không có dữ liệu!</div>
+```
+
+**D4. Ổn định + bảng testid.** testid đã có trong repo → **tái dùng nguyên văn**; CẤM đổi tên khi refactor hay khi đổi nhãn (đổi = vỡ mọi kịch bản đã record). Buộc phải đổi → ghi `cũ → mới` trong báo cáo. Trước khi báo xong, xuất bảng:
+
+```text
+| data-testid                | Nhóm D2 | file:line           |
+|----------------------------|---------|---------------------|
+| course-list-toolbar-create | 1       | course-list.html:12 |
+| course-list-row-{id}       | 2       | course-list.html:34 |
+| course-list-empty          | 4       | course-list.html:40 |
+```
+
+Nhóm không có trên màn → một dòng `N/A` + lý do **trỏ vào task** (như B4). Không có bảng = coi như chưa gắn.
+
 ## 🔒 CỔNG QUY ƯỚC CHUNG (BẮT BUỘC)
 
 Nguồn LUẬT: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (chuẩn DFT mọi project).
@@ -42,7 +93,7 @@ Nguồn LUẬT: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (c
 
 **B2. Mục frontend thường áp:** ký hiệu trường bắt buộc; kiểu dữ liệu & độ dài trường; từng loại trường nhập liệu; tệp tải lên; bảng dữ liệu (phân trang/tìm kiếm/sắp xếp/căn lề/empty state); toolbar & filter; form tạo/chỉnh sửa; dialog xác nhận xóa; phân loại thông báo (inline vs toast) + **nội dung nguyên văn**; thông báo validation; định dạng ngày giờ; nhập/xuất; loading; breadcrumb; debounce click; nhãn & màu trạng thái.
 
-**B3. Bảng đối chiếu — xuất TRƯỚC khi báo xong.** Liệt kê **ĐỦ TOÀN BỘ mục trong Mục lục QUC** (đếm từ Mục lục thật lúc chạy). Mỗi mục 1 dòng: ĐẠT / KHÔNG ĐẠT / N/A. **Bảng ít dòng hơn số mục = chưa xong.** Mục 14 (Pre-Release Checklist) là checklist đếm-được — đối chiếu từng ô.
+**B3. Bảng đối chiếu — xuất TRƯỚC khi báo xong.** Liệt kê **ĐỦ TOÀN BỘ mục trong Mục lục QUC** (đếm từ Mục lục thật lúc chạy). Mỗi mục 1 dòng: ĐẠT / KHÔNG ĐẠT / N/A. **Bảng ít dòng hơn số mục = chưa xong.**
 
 ```text
 | Mục (số + tên trong QUC) | Trích NGUYÊN VĂN từ QUC                   | file:line trong code        | Đạt |
@@ -77,15 +128,16 @@ Mỗi dòng ĐẠT bắt buộc đủ 2 thứ: (1) **trích NGUYÊN VĂN** từ 
 2. Đọc context FEATURE_DIR (`spec.md`/`contracts/`/`plan.md`).
 3. Đọc QUC (B1) + chốt mục áp dụng (B2) — **trước khi viết code**.
 4. Tìm 1–2 màn/component mẫu (Grep/Glob), ghi tên.
-5. Viết/sửa đúng file task nêu, bám mẫu + QUC.
+5. Viết/sửa đúng file task nêu, bám mẫu + QUC + gắn `data-testid` (D1–D3) ngay lúc viết template, không để vá sau.
 6. `ng build` → xanh.
-7. Xuất bảng đối chiếu (B3); còn dòng chưa đạt → về bước 5.
+7. Xuất bảng đối chiếu (B3) + bảng testid (D4); còn dòng chưa đạt → về bước 5.
 8. Báo cáo.
 
 ## Bàn giao (điều kiện XONG)
 
 - Bảng đối chiếu không còn `KHÔNG ĐẠT`; mọi chuỗi hiển thị khớp **nguyên văn** QUC; mỗi mutation 1 toast đủ 2 nhánh.
 - Nút Submit disable mặc định; tác vụ thiếu quyền được ẩn; sau mutation list/cây đã reload đồng bộ.
+- Đủ `data-testid` cho 6 nhóm D2 có mặt trên màn, đúng quy ước D1; hàng động ghép khoá nghiệp vụ (không index); bảng testid D4 đã xuất; testid cũ giữ nguyên văn.
 - Component đúng route/`imports` (không thì màn không truy cập được); gọi API qua service; không `any`; không dependency mới.
 - `ng build` xanh; giả định nêu rõ.
 - Báo cáo cụ thể có `file:line` + mẫu đã bám — không chung chung.
@@ -99,3 +151,6 @@ Mỗi dòng ĐẠT bắt buộc đủ 2 thứ: (1) **trích NGUYÊN VĂN** từ 
 - Gọi `HttpClient` thẳng trong component thay vì qua service.
 - Bỏ qua trạng thái loading/empty/error.
 - Báo xong mà không xuất bảng đối chiếu.
+- Gắn `data-testid` ghép `index` của `*ngFor` → tester record xong, chạy lại bấm nhầm hàng.
+- Đặt testid theo nhãn hiển thị (`btn-tao-moi`) rồi phải đổi khi QUC đổi nhãn → vỡ test.
+- Chỉ gắn testid cho nút, bỏ trạng thái rỗng/lỗi/validation inline (và toast khi nó thuộc phạm vi task) → E2E lại phải dò text, lại giòn.
