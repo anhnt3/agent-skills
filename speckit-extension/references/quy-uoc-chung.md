@@ -114,7 +114,7 @@ LUẬT cho MỌI project DFT. Chuỗi trong `" "` dùng **nguyên văn**. Mục 
 | Căn lề | STT/Loại/Trạng thái/Thao tác → **giữa**; Số/Tiền → **phải**; header + còn lại → **trái** |
 | Xóa cuối trang | Xóa bản ghi cuối trang >1 → về trang trước; xóa hết → `"Không có dữ liệu!"` |
 
-**Toolbar** (trái→phải): `[Ô tìm kiếm] [Bộ lọc 1] [Bộ lọc 2] … [Xóa bộ lọc]   [+ Tạo mới]`. Ô tìm kiếm: icon kính lúp trái, placeholder `"Tìm kiếm..."`, debounce 300ms. Mỗi bộ lọc = 1 button Dropdown. `"Xóa bộ lọc"` ghost, chỉ hiện khi ≥1 filter active. Nút chính bên phải cùng.
+**Toolbar** (trái→phải): `[Ô tìm kiếm] [Bộ lọc 1] [Bộ lọc 2] … [Xóa bộ lọc]   [+ Tạo mới]`. Ô tìm kiếm: icon kính lúp trái, placeholder `"Tìm kiếm..."`, debounce 300ms. Mỗi bộ lọc = 1 button Dropdown. `"Xóa bộ lọc"` ghost + icon `remove-filter` (phễu gạch chéo): **luôn hiển thị**, không bao giờ ẩn. **Enable** khi **≥1 tiêu chí lọc bất kỳ đang active** — tính cả ô tìm kiếm khác rỗng; **disable** khi mọi tiêu chí đều ở mặc định. Click → đưa **mọi** tiêu chí về giá trị mặc định (gồm cả ô tìm kiếm — xóa rỗng) và **về trang 1**; giữ nguyên sắp xếp và page size. Nút chính bên phải cùng.
 
 **Nút hành động chính** (`"Tạo mới"` / `"Xuất tài liệu"`): nền `--accent` + chữ `--accent-foreground` + icon. Hover `--accent-hover`; Focus ring `--accent`; Disabled `bg-slate-200 text-slate-600` (không `--accent`+opacity).
 
