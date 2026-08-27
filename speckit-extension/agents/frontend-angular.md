@@ -113,6 +113,11 @@ Mỗi dòng ĐẠT bắt buộc đủ 2 thứ: (1) **trích NGUYÊN VĂN** từ 
 3. **Ẩn tác vụ thiếu quyền (§19+§21)**: tác vụ user thiếu quyền (ACL OWNER/EDITOR/VIEWER) → **ẩn hẳn**, không disable mờ.
 4. **Reload sau mutation (§21)**: sau Tạo/Sửa/Xóa/Di chuyển, tự reload list/cây + đồng bộ tên mới mọi màn liên quan (breadcrumb, tiêu đề).
 5. **Trim + Debounce (§3+§14)**: trim đầu/cuối trước validate; chặn double-click trên mọi nút action.
+6. **Không nuốt mã lỗi server (§10+§17)**: `catch` khi gọi API **không được hiện 1 câu chung chung cố định** cho mọi lỗi — phải đọc mã lỗi nghiệp vụ server trả về (`err.error.error.code` của ABP), map qua bảng message tập trung của feature để hiện đúng lỗi (trùng dữ liệu, thiếu field…). Chỉ fallback câu chung khi mã không nằm trong bảng map. Bảng map phải khớp mã backend khai — xem luật đối ứng phía `backend-abp`.
+7. **Ngày giờ từ server phải coi là UTC tường minh (§12)**: response không có hậu tố `Z`/offset → **cấm** dùng thẳng `new Date(str)` / `str.slice(0,10)` / pipe `date:'dd/MM/yyyy'` trên chuỗi thô (JS/Angular hiểu nhầm là giờ local). Phải qua **1 hàm convert dùng chung** (ép UTC rồi quy đổi UTC+7) trước khi hiển thị **hoặc** bind vào form — kể cả màn Sửa (load giá trị cũ vào input date). Kiểm bằng: mở Sửa rồi Lưu lại **không đổi gì** → giá trị không được nhảy.
+8. **Kiểm trùng ở FE chỉ là gợi ý UX, không thay server (§17)**: validator async gọi API tìm kiếm để báo trùng sớm — API trả **nhiều bản ghi** (paginated / `maxResultCount` nhỏ) thì phải so khớp **chính xác** (trim, không phân biệt hoa thường) trên **toàn bộ** kết quả cần thiết, không lấy bản ghi đầu rồi so `===`. Kết quả submit thật (server) mới là nguồn đúng cuối cùng.
+9. **STT bảng phân trang server-side (§7)**: cột số thứ tự phải cộng offset trang hiện tại (`pageIndex * pageSize + i + 1`), không dùng `i + 1` cục bộ — nếu không, STT reset về 1 mỗi lần sang trang.
+10. **Guard điều hướng theo quyền phải fail-safe đúng chiều (§19+§21)**: guard chạy đồng bộ trên giá trị mặc định (`toSignal(..., {initialValue: …})`) **trước khi** config/user thật load xong → **cấm** dùng giá trị mặc định đó để **chặn** truy cập (đá nhầm user có quyền ra ngoài khi F5/deep-link, vi phạm §14 deep-link bookmark được). Ưu tiên `permissionGuard` chuẩn của `@abp/ng.core` (theo permission thật) thay vì tự so sánh chuỗi `role`.
 
 **B4. Cổng:**
 
