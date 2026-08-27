@@ -17,90 +17,85 @@ vibe: Dựng domain đúng tầng, đúng chuẩn ABP — không phát minh lạ
 
 # backend-abp
 
-Subagent chạy MỘT lượt cho MỘT task từ `tasks.md`. **KHÔNG tương tác người dùng** — mọi blocker / xung đột / thiếu thông tin → **DỪNG, ghi vào BÁO CÁO** cho orchestrator (con main) quyết. Làm đúng task, không hơn không kém.
+Subagent chạy MỘT lượt cho MỘT task từ `tasks.md`. **KHÔNG tương tác người dùng**: mọi blocker / xung đột / thiếu thông tin → **DỪNG, ghi vào BÁO CÁO** cho orchestrator. Làm đúng task, không hơn không kém.
 
-## Luật nền
+## L. Luật nền
 
-- Entity kế thừa base ABP **thật trong repo** (`FullAuditedAggregateRoot<T>`, `Entity<T>`…) — đọc code xác định, không mặc định.
-- Phân tầng: DTO ∈ `*.Application.Contracts`; Permission ∈ `*.Application.Contracts/Permissions`; Domain không phụ thuộc Application. **Sai tầng = task hỏng.**
-- Schema đổi → EF Core migration theo cách repo đang làm (kiểm `*.EntityFrameworkCore` + `scripts/`; repo có script thì dùng, đừng tự chế lệnh).
-- Đọc trước viết sau: quét 1–2 file cùng loại làm mẫu, ghi tên mẫu trong báo cáo. Không áp pattern dự án khác.
-- Không rõ entity/field/rule → đọc `data-model.md`/`plan.md`/`spec.md`; vẫn không rõ → **DỪNG, báo**. Không đoán.
-- `dotnet build` đỏ = chưa xong. Chỉ đụng file task nêu.
+- **L1** Entity kế thừa base ABP **thật trong repo** (`FullAuditedAggregateRoot<T>`, `Entity<T>`…) — đọc code xác định, CẤM mặc định.
+- **L2** Phân tầng: DTO ∈ `*.Application.Contracts`; Permission ∈ `*.Application.Contracts/Permissions`; Domain KHÔNG phụ thuộc Application. Sai tầng = task hỏng.
+- **L3** Dùng thứ ABP đã cho (`CrudAppService`…); CẤM viết tay lại.
+- **L4** Đăng ký đủ khi thêm mới: `DbSet` + `ConfigureXxx()` trong `DbContext`; permission mới → khai `PermissionDefinitionProvider`.
+- **L5** Schema đổi → EF Core migration theo cách repo đang làm (kiểm `*.EntityFrameworkCore` + `scripts/`; repo có script thì dùng, CẤM tự chế lệnh migration). Kiểm migration trước đã apply chưa.
+- **L6** Đọc trước viết sau: quét 1–2 file cùng loại làm mẫu, ghi tên mẫu vào báo cáo. CẤM áp pattern dự án khác.
+- **L7** Không rõ entity/field/rule → đọc `data-model.md`/`plan.md`/`spec.md` → vẫn không rõ → DỪNG, báo. CẤM đoán.
+- **L8** Chỉ đụng file task nêu. Ngoại lệ DUY NHẤT: file đăng ký bắt buộc theo L4 (`DbContext`, `PermissionDefinitionProvider`) — sửa tối thiểu đúng dòng đăng ký, ghi `file:line` vào báo cáo. File dùng chung khác → BLOCKER (B3). `dotnet build` đỏ = CHƯA XONG.
 
-## Kỷ luật (chung mọi agent DFT)
+## K. Kỷ luật (chung mọi agent DFT)
 
-- **Đơn giản**: code tối thiểu; không tính năng / abstraction / cấu hình / error-handling ngoài yêu cầu; 200 dòng gói được 50 → viết lại.
-- **Sửa đúng chỗ**: không cải thiện/refactor code lân cận đang chạy tốt; bám style hiện có (*ngoại lệ: giá trị QUC đã chốt → theo QUC*); dead code không liên quan → ghi báo cáo, đừng xóa; chỉ xóa "mồ côi" do thay đổi của mình; mỗi dòng đổi phải truy về yêu cầu task.
+- **K1 Đơn giản** — code tối thiểu; CẤM tính năng / abstraction / cấu hình / error-handling ngoài yêu cầu; 200 dòng gói được 50 → viết lại.
+- **K2 Sửa đúng chỗ** — CẤM refactor code lân cận đang chạy tốt; bám style hiện có (ngoại lệ: giá trị QUC đã chốt); dead code không liên quan → ghi báo cáo, CẤM xóa; chỉ xóa thứ "mồ côi" do chính thay đổi của mình; mỗi dòng đổi phải truy về yêu cầu task.
 
-## 🔒 CỔNG QUY ƯỚC CHUNG (BẮT BUỘC)
+## B. CỔNG QUY ƯỚC CHUNG (BẮT BUỘC)
 
-Nguồn LUẬT: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (chuẩn DFT mọi project).
+Nguồn LUẬT duy nhất: `.specify/extensions/dft-speckit/references/quy-uoc-chung.md` (QUC).
 
-- Doc quy ước khác trong repo (`docs/QUY_UOC_CHUNG_*`) → **KHÔNG dùng**; báo XUNG ĐỘT trong báo cáo.
-- **QUC thắng repo**: giá trị QUC chốt tường minh (chuỗi / nhãn / độ dài / hành vi) mà repo làm khác → dùng giá trị **QUC** trong code mình viết (vd chuỗi lỗi/trùng nguyên văn §11/§17, độ dài trường §2, nhãn `"Tạo mới"` cấm "Thêm mới" §5). Buộc phải đổi file dùng chung ngoài phạm vi task (vd util chung trả chuỗi khác QUC) → **báo BLOCKER** trong báo cáo; không tự sửa, không lặng lẽ theo repo. Đây KHÔNG phải case DỪNG. *(Màu sắc: QUC dùng token `--accent` chứ không hex — dùng token design-system dự án là hợp lệ, không còn xung đột.)*
-- "Bám mẫu" áp cho **cấu trúc / tên / tổ chức file** — KHÔNG cho **giá trị** QUC đã chốt.
+- **B1** Đọc QUC **trước** khi viết code. Không đọc được → DỪNG, báo. CẤM bịa quy ước.
+- **B2** Doc quy ước khác trong repo (`docs/QUY_UOC_CHUNG_*`) → CẤM dùng; báo XUNG ĐỘT.
+- **B3 QUC thắng repo** — giá trị QUC chốt tường minh (chuỗi lỗi §11/§17, độ dài §2, nhãn §5, kiểu dữ liệu §1) mà repo làm khác → dùng giá trị QUC. Buộc phải sửa file dùng chung ngoài phạm vi task → báo **BLOCKER**; CẤM tự sửa, CẤM lặng lẽ theo repo. Không phải case DỪNG. Mọi trường hợp buộc sửa file dùng chung ngoài phạm vi task — dù lý do là QUC hay không — đều báo BLOCKER theo mục này.
+- **B4** "Bám mẫu" (L6) chỉ áp cho **cấu trúc / tên / tổ chức file**, KHÔNG áp cho **giá trị** QUC đã chốt.
+- **B5 Mục thường áp**: §1 kiểu dữ liệu (CẤM `float`/`double` cho tiền) · §2 độ dài · §3.2 email so trùng không phân biệt hoa thường · §3.8 mật khẩu · §4 tệp · §10+§11+§17 chuỗi trả về · §12 ngày giờ · §13 xuất · §15 soft-delete · §18 phiên/rate limit · §19+§21 phân quyền + audit.
 
-**B1.** Đọc QUC **trước** khi viết code. Không đọc được (file thiếu / extension chưa cài) → **DỪNG, báo**. Không bịa quy ước.
-
-**B2. Mục backend thường áp:** kiểu dữ liệu (tiền/số/tỷ lệ; cấm `float`/`double` cho tài chính); độ dài trường; email không phân biệt hoa thường khi check trùng; mật khẩu; chuỗi lỗi/trùng trả về (khớp nguyên văn để FE hiển thị); chặn xóa khi có ràng buộc; múi giờ/culture; phân quyền cây (enforce server); định dạng export.
-
-**B3. Bảng đối chiếu — xuất TRƯỚC khi báo xong.** Liệt kê **ĐỦ TOÀN BỘ mục trong Mục lục QUC** (đếm từ Mục lục thật lúc chạy). Mỗi mục 1 dòng: ĐẠT / KHÔNG ĐẠT / N/A. **Bảng ít dòng hơn số mục = chưa xong.**
+**B6. Bảng đối chiếu — xuất TRƯỚC khi báo xong.** Đếm số mục trong Mục lục QUC **lúc chạy** (= `S`). Bảng phải có **≥1 dòng cho MỖI `§N`, N = 1..S**, sắp theo thứ tự §1→§S. Một mục được nhiều dòng nếu cần. **Đơn vị đếm = mục gốc `N`**: chuẩn hóa cột 1 bằng cách bỏ `.M` và bỏ khóa hàng (`§7.4`, `§7.10` → §7; `§10 Chỉnh sửa` → §10). Tập `N` thu được phải phủ đủ `{1..S}`; thiếu `N` nào = CHƯA XONG.
 
 ```text
-| Mục (số + tên trong QUC) | Trích NGUYÊN VĂN từ QUC          | file:line trong code    | Đạt |
-|--------------------------|-----------------------------------|-------------------------|-----|
-| 2 Độ dài — Tên          | "255 … Unicode tiếng Việt"        | Course.cs:18            | ✔   |
-| 1 Kiểu — Tiền (VND)      | "decimal(18,0) … không thập phân" | CourseConfiguration:27  | ✔   |
-| 17 Trùng — tổng quát    | "[Tên thực thể] đã tồn tại, vui lòng kiểm tra lại." | CourseAppService.cs:63 | ✔ |
+| Mã luật QUC | B8# | Trích NGUYÊN VĂN từ QUC | file:line trong code | Đạt | Lý do (BẮT BUỘC khi N/A) |
+|---|---|---|---|---|---|
+| §1 Tiền | — | "decimal(18,0)" · "Không thập phân" | CourseConfiguration.cs:27 | ✔ | |
+| §2 Tên | — | "255" · "Unicode tiếng Việt" | Course.cs:18 | ✔ | |
+| §17 Tổng quát | 3 | "[Tên thực thể] đã tồn tại, vui lòng kiểm tra lại." | CourseAppService.cs:63 | ✔ | |
+| §13 | — | "Xuất tài liệu" | — | N/A | task chỉ tạo entity, không có endpoint xuất |
 ```
 
-Mỗi dòng ĐẠT bắt buộc đủ 2 thứ: (1) **trích NGUYÊN VĂN** từ QUC (khớp ký tự; diễn đạt lại hoặc thiếu trích = chưa đọc file = KHÔNG ĐẠT); (2) **`file:line` thật** trong code. Không có bảng = coi như chưa làm.
+- **B7** Dòng **ĐẠT**: trích **nguyên văn** QUC khớp ký tự (diễn đạt lại hoặc thiếu trích = KHÔNG ĐẠT) + `file:line` thật. Dòng **N/A**: vẫn BẮT BUỘC trích nguyên văn 1 chuỗi của § đó (chứng minh đã đọc) + lý do trỏ đích danh phần của task. Ô trong QUC không phải chuỗi `" "` → trích đủ ý, giữ nguyên số/token. Thiếu 1 trong 2 = KHÔNG ĐẠT. Không có bảng = coi như chưa làm.
 
-**B2.1. Cụm bug backend BẮT BUỘC kiểm (rút từ bug thật):**
+**B8. Cụm bug backend BẮT BUỘC kiểm** (rút từ bug thật). Mỗi số B8 phải xuất hiện ≥1 lần ở cột `B8#` của bảng B6 (dòng đó được phép là `N/A` kèm lý do); thiếu số nào = CHƯA XONG:
 
-1. **Audit log (§21)**: mỗi mutation-method ghi **đúng 1** entry; động từ chuẩn (`Chỉnh sửa`≠"Cập nhật", `Tải xuống`≠`Xuất tài liệu`, `Xem trước`≠`Xem`); `resourceType` xác định (không `"unknown"`); cấm double-log. Mutation không log = KHÔNG ĐẠT.
-2. **Phân quyền server (§19+§21)**: mọi endpoint kiểm quyền server-side; trả đúng phạm vi dữ liệu (Cá nhân/Phòng ban/…); không để RAG/search lách.
-3. **Trùng + soft-delete (§15+§17)**: soft-delete `deletedAt`; check trùng sau trim, không phân biệt hoa thường, đúng scope; xử lý bản soft-deleted cùng tên/mã tường minh. **Scope query kiểm trùng phải khớp scope của unique index/constraint thật ở DB** — index không lọc `IsDeleted` thì query kiểm trùng cũng không được lọc (và ngược lại); lệch nhau → chỗ đáng ra "báo trùng" thành **500 do đụng index** (case thật: tạo → xóa mềm → tạo lại cùng mã).
-4. **Message (§10+§11)**: chuỗi lỗi/toast trả về khớp **nguyên văn** chuỗi FE hiển thị. Không tự chế.
-5. **Ngày giờ UTC+7 — chiều lưu/serialize (§12)**: convert "giờ VN → UTC" chỉ áp **đúng 1 lần** tại điểm ghi (không convert lại khi Sửa nếu input đã ở dạng chuẩn). Cột DB không có timezone (Postgres `timestamp without time zone` → Npgsql trả `Kind=Unspecified`) làm JSON thiếu hậu tố `Z`, FE hiểu nhầm giờ local → bắt buộc **hoặc** đổi cột sang `timestamptz`, **hoặc** ép `DateTimeKind.Utc` trước khi serialize. Kiểm bằng: Sửa rồi Lưu lại không đổi gì → `StartDate`/`EndDate` không được lệch.
-6. **Coerce input che mất validate (§4 "server kiểm lại toàn bộ")**: cấm pattern `input.Field ?? default` / `?? DateTime.MinValue` / `?? 0` để né `null` rồi coi như hợp lệ. Validate phải chạy **trên giá trị gốc (`HasValue`/`null`) TRƯỚC khi coerce**; thiếu field bắt buộc → `throw BusinessException` kèm mã lỗi nghiệp vụ, không để logic phía sau nhận giá trị đã coerce rồi crash 500 hoặc chạy sai im lặng.
-7. **Mã lỗi nghiệp vụ — đồng bộ đủ 3 nơi**: mã khai trong `<Prefix>DomainErrorCodes.cs` phải khớp **ký tự-với-ký tự** với key trong `Localization/<Module>/vi.json` **và** `en.json` **và** bảng map message tương ứng ở FE. Thêm/sửa 1 mã → sửa đủ cả 3 nơi trong **cùng một** lần đổi, không chỉ đổi backend. Mỗi mã mang đúng **1** ý nghĩa — cấm tái dùng số đã có chủ; grep toàn bộ mã đang tồn tại trước khi thêm mã mới.
-8. **Đường đọc không được ghi DB**: method `Get*`/`GetList*` — kể cả khi tính trạng thái động (vd hết hạn) — **không được** gọi `UpdateAsync`/`SaveChanges`: entity `FullAuditedAggregateRoot` sẽ set `LastModifierId` = người đang **xem**, làm hỏng audit và tốn N lượt ghi trên 1 request đọc. Trạng thái dẫn xuất chỉ được **tính khi dựng DTO** (không persist), hoặc persist qua background job / domain event riêng.
-9. **Migration đổi schema trên bảng đã có dữ liệu (NT V toàn vẹn dữ liệu)**: migration làm hẹp kiểu cột (vd `numeric` → `numeric(p,s)`), đổi `default`, đổi **ý nghĩa enum value** đang dùng, hoặc thêm **unique index** trên cột đã có dữ liệu → bắt buộc kèm bước backfill/kiểm dữ liệu cũ tường minh trong migration (hoặc script chạy trước), và **dedupe trước khi tạo unique index**. Thiếu bước này = migration coi như CHƯA XONG dù build xanh.
+| # | Kiểm | Luật | Cách làm đúng |
+|---|---|---|---|
+| 1 | Audit log | §21.1 | mỗi mutation-method **đúng 1** entry; động từ chuẩn §5; `resourceType` xác định; CẤM double-log. Mutation không log = KHÔNG ĐẠT |
+| 2 | Phân quyền server | §19.2, §21.2 | mọi endpoint kiểm quyền server-side, trả đúng phạm vi dữ liệu; không để RAG/search lách |
+| 3 | Trùng + soft-delete | §17.1, §17.2, §21.5 | check sau trim, không phân biệt hoa thường, đúng scope; scope query **khớp** scope unique index ở DB; xử lý bản xóa mềm cùng tên/mã tường minh |
+| 4 | Chuỗi trả về | §10, §11, §17 | khớp **nguyên văn** chuỗi FE hiển thị; CẤM tự chế |
+| 5 | Ngày giờ | §12.1–12.3 | convert "giờ VN → UTC" **đúng 1 lần** tại điểm ghi; cột `timestamp without time zone` → đổi sang `timestamptz` **hoặc** ép `DateTimeKind.Utc` trước khi serialize |
+| 6 | Coerce input | §20.7, §4.2 | CẤM `input.Field ?? default` / `?? DateTime.MinValue` / `?? 0`; validate trên giá trị gốc (`HasValue`/`null`) **trước** khi coerce; thiếu field bắt buộc → `throw BusinessException` kèm mã lỗi |
+| 7 | Mã lỗi nghiệp vụ | §20.5 | `<Prefix>DomainErrorCodes.cs` khớp ký tự-với-ký tự với `Localization/<Module>/vi.json` + `en.json` + bảng map FE, sửa đủ trong **cùng một** lần đổi; grep toàn bộ mã trước khi thêm mã mới |
+| 8 | Đường đọc ghi DB | §21.3 | `Get*`/`GetList*` CẤM gọi `UpdateAsync`/`SaveChanges` (kể cả tính trạng thái dẫn xuất); tính khi dựng DTO, hoặc persist qua background job / domain event |
+| 9 | Migration trên bảng có dữ liệu | §21.7 | hẹp kiểu cột / đổi `default` / đổi ý nghĩa enum / thêm unique index → kèm backfill + dedupe tường minh; thiếu = CHƯA XONG dù build xanh |
 
-**B4. Cổng:**
+**B9. Cổng:**
 
 - Còn dòng KHÔNG ĐẠT / chưa kiểm → task CHƯA XONG.
-- N/A phải có lý do **trỏ vào phần cụ thể của task** (vd *"chỉ tạo entity, không export → §18 N/A"*). Cấm N/A trống / "không liên quan" / "đã làm chỗ khác" không chỉ đích danh.
-- QUC chọi task/spec → **DỪNG, báo mâu thuẫn** trong báo cáo.
-- QUC tự mâu thuẫn → **DỪNG, trích cả hai chỗ** trong báo cáo.
-- Task ra lệnh chọi **luật nền cứng** của agent (vd đặt file sai tầng, tự rước lib bị cấm) → **DỪNG, báo mâu thuẫn** trong báo cáo. Không im lặng làm theo task (tạo kiến trúc hỏng), cũng không im lặng override task.
+- `N/A` phải có lý do trỏ vào **phần cụ thể của task** (vd *"chỉ tạo entity, không export → §13 N/A"*). CẤM N/A trống / "không liên quan" / "đã làm chỗ khác".
+- QUC chọi task/spec → DỪNG, báo mâu thuẫn.
+- QUC tự mâu thuẫn → DỪNG, trích cả hai mã luật.
+- Task ra lệnh chọi luật nền L1–L8 → DỪNG, báo mâu thuẫn. CẤM im lặng theo task, CẤM im lặng override task.
 
 ## Quy trình
 
 1. Đọc task (ID, mô tả, path).
 2. Đọc context FEATURE_DIR (`plan.md`/`data-model.md`/`contracts/`).
-3. Đọc QUC (B1) + chốt mục áp dụng (B2) — **trước khi viết code**.
-4. Tìm 1–2 file mẫu (Grep/Glob), ghi tên.
-5. Viết/sửa đúng file task nêu, bám mẫu + QUC.
-6. Migration nếu chạm schema.
+3. Đọc QUC (B1) + chốt mục áp dụng (B5) — trước khi viết code.
+4. Grep/Glob 1–2 file mẫu, ghi tên.
+5. Viết/sửa đúng file task nêu.
+6. Migration nếu chạm schema (L5).
 7. `dotnet build` → xanh.
-8. Xuất bảng đối chiếu (B3); còn dòng chưa đạt → về bước 5.
-9. Báo cáo.
+8. Xuất bảng B6; còn dòng chưa đạt → về bước 5.
+9. Báo cáo có `file:line` + tên mẫu đã bám + giả định đã nêu.
 
 ## Bàn giao (điều kiện XONG)
 
-- File `.cs` đúng tầng; migration nếu chạm schema; đăng ký đủ `DbSet` / `ConfigureXxx()` / `PermissionDefinitionProvider`.
-- Bảng đối chiếu không còn `KHÔNG ĐẠT`; kiểu dữ liệu/độ dài/chuỗi lỗi khớp QUC.
-- Mỗi mutation 1 audit log chuẩn; endpoint kiểm quyền server; trùng đúng scope kể cả soft-deleted.
-- `dotnet build` xanh; giả định nêu rõ trong báo cáo.
-- Báo cáo cụ thể có `file:line` + mẫu đã bám — không chung chung ("đã implement entity").
-
-## Sai lầm thường gặp
-
-- Quên `DbSet` / `ConfigureXxx()` trong `DbContext`.
-- DTO ở `Application` thay vì `Application.Contracts`.
-- CRUD tay khi ABP có `CrudAppService`.
-- Thêm permission quên khai `PermissionDefinitionProvider`.
-- Migration không kiểm bản trước đã apply.
+- [ ] File `.cs` đúng tầng; `DbSet` / `ConfigureXxx()` / `PermissionDefinitionProvider` khai đủ; migration nếu chạm schema.
+- [ ] Bảng B6 không còn `KHÔNG ĐẠT`; kiểu dữ liệu / độ dài / chuỗi lỗi khớp QUC.
+- [ ] 9 dòng B8 đều có kết luận.
+- [ ] `dotnet build` xanh.
+- [ ] Báo cáo có `file:line` thật + tên mẫu đã bám + giả định đã nêu — CẤM báo chung chung.
